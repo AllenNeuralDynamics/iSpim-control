@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "mesospim"
+description = "abstraction of the mesospim-prime instrument."
+version = "0.1.0"
+authors = ["poofjunior <joshua.vasquez@alleninstitute.org>"]
+readme = "README.md"
+license = "MIT"
+keywords = ['microcsope', 'spim']
+classifiers=[
+    'License :: OSI Approved :: MIT License',
+    'Development Status :: 4 - Beta',
+    'Programming Language :: Python'
+]
+packages = [
+    { include = "mesospim"},
+]
+
+[tool.poetry.urls]
+repository = "https://github.com/AllenNeuralDynamics/mesospim-prime"
+
+[tool.poetry.dependencies]
+python = ">=3.6"
+pip = ">=21.3"
+tigerasi = "git+ssh://git@github.com/AllenNeuralDynamics/TigerASI@main'"
+obis_laser = "git+ssh://git@github.com/AllenNeuralDynamics/obis-laser@main'"
+opto = "git+ssh://git@github.com/AllenNeuralDynamics/opto@master'"
+scipy = "^1.8.1"
+numpy = "^1.22.3"
+matplotlib = "^3.5.2"
+tomlkit = "^0.11.1"
+mock = "^4.0.3"
+tifffile = "^2022.5.4"
+coloredlogs = "^15.0.1"
+nidaqmx = "^0.6.2"
+gitPython = "^3.1.27"
+
+[build-system]
+requires = ["poetry-core>=1.0.8"]
+build-backend = "poetry.core.masonry.api"
