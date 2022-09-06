@@ -43,7 +43,7 @@ class Pose:
     def _move_relative(self, wait: bool = True, **axes: dict):
         axes_moves = "".join([f'{k}={v:.3f} ' for k, v in axes.items()])
         w_text = "" if wait else "NOT "
-        self.log.debug(f"Relative move by: {axes_moves}and {w_text}waiting.")
+        self.log.debug(f"Relative move by: {axes_moves} and {w_text}waiting.")
         self.tigerbox.move_axes_relative(**axes, wait_for_output=wait,
                                          wait_for_reply=wait)
         if wait:

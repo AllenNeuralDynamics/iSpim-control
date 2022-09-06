@@ -1,22 +1,26 @@
-"""Abstraction of Mesospim-Prime instrument."""
+#!/usr/bin/env python3
+"""Abstraction of dispim instrument."""
 
-import numpy as np  # for live view
-import cv2
+import logging
+import sys
+
+from coloredlogs import ColoredFormatter
 from datetime import timedelta, datetime
 import calendar
 import tifffile
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
-from collections import deque
+import os, shutil
+import numpy as np
 from pathlib import Path
 from math import ceil
 from time import perf_counter, sleep
+from datetime import date
 from .devices.dcamapi4 import *
 from .devices.dcam import Dcam, Dcamapi
 from .devices.ni import WaveformHardware
 from .devices.tiger_components import SamplePose, CameraPose, FilterWheel
 from .mesospim_config import MesospimConfig, MAX_OPEN_LOOP_Z_DIST_UM
-from .spim_base import Spim
 from .tiff_transfer import TiffTransfer
 from . import compute_waveforms
 # Drivers in external packages
@@ -28,15 +32,11 @@ LASER_MODEL_TO_OBJ = \
     {
        "Vortran": Vortran,
         "ObisLS": ObisLS,
-        "Oxxius": Oxxius # NEED TO ADD OXXIUS DRIVER HERE
+        "Oxxius": Oxxisu # NEED TO OXXIUS ADD DRIVER HERE
     }
 
-# Constants
-IMG_MIN = 0
-IMG_MAX = 65535
 
-
-class Mesospim(Spim):
+class Mesospim:
 
     def __init__(self, config_filepath: str,
                  log_filename: str = 'debug.log',
@@ -45,24 +45,49 @@ class Mesospim(Spim):
                  console_output_level: str = 'info',
                  simulated: bool = False):
         """Read config file. Create Mesopim components according to config."""
-        super().__init__(config_filepath, log_filename, console_output,
-                         color_console_output, console_output_level, simulated)
+        # If simulated, no physical connections to hardware should be required.
+        # Simulation behavior should be pushed as far down the object
+        # hierarchy as possible.
+        self.simulated = simulated
+        # Setup logging.
+        # Save console output to print/not-print imaging progress.
+        self.console_output = console_output
+        # We want the name of the package here since logger hierarchy
+        # depends on module structure.
+        self.log = logging.getLogger("dispim")
+        # logger level must be set to the lowest level of any handler.
+        self.log.setLevel(logging.DEBUG)
+        # Create log handlers to dispatch:
+        # - DEBUG level and above to write to a file called debug.log.
+        # - User-specified level and above to print to console if specified.
+        fmt = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
+        fmt = "[SIM] " + fmt if self.simulated else fmt
+        datefmt = '%Y-%m-%d,%H:%M:%S'
+        self.log_format = logging.Formatter(fmt=fmt, datefmt=datefmt)
+        self.log_handlers = []
+        debug_filepath = Path(log_filename)
+        self.log_handlers.append(logging.FileHandler(debug_filepath))
+        self.log_handlers[-1].setLevel(logging.DEBUG)
+        self.log_handlers[-1].setFormatter(self.log_format)
+        if self.console_output:
+            self.log_handlers.append(logging.StreamHandler(sys.stdout))
+            self.log_handlers[-1].setLevel(console_output_level)
+            if color_console_output:
+                colored_formatter = ColoredFormatter(fmt=fmt, datefmt=datefmt)
+                self.log_handlers[-1].setFormatter(colored_formatter)
+            else:
+                self.log_handlers[-1].setFormatter(self.log_format)
+        for handler in self.log_handlers:
+            self.log.addHandler(handler)
+
         # Config
         self.cfg = MesospimConfig(config_filepath)
 
         # Thread handles and objects for syncing.
-        self.image_capture_worker = None  # captures images during volumetric
-                                          # image capture sequence.
-        self.live_view_worker = None  # for displaying a window of the current
-                                      # image.
-        self.livestream_worker = None  # captures images during livestream
-        self.livestream_enabled = Event()
+        self.image_capture_worker = None
+        self.live_view_worker = None
         self.live_view_enabled = Event()
         self.image_in_hw_buffer = Event()
-        self.img_deque = deque(maxlen=2)  # circular buffer
-
-        self.autoexpose = False
-        self.img_limits = [IMG_MIN, IMG_MAX]
 
         # Setup Hardware Components.
         if not (self.simulated or Dcamapi.init()):
@@ -87,10 +112,7 @@ class Mesospim(Spim):
         self.daq = WaveformHardware(**self.cfg.daq_obj_params) if not \
             self.simulated else Mock(WaveformHardware)
         self.lasers = {}  # populated in _setup_lasers.
-
-        # Internal state attributes.
-        self.active_laser = None  # Bookkeep which laser is configured.
-        self.live_status = None  # Bookkeep if we are running in live mode.
+        self.active_laser = None  # Bookkeeping which laser is configured.
 
         # Apply config-specific configurations to each component.
         self._setup_camera()
@@ -99,30 +121,29 @@ class Mesospim(Spim):
         # Record the software state.
         self._log_git_hashes()
 
-        # Extra Internal State attributes for the current image capture
-        # sequence. These really only need to persist for logging purposes.
+        # Extra attributes for the current volumetric image capture sequence.
+        # These really only need to persist for logging purposes.
         self.image_index = 0  # current image to capture.
         self.total_tiles = 0  # tiles to be captured.
+        self.stage_x_pos = None
         self.stage_y_pos = None
-        self.stage_z_pos = None
 
-    def configure_daq(self, active_wavelenth: int, live: bool = False):
+    def configure_daq(self, active_wavelenth: int):
         """Setup DAQ to play waveforms according to wavelength to image with.
 
         Note: DAQ waveforms depend on the laser wavelength we are imaging with.
 
         :param active_wavelenth: the laser wavelength to configure the daq for.
             Only one laser wavelength may be turned on at a time.
-        :param live: True if we want the waveforms to play on loop.
         """
         # TODO: cache this.
-        self.log.debug(f"Computing waveforms for {active_wavelenth}[nm] laser.")
+        self.log.debug(f"Computing waveforms for {active_wavelenth} [nm] laser.")
         _, voltages_t = compute_waveforms.generate_waveforms(self.cfg,
                                                              active_wavelenth)
         self.log.debug("Setting up daq.")
         period_time = self.cfg.get_daq_cycle_time(active_wavelenth)
         ao_names_to_channels = self.cfg.daq_ao_names_to_channels
-        self.daq.configure(period_time, ao_names_to_channels, live)
+        self.daq.configure(period_time, ao_names_to_channels)
         self.daq.assign_waveforms(voltages_t)
         # TODO: Consider plotting waveforms and saving to data collection
         #  folder at the beginning of an imaging run.
@@ -132,7 +153,6 @@ class Mesospim(Spim):
         self.log.debug("Setting up camera.")
         if self.simulated: # Can't do much better here in terms of simulating.
             self.cam.buf_getlastframedata.return_value = np.zeros((self.cfg.camx, self.cfg.camy), dtype='uint16')
-            self.cam.wait_capevent_frameready.return_value = True
             return
         for n in self.cfg.ncams:
             self.cam[n].dev_open()  # open camera
@@ -185,33 +205,99 @@ class Mesospim(Spim):
         """Log the git hashes of this project and all packages."""
         pass
 
-    def run_from_config(self):
-        """Collect volumetric image according to the config file parameters."""
-        if self.livestream_enabled.is_set():
-            self.stop_livestream()
-        self.capture_tiled_image_stack(self.cfg.volume_x_um,
-                                       self.cfg.volume_y_um,
-                                       self.cfg.volume_z_um,
-                                       self.cfg.imaging_wavelengths,
-                                       self.cfg.tile_overlap_y_percent,
-                                       self.cfg.tile_overlap_z_percent,
-                                       self.cfg.tile_prefix,
-                                       self.cfg.local_storage_dir,
-                                       self.img_storage_dir)
+    def livestream(self):
+        """repeatedly play the daq waveform. Blocks.
+
+        Can be called in conjunction with liveview to see the image.
+        """
+        self.log.debug("Starting livestream.")
+        print("GUI settings for debugging:")
+        print(f"  Line Interval: {self.row_interval*1e6:.3f} [us]")
+        print(f"  Exposure Time (computed): {self.row_exposure_time*1e3:.3f} [ms]")
+        print()
+        self.enable_live_view()
+        try:
+            while True:
+                self.daq.start()
+                # TODO: possibly add a sleep here.
+                self.daq.wait_until_done()  # use 1 [sec] default timeout.
+                self.daq.stop()
+        finally:
+            self.log.debug("Stopping livestream.")
+            self.disable_live_view()
+            self.daq.wait_until_done()  # use 1 [sec] default timeout.
+            self.daq.stop()
+
+    def collect_volumetric_image(self, live_view: bool = False,
+                                 compute_max_intensity_proj: bool = False,
+                                 overwrite: bool = False):
+        """collect volumetric image according to the config file parameters."""
+        # Create output folder and folder for storing images.
+        output_folder = \
+            self.cfg.ext_storage_dir / Path(self.cfg.subject_id + "-ID_" +
+                                            date.today().strftime("%Y_%m_%d"))
+        print(f"external storage dir is: {self.cfg.ext_storage_dir.resolve()}")
+        if output_folder.exists() and not overwrite:
+            self.log.error(f"Output folder {output_folder.absolute()} exists, "
+                           "This function must be rerun with overwrite=True.")
+            raise
+        img_folder = output_folder / Path("micr/")
+        # Create a log file specific to this job.
+        # TODO: enable/disable max proj computation in a separate process.
+        imaging_log_filename = "imaging_log.log"  # This should be a cfg param.
+        imaging_log_filepath = Path(imaging_log_filename)
+        imaging_log_handler = logging.FileHandler(imaging_log_filepath)
+        imaging_log_handler.setLevel(logging.DEBUG)
+        imaging_log_handler.setFormatter(self.log_format)
+        self.log.addHandler(imaging_log_handler)
+        self._log_git_hashes()
+        self.log.info(f"Creating datset folder in: {output_folder.absolute()}")
+        try:
+            print(img_folder)
+            img_folder.mkdir(parents=True, exist_ok=overwrite)
+            if live_view:
+                self.enable_live_view()
+            if compute_max_intensity_proj:
+                self.enable_live_max_intensity_proj_calc()
+            self.capture_tiled_image_stack(self.cfg.volume_x_um,
+                                           self.cfg.volume_y_um,
+                                           self.cfg.volume_z_um,
+                                           self.cfg.imaging_wavelengths,
+                                           self.cfg.tile_overlap_x_percent,
+                                           self.cfg.tile_overlap_y_percent,
+                                           self.cfg.tile_prefix,
+                                           self.cfg.local_storage_dir,
+                                           img_folder)
+        finally:
+            if live_view:
+                self.disable_live_view()
+            if compute_max_intensity_proj:
+                self.disable_live_max_intensity_proj_calc()
+            imaging_log_handler.close()
+            self.log.removeHandler(imaging_log_handler)
+            # Bundle the log and config files with the dataset.
+            self.cfg.save(output_folder, overwrite=overwrite)
+            # shutil can't overwrite, so we must delete any prior imaging log
+            # in the destination folder if overwriting.
+            imaging_log_dest = output_folder/Path(imaging_log_filename)
+            if overwrite and imaging_log_dest.exists():
+                imaging_log_dest.unlink()
+            # We must use shutil because we may be moving files across disks.
+            shutil.move(str(imaging_log_filepath), str(output_folder))
 
     def capture_tiled_image_stack(self, volume_x_um: float, volume_y_um: float,
                                   volume_z_um: float,
                                   wavelengths: list,
+                                  tile_overlap_x_percent: float = 15.0,
                                   tile_overlap_y_percent: float = 15.0,
-                                  tile_overlap_z_percent: float = 15.0,
                                   tile_prefix: str = "tile",
                                   local_storage_dir: Path = Path("."),
-                                  img_storage_dir: Path = None):
+                                  ext_storage_dir: Path = None):
         """ Capture an array of tiles starting from the current position.
         Note: returns to the starting position even if errors occur
               (except stage-related errors).
         """
-        # Iterate through the volume through z, then x, then y.
+        # Iterate through the volume through x, then y, then z.
         # Play waveforms for moving the laser and sensor shutter.
         # Capture the fully-formed image after waveform has finished playing.
         # Move the stage by the specified amount between image capture events.
@@ -231,9 +317,6 @@ class Mesospim(Spim):
                       / y_grid_step_um)
         zsteps = ceil((volume_z_um - self.cfg.tile_size_um)
                       / z_grid_step_um)
-
-        # TODO: check if we will violate storage directory limits with our
-        #   run. (Check local and external storage.)
 
         # Log relevant info about this imaging run.
         self.total_tiles = (1+xsteps)*(1+ysteps)*(1+zsteps)*len(wavelengths)
@@ -313,11 +396,15 @@ class Mesospim(Spim):
             # Wait for waveform playback to finish so we leave signals in their
             # ending voltage states.
             self.daq.wait_until_done()  # use default timeout of 1[s].
+            # Force max intensity worker to timeout if it is running.
+            #if max_intensity_worker is not None:
+            #   TODO: set some flag here.
+            #    max_intensity_worker.join()
+            # Normal cleanup.
             self.log.info("Stopping camera(s).")
             for n in self.cfg.ncams:
                 self.cam[n].cap_stop()
                 self.cam[n].buf_release()
-            self.cam.buf_release()
             if transfer_process is not None:
                 self.log.debug("joining zstack transfer process.")
                 transfer_process.join()
@@ -366,24 +453,8 @@ class Mesospim(Spim):
                 # Trigger waveforms to move laser and expose image.
                 self.daq.start()
         finally:
-            print()
-            # If zwait was false, then we ignored many tigerbox replies.
-            # Discard these queued replies before issuing move+wait.
-            sleep(0.05)  # Hack to avoid race condition from any prior replies.
-            self.tigerbox.clear_incoming_message_queue()
-            # Reset Z stage position to where we started.
-            # Apply a lead-in-move to take out backlash.
-            self.log.debug("Applying extra move to take out backlash.")
-            self.sample_pose.move_absolute(z=round(stage_z_backup_pos), wait=True)
-            stage_z_pos = 0
-            self.sample_pose.move_absolute(z=round(stage_z_pos), wait=True)
-            # If we aborted early, save whatever pictures we took.
-            if image_count != images_captured:
-                # force tiff_capturer to timeout by setting image flag.
-                self.image_in_hw_buffer.set()
-            # Join the image capture thread.
-            self.log.debug("Joining zstack capture thread.")
-            tiff_capturer.join()
+
+                # BUFFERING AND IMAGE CAPTURE FOR DISPIM
 
     # def _image_capture_worker(self, filepath: Path, image_count: int,
     #                           wavelength: int):
@@ -400,26 +471,22 @@ class Mesospim(Spim):
     #                 raise RuntimeError(f"Error. Camera failed to capture image "
     #                                    f"{images_captured + 1} with error: "
     #                                    f"{str(self.cam.lasterr())}")
-    #             self.img_deque.append(self.cam.buf_getlastframedata())
-    #             tif.write(self.img_deque[-1], contiguous=True)
+    #             tif.write(self.cam.buf_getlastframedata(), contiguous=True)
     #             self.image_in_hw_buffer.clear()
     #             images_captured += 1
     #             self.log.debug("Acquired zstack image: "
     #                            f"{images_captured}/{image_count}. "
-    #                            f"Read took: {perf_counter() - capture_start:.3f}[s].")
+    #                            f"Read took: {perf_counter() - capture_start:.3f} [s].")
 
-    def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
+    def setup_imaging_for_laser(self, wavelength: int):
         """Configure system to image with the desired laser wavelength.
 
         Note: this fn changes the filter wheel too.
         """
-        # Bail early if this laser is already setup in the previously set mode.
-        if self.active_laser == wavelength and self.live_status == live:
-            self.log.debug("Skipping daq setup. Laser already provisioned.")
+        # Bail early if this laser is already setup.
+        if self.active_laser == wavelength:
             return
-        self.live_status = live
-        live_status_msg = " in live mode" if live else ""
-        self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
+        self.log.info(f"Configuring {wavelength} laser.")
         if self.active_laser is not None:
             self.lasers[self.active_laser].disable()
         fw_index = self.cfg.laser_specs[str(wavelength)]['filter_index']
@@ -427,165 +494,40 @@ class Mesospim(Spim):
         camera_focus_pos = self.cfg.laser_specs[str(wavelength)]['camera_axis_position']
         self.camera_pose.move_absolute(camera_focus_pos, wait=True)
         # Reprovision the DAQ.
-        self.configure_daq(wavelength, live)
+        self.configure_daq(wavelength)
         self.active_laser = wavelength
         self.lasers[self.active_laser].enable()
 
-    def get_latest_img(self):
-        """returns the latest image as a 2d numpy array. Useful for UIs."""
-        return self.img_deque[0]
-
-    # def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
-    #     """Convenience function for moving the sample from a UI."""
-    #     self.sample_pose.move_absolute(x=x, y=y, z=z, wait=True)
-
-    def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
-        """Convenience func for moving the sample from a UI (units: steps)."""
-        self.sample_pose.move_relative(x=x, y=y, z=z, wait=True)
-
-    def move_camera_relative(self, m: int):
-        """Convenience func for moving the camera from a UI (units: steps)."""
-        self.camera_pose.move_relative(m=m, wait=True)
-
-    def move_camera_absolute(self, m: int):
-        """Convenience func for moving the camera from a UI (units: steps)."""
-        self.camera_pose.move_absolute(m, wait=True)
-
-    def get_sample_position(self):
-        return self.sample_pose.get_position()
-
-    def get_camera_position(self):
-        return self.camera_pose.get_position()
-
-    def start_livestream(self, wavelength: int):
-        """Repeatedly play the daq waveforms and buffer incoming images."""
-        if wavelength not in self.cfg.laser_wavelengths:
-            self.log.error(f"Aborting. {wavelength}[nm] laser is not a valid "
-                           "laser.")
-            return
-        # Bail early if it's started.
-        if self.livestream_enabled.is_set():
-            self.log.warning("Not starting. Livestream is already running.")
-            return
-        self.log.debug("Starting livestream.")
-        self.log.warning(f"Turning on the {wavelength}[nm] laser.")
-        self.setup_imaging_for_laser(wavelength, live=True)
-        self.daq.start()
-        self.livestream_enabled.set()
-        self.livestream_worker = Thread(target=self._livestream_worker,
-                                        args=(wavelength,), daemon=True)
-        self.livestream_worker.start()
-        # Launch thread for picking up camera images.
-
-    def stop_livestream(self, wait: bool = False):
-        # Bail early if it's already stopped.
-        if not self.livestream_enabled.is_set():
-            self.log.warning("Not starting. Livestream is already stopped.")
-            return
-        wait_cond = "" if wait else "not "
-        self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
-        self.livestream_enabled.clear()
-
-        if wait:
-            self.livestream_worker.join()
-        self.daq.stop()
-        self.daq.close()
-        self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
-        self.active_laser = None
-
-    def _livestream_worker(self, wavelength):
-        """Pulls images from the camera and puts them into the ring buffer."""
-        image_wait_time = round(5*self.cfg.get_daq_cycle_time(wavelength)*1e3)
-        self.cam.buf_alloc(2)
-        self.cam.cap_start()
-        while self.livestream_enabled.is_set():
-            if not self.cam.wait_capevent_frameready(image_wait_time):
-                self.log.error(f"Camera failed to capture image with error"
-                               f"{str(self.cam.lasterr())}")
-            if self.simulated:
-                sleep(1./16)
-            self.img_deque.append(self.cam.buf_getlastframedata())
-        self.cam.cap_stop()
-        self.cam.buf_release()
-
-
-    def enable_display(self):
+    def enable_live_view(self):
         """Enable live image viewing in a separate thread."""
         # Bail early if it's already enabled.
-        if self.live_view_enabled.is_set():
-            self.log.warning("Not enabling. Display is already enabled.")
+        if self.live_view_worker is not None:
             return
         self.log.debug("Enabling live view.")
-        self.live_view_enabled.set()
         self.live_view_worker = Thread(target=self._live_view_worker,
                                        daemon=True)
-        self.live_view_worker.start()
 
-    def disable_display(self, wait: bool = False):
-        if not self.live_view_enabled.is_set():
-            self.log.warning("Not disabling. Display is already disabled.")
-            return
-        wait_cond = "" if wait else "not "
-        self.log.debug(f"Disabling live view and {wait_cond}waiting.")
-        self.live_view_enabled.clear()
+    def disable_live_view(self, wait: bool = False):
+        if self.live_view_worker is not None:
+            wait_cond = "" if wait else "not "
+            self.log.debug(f"Disabling live view and {wait_cond}waiting.")
+            self.live_view_enabled.clear()
         if wait:
             self.live_view_worker.join()
 
-    def set_autoexpose(self, state: bool):
-        """Set to True/False to Enable/Disable builtin display autoexposure."""
-        self.autoexpose = state
-        self.log.info(f"autoexpose is: {self.autoexpose} of type {type(self.autoexpose)}")
-
-    def get_autoexposure(self):
-        return self.img_limits
-
-    def set_exposure_limits(self, min_limit: int = None,
-                            max_limit: int = None):
-        # Check extremes if defined.
-        if min_limit is not None:
-            if min_limit < IMG_MIN or min_limit > IMG_MAX:
-                self.log.error("Invalid exposure minimum setting.")
-                min_limit = self.img_limits[0]
-            if max_limit < IMG_MIN or max_limit > IMG_MAX:
-                self.log.error("Invalid exposure maximum setting")
-                max_limit = self.img_limits[1]
-        self.img_limits = [min_limit if min_limit is not None
-                           else self.img_limits[0],
-                           max_limit if max_limit is not None
-                           else self.img_limits[1]]
-
     def _live_view_worker(self):
-        """Threadworker for displaying a window to view the latest images."""
-        window_name = "Live View"
-        cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
-        frames_grabbed = 0
-        while self.live_view_enabled.is_set():
-            if len(self.img_deque) < 1:
-                continue
-            data = self.get_latest_img()
-            # Shrink the data for the viewer and rotate the picture.
-            data = np.rot90(cv2.resize(data, (640, 640)), -1)
-            # Apply autoexposure if set.
-            if self.autoexpose:
-                self.img_limits[0] = IMG_MIN
-                self.img_limits[1] = np.amax(data)
-            # Apply current exposure settings.
-            # Point Slope Formula.
-            m = int(IMG_MAX/(self.img_limits[1] - self.img_limits[0]))
-            data = np.round(np.clip(m*data - m*self.img_limits[0], IMG_MIN, IMG_MAX))
-            cv2.imshow(window_name, data)
-            key = cv2.waitKey(1)  # Display for at least one ms
-        cv2.destroyAllWindows()
-
-    def enable_live_mips(self):
+        """Threadworker for viewing images."""
         raise NotImplementedError
 
-    def disable_live_mips(self):
+    def enable_live_max_intensity_proj_calc(self):
         raise NotImplementedError
 
-    def _live_mips_worker(self):
+    def disable_live_max_intensity_proj_calc(self):
+        raise NotImplementedError
+
+    def _live_max_proj_comp_worker(self):
         """Threadworker for live computation of zstack max intensity projection."""
-        # TODO: this might need to happen in a separate process with queued images
+        # TODO: this needs to happen in a separate process with queued images
         #       so as not to slow down the main thread.
         # TODO: error if we cannot compute max intensity projection
         # fast enough to do it live. Bail but don't kill the run.
@@ -597,23 +539,23 @@ class Mesospim(Spim):
 
     def close(self):
         """Safely close all open hardware connections."""
-        if self.livestream_enabled.is_set():
-            self.stop_livestream()
-        if self.live_view_enabled.is_set():
-            self.disable_display()
-        self.log.info("Closing ETL.")
-        self.etl.close(soft_close=True)
         self.log.info("Closing daq.")
         self.daq.close()
         self.active_laser = None
-        self.log.info("Powering down lasers.")
-        for wavelength, laser in self.lasers.items():
-            self.log.info(f"Powering down {wavelength}[nm] laser.")
-            laser.disable()
-        self.log.info("Closing camera.")
-        self.cam.dev_close()
-        self.log.info("De-initializing Dcam API.")
-        # Dcamapi.uninit can be called repeatedly, but we must call it at least
-        # once at the end.
-        Dcamapi.uninit()
-        super().close()
+        if not self.simulated:  # These devices cannot be stubbed out.
+            self.log.info("Powering down lasers.")
+            for wavelength, laser in self.lasers.items():
+                self.log.info(f"Powering down {wavelength}[nm] laser.")
+                laser.disable()
+            self.log.info("Closing ETL.")
+            self.etl.close(soft_close=True)
+            self.log.info("Closing camera.")
+            self.cam.dev_close()
+            self.log.info("De-initializing Dcam API.")
+            # Dcamapi.uninit can be called repeatedly but we must call it at least
+            # once at the end.
+            if not self.simulated:
+                Dcamapi.uninit()
+        self.log.info("Ending log.")
+        for handler in self.log_handlers:
+            handler.close()

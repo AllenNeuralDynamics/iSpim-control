@@ -27,8 +27,6 @@ class TomlConfig:
         if self.path and self.path.exists():
             self.log.info(f"Loading: {self.path.resolve()}")
             self.load(self.path)
-        elif self.path:
-            self.log.error(f"Could not load config from: {toml_filepath}")
         else:
             self.log.warning("No configuration was specified to load.")
         self.doc_name = self.path.name
