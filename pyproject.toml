@@ -1,39 +1,45 @@
-[tool.poetry]
-name = "mesospim"
-description = "abstraction of the mesospim-prime instrument."
+[project]
+name = "dispim"
+description = "abstraction of the dispim instrument."
 version = "0.1.0"
-authors = ["poofjunior <joshua.vasquez@alleninstitute.org>"]
+authors = [
+    {name = "Adam Glaser", email = "adam.glaser@alleninstitute.org"},
+    {name = "Joshua Vasquez", email = "joshua.vasquez@alleninstitute.org"},
+    {name = "Micah Woodard", email = "micah.woodard@alleninstitute.org"}
+]
 readme = "README.md"
-license = "MIT"
 keywords = ['microcsope', 'spim']
 classifiers=[
     'License :: OSI Approved :: MIT License',
     'Development Status :: 4 - Beta',
     'Programming Language :: Python'
 ]
-packages = [
-    { include = "mesospim"},
+#packages = [
+#    { include = "mesospim"},
+#]
+requires-python = ">=3.8,<3.11"
+dependencies = [
+    "tigerasi @ git+ssh://git@github.com/AllenNeuralDynamics/TigerASI.git@main#egg=TigerASI",
+    "obis-laser @ git+ssh://git@github.com/AllenNeuralDynamics/obis-laser.git@main#egg=obis-laser",
+    "opto @ git+ssh://git@github.com/AllenNeuralDynamics/opto.git@master#egg=opto",
+    "scipy >= 1.8.1",
+    "numpy >= 1.22.3",
+    "matplotlib >= 3.5.2",
+    "tomlkit >= 0.11.1",
+    "mock >= 4.0.3",
+    "tifffile >= 2022.8.12",
+    "coloredlogs >= 15.0.1",
+    "nidaqmx >= 0.6.2",
+    "gitPython >= 3.1.27"
 ]
 
-[tool.poetry.urls]
-repository = "https://github.com/AllenNeuralDynamics/mesospim-prime"
-
-[tool.poetry.dependencies]
-python = ">=3.6"
-pip = ">=21.3"
-tigerasi = "git+ssh://git@github.com/AllenNeuralDynamics/TigerASI@main'"
-obis_laser = "git+ssh://git@github.com/AllenNeuralDynamics/obis-laser@main'"
-opto = "git+ssh://git@github.com/AllenNeuralDynamics/opto@master'"
-scipy = "^1.8.1"
-numpy = "^1.22.3"
-matplotlib = "^3.5.2"
-tomlkit = "^0.11.1"
-mock = "^4.0.3"
-tifffile = "^2022.5.4"
-coloredlogs = "^15.0.1"
-nidaqmx = "^0.6.2"
-gitPython = "^3.1.27"
+[project.urls]
+source = "https://github.com/AllenNeuralDynamics/dispim-control"
 
 [build-system]
-requires = ["poetry-core>=1.0.8"]
-build-backend = "poetry.core.masonry.api"
+requires = ["flit_core >=3.7.1,<4"]
+build-backend = "flit_core.buildapi"
+
+
+[project.scripts]
+mesospim = "bin.main:main"
