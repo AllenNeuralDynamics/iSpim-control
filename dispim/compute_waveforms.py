@@ -29,14 +29,28 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     :param active_wavelength: laser wavelength that will be turned on.
     """
     # Create wavelength-dependent constants
-    active_laser_specs = cfg.laser_specs[str(active_wavelength)]['etl']
-    etl_min_voltage = active_laser_specs['min_voltage']
-    etl_max_voltage = active_laser_specs['max_voltage']
-    waveform_cycle_time = cfg.get_waveform_cycle_time(active_wavelength)
-    etl_delay = cfg.get_etl_delay(active_wavelength)
-    daq_cycle_time = cfg.get_daq_cycle_time(active_wavelength)
-    daq_num_samples = cfg.get_daq_num_samples(active_wavelength)
-    laser_duty_cycle = cfg.get_laser_duty_cycle(active_wavelength)
+    active_laser_specs = cfg.laser_specs[str(active_wavelength)]
+    etl_offset = active_laser_specs['etl']['offset']
+    etl_amplitude = active_laser_specs['etl']['amplitude']
+    galvo_x_left_offset = active_laser_specs['galvo_x_left']['offset']
+    galvo_x_right_offset = active_laser_specs['galvo_x_right']['offset']
+    galvo_y_left_offset = active_laser_specs['galvo_y_left']['offset']
+    galvo_y_right_offset = active_laser_specs['galvo_y_right']['offset']
+    galvo_x_left_amplitude = active_laser_specs['galvo_x_left']['amplitude']
+    galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
+    galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
+    galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
+
+    delay_time = cfg.get_delay_time()
+    rest_time = cfg.get_rest_time()
+    exposure_time = cfg.get_exposure_time()
+    daq_cycle_time = cfg.get_daq_cycle_time()
+
+    delay_samples = cfg.get_delay_samples()
+    rest_samples = cfg.get_rest_samples()
+    exposure_samples = cfg.get_exposure_samples()
+    daq_cycle_samples = cfg.get_daq_cycle_samples()
+    period_samples = numpy.linspace(0, 2*math.pi, period_samples)
 
     # Create table that holds an entire cycle's worth of pts.
     # External trigger signal is the last value. Aside from that,
@@ -44,8 +58,10 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     # consistent with the signal order that the WaveformGenerator creates
     # tasks. We can ensure this by iterating through the same data structure
     # in the cfg as we do when we create tasks with the WaveformGenerator.
-    voltages_t = np.zeros((cfg.daq_used_channels, daq_num_samples))
+    voltages_t = np.zeros((cfg.daq_used_channels, daq_cycle_samples))
     t = np.linspace(0, daq_cycle_time, daq_num_samples, endpoint=False)
+
+    period_samples = numpy.linspace(0, 2*math.pi, daq_cycle_samples)
 
     # Delay for all signals except the external trigger.
     sof_shift_count = round(cfg.daq_update_freq * cfg.start_of_frame_delay)
@@ -100,9 +116,9 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
         # Generate differential voltages for the adjustment galvo.
         # These signals are fixed throughout and don't need shifting.
         elif ao_name.startswith("galvo") and ao_name.endswith("plus"):
-            voltages_t[index] = 0.5 * cfg.adj_galvo_setpoint * np.ones(len(t))
+            voltages_t[index] = 0.5 * cfg.trim_galvo_setpoint * np.ones(len(t))
         elif ao_name.startswith("galvo") and ao_name.endswith("minus"):
-            voltages_t[index] = -0.5 * cfg.adj_galvo_setpoint * np.ones(len(t))
+            voltages_t[index] = -0.5 * cfg.trim_galvo_setpoint * np.ones(len(t))
         else:
             raise RuntimeError(f"{ao_name} does not have any plotting criteria.")
 
@@ -115,8 +131,9 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     return t, voltages_t
 
 
-def plot_waveforms_to_pdf(cfg: MesospimConfig, t: list, voltages_t: list,
-                          active_wavelength: int, filename: str = "plot.pdf"):
+def plot_waveforms_to_pdf(cfg: MesospimConfig, t: np.array,
+                          voltages_t: np.array, active_wavelength: int,
+                          filename: str = "plot.pdf"):
     """Write a pdf plot output of the waveforms."""
     # Plot the data for sanity checking.
     fig = plt.figure(figsize=(20, 7))
