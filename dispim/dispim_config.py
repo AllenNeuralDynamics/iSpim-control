@@ -1,12 +1,6 @@
 """Mesospim Config object to flatten item access in the TOML-based config."""
 
-import copy
-from functools import cached_property
-from .config_base import SpimConfig
-from .devices.dcamapi4 import DCAMPROP
-
-# Constants below are used for sanity checks. Do not change these.
-MIN_LINE_INTERVAL = 5e-6  # seconds. min time a row is turned on.
+from mesospim.config_base import SpimConfig
 
 # A template from which we can generate a blank mesospim config toml file.
 TomlTemplate = \
@@ -29,7 +23,7 @@ TomlTemplate = \
 
 
 class DispimConfig(SpimConfig):
-    """A Mesospim Configuration."""
+    """A Dispim Configuration."""
 
     def __init__(self, toml_filepath: str):
         """Read config file. Warn if not found, but create sensible defaults."""
@@ -38,26 +32,12 @@ class DispimConfig(SpimConfig):
         # Note: these are mutable, so reloading the toml doesn't affect them.
         self.stage_specs = self.cfg['sample_stage_specs']
         self.laser_specs = self.cfg['channel_specs']
-        self.camera_specs = self.cfg['camera_specs']
-        self.waveform_specs = self.cfg['waveform_specs']
-        self.design_specs = self.cfg['design_specs']
 
-        self.etl_obj_kwds = self.cfg['etl_driver_kwds']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
-        self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
-
-    def reload(self):
-        super().reload()
-        # Clear cached properties since they need to be recomputed.
-        cls = self.__class__
-        cached_properties = [a for a in dir(self) if
-                             isinstance(getattr(cls, a, cls), cached_property)]
-        for prop in cached_properties:
-            # Check if hasattr first; otherwise delattr will fail on any
-            # cached_property that was never cached.
-            if hasattr(self, prop):
-                delattr(self, prop)
+        # TODO: dispim has 2 filterwheels. We must set the location of both
+        #   programmatically.
+        #self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
@@ -261,15 +241,8 @@ class DispimConfig(SpimConfig):
         except AssertionError as e:
             error_msgs.append(str(e))
 
-        # TODO: sanity check ETL voltage limits.
-
-        assert self.row_interval >= MIN_LINE_INTERVAL, \
-            f"Error: row interval ({self.row_interval*1e6:.3f} [us]) too " \
-            f"small. Minimum is {MIN_LINE_INTERVAL*1e6:.3f} [us]."
-        assert abs(self.trim_galvo_setpoint * 2) < MAX_ADJ_GALVO_VOLTAGE, \
-            f"Error: adjustment galvo setpoint voltage is out of range."
-        assert self.scan_direction in {'FORWARD', 'BACKWARD'}, \
-            "Error. Typo in config.toml scan direction."
+        # TODO: a bunch of DISPIM-specific sanity checks.
+        # TODO: put this in the base class.
         assert self.local_storage_dir.exists(), \
             f"Error: local storage directory '{self.local_storage_dir}' " \
             "does not exist."
