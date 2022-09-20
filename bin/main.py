@@ -6,6 +6,7 @@ import ctypes
 import argparse
 import os
 
+# We need a separate main function to install from the package as a script.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=None)
@@ -43,6 +44,7 @@ def main():
         pass
     finally:
         instrument.close()
+
 
 if __name__ == '__main__':
     main()
