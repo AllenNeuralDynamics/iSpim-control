@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 from time import perf_counter
 from mock import NonCallableMock as Mock
-from dispim.exaspim_config import ExaspimConfig
+from dispim.dispim_config import DispimConfig
 from dispim.devices.camera import Camera
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
@@ -13,7 +13,7 @@ from mesospim.spim_base import Spim
 from mesospim.devices.tiger_components import SamplePose
 
 
-class Exaspim(Spim):
+class Dispim(Spim):
 
     def __init__(self, config_filepath: str, log_filename: str = 'debug.log',
                  console_output: bool = True,
@@ -22,7 +22,7 @@ class Exaspim(Spim):
 
         super().__init__(config_filepath, log_filename, console_output,
                          color_console_output, console_output_level, simulated)
-        #self.cfg = DispimConfig(config_filepath)
+        self.cfg = DispimConfig(config_filepath)
 
         # Separate Processes.
 
@@ -49,22 +49,26 @@ class Exaspim(Spim):
         # The tigerbox x axis is the sample pose z axis.
         #   TODO: map this in the config.
         self.tigerbox.set_axis_backlash(x=0)
+        # TODO: handle axis remapping here. Remapping should probably come from
+        #   the config.
+        # Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y
+        #self.sample_pose.apply_axis_remapping(self.cfg.axis_map)
 
     def _setup_camera(self):
         """Configure the camera for the Exaspim according to the config."""
         # pass config parameters into object here.
+        # TODO: add calliphlox setup stuff here.
         pass
 
     def run_from_config(self):
         self.collect_volumetric_image(self.cfg.volume_x_um,
                                       self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,
-                                      self.cfg.imaging_wavelengths,
+                                      self.cfg.laser_wavelengths,  # TODO: fix this.
                                       self.cfg.tile_overlap_x_percent,
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
                                       self.cfg.local_storage_dir,
-                                      # TODO: how to make these config based?
                                       self.img_storage_dir,
                                       self.deriv_storage_dir)
 
@@ -78,9 +82,8 @@ class Exaspim(Spim):
                                  img_storage_dir: Path = None,
                                  deriv_storage_dir: Path = None):
         """Collect a tiled volumetric image with specified size/overlap specs.
-
-        :param image_stack_chunk_size:
         """
+        pass
 
     def livestream(self):
         pass
