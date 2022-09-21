@@ -13,10 +13,10 @@ import logging
 
 class WaveformHardware:
 
-    def __init__(self, dev_name, output_trigger_name, update_frequency):
+    def __init__(self, dev_name, input_trigger_name, update_frequency):
 
         self.dev_name = dev_name # NI card address, i.e. Dev2
-        # self.output_trigger_name = output_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
+        self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
         self.update_freq = update_frequency  # in [Hz]
         self.ao_task = None
         self.counter_task = None
@@ -48,14 +48,14 @@ class WaveformHardware:
             samps_per_chan=sample_count)
         self.ao_task.triggers.start_trigger.retriggerable = True
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
-            trigger_source=f"/Dev2/PFI0", # NEED TO GRAB THIS FROM CONFIG INSTEAD OF HARDCODE
+            trigger_source=f"/{self.dev_name}/{self.input_trigger_name}"
             trigger_edge=Slope.RISING)
 
         # Create counter for encoder pulses from same trigger source. assign to ctr0
         self.counter_task = nidaqmx.Task("counter_task")
 		self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(
-			'/Dev2/ctr0', edge = nidaqmx.constants.Edge.RISING)
-		self.counter_loop.ci_count_edges_term = '/Dev2/PFI0' # NEED TO GRAB THIS FROM CONFIG INSTEAD OF HARDCODE
+			f"{self.dev_name}/ctr0", edge = nidaqmx.constants.Edge.RISING)
+		self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
        	# NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.

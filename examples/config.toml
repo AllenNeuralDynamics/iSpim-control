@@ -161,19 +161,21 @@ camera_right = 7
 [camera_specs.camera_right]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'FORWARD' #  BACKWARD for ch2 and FORWARD for ch1
+offset = 6 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
 [camera_specs.camera_left]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'BACKWARD' #  BACKWARD for ch2 and FORWARD for ch1
+offset = 6 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
 # <SOMETHING>_kwds will be splatted with **kwds to init the corresponding object.
 [daq_driver_kwds]
-dev_name = 'Dev1' # NI Card address as it appears to the PC.
-output_trigger_name = 'port0/line0'
+dev_name = 'Dev2' # NI Card address as it appears to the PC.
+input_trigger_name = 'PFI0'
 update_frequency = 4.0e5 # Hz
 
 [tiger_controller_driver_kwds]

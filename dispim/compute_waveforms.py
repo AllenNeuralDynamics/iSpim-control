@@ -9,14 +9,9 @@ from .mesospim_config import MesospimConfig
 # TODO: cfg should be able to lookup config params sensibly (like with a string for a key)
 def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     """return a numpy nd array with the correct waveforms.
-    The DAQ outputs all waveforms to control: the etl, the galvo,
-    laser enable(s), and the start trigger.
-    The camera will begin capturing upon reading the start trigger.
-    Waveforms are planned to account for any non-negligible phase lag.
-    Here, the ETL is laggiest. ETL signal will start first such that the true
-    ETL output occurs in sync with the remaining signals.
-    Since multiple lasers are present, a waveform is generated for all
-    waveforms, but only the active ones will have nonzero values.
+    The DAQ outputs all waveforms to control: the etls, the galvos,
+    the cameras, and the laser(s).
+    The NI card is triggered by encoder pulses from the stage.
     :param cfg: Mesospim configuration object.
     :param active_wavelength: laser wavelength that will be turned on.
     """
@@ -34,8 +29,8 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     self.galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
     self.galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
     self.galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
-    self.camera_left_offset = active_laser_specs['camera_left']['offset']
-    self.camera_right_offset = active_laser_specs['camera_right']['offset']
+    self.camera_left_offset = cfg.camera_specs['camera_left']['offset']
+    self.camera_right_offset = cfg.camera_specs['camera_right']['offset']
 
     self.delay_time = cfg.get_delay_time()
     self.rest_time = cfg.get_rest_time()
