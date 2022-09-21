@@ -6,51 +6,50 @@ import matplotlib.pyplot as plt
 from scipy.signal import square, sawtooth
 from .mesospim_config import MesospimConfig
 
-# Notes:
-# https://github.com/mesoSPIM/mesoSPIM-hardware-documentation/wiki/mesoSPIM_waveforms
-
-
 # TODO: cfg should be able to lookup config params sensibly (like with a string for a key)
 def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     """return a numpy nd array with the correct waveforms.
-
     The DAQ outputs all waveforms to control: the etl, the galvo,
     laser enable(s), and the start trigger.
     The camera will begin capturing upon reading the start trigger.
-
     Waveforms are planned to account for any non-negligible phase lag.
     Here, the ETL is laggiest. ETL signal will start first such that the true
     ETL output occurs in sync with the remaining signals.
-
     Since multiple lasers are present, a waveform is generated for all
     waveforms, but only the active ones will have nonzero values.
-
     :param cfg: Mesospim configuration object.
     :param active_wavelength: laser wavelength that will be turned on.
     """
     # Create wavelength-dependent constants
-    active_laser_specs = cfg.laser_specs[str(active_wavelength)]
-    etl_offset = active_laser_specs['etl']['offset']
-    etl_amplitude = active_laser_specs['etl']['amplitude']
-    galvo_x_left_offset = active_laser_specs['galvo_x_left']['offset']
-    galvo_x_right_offset = active_laser_specs['galvo_x_right']['offset']
-    galvo_y_left_offset = active_laser_specs['galvo_y_left']['offset']
-    galvo_y_right_offset = active_laser_specs['galvo_y_right']['offset']
-    galvo_x_left_amplitude = active_laser_specs['galvo_x_left']['amplitude']
-    galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
-    galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
-    galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
+    self.active_laser_specs = cfg.laser_specs[str(active_wavelength)]
+    self.etl_left_offset = active_laser_specs['etl_left']['offset']
+    self.etl_right_offset = active_laser_specs['etl_right']['offset']
+    self.etl_left_amplitude = active_laser_specs['etl_left']['amplitude']
+    self.etl_right_amplitude = active_laser_specs['etl_right']['amplitude']
+    self.galvo_x_left_offset = active_laser_specs['galvo_x_left']['offset']
+    self.galvo_x_right_offset = active_laser_specs['galvo_x_right']['offset']
+    self.galvo_y_left_offset = active_laser_specs['galvo_y_left']['offset']
+    self.galvo_y_right_offset = active_laser_specs['galvo_y_right']['offset']
+    self.galvo_x_left_amplitude = active_laser_specs['galvo_x_left']['amplitude']
+    self.galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
+    self.galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
+    self.galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
+    self.camera_left_offset = active_laser_specs['camera_left']['offset']
+    self.camera_right_offset = active_laser_specs['camera_right']['offset']
 
-    delay_time = cfg.get_delay_time()
-    rest_time = cfg.get_rest_time()
-    exposure_time = cfg.get_exposure_time()
-    daq_cycle_time = cfg.get_daq_cycle_time()
+    self.delay_time = cfg.get_delay_time()
+    self.rest_time = cfg.get_rest_time()
+    self.exposure_time = cfg.get_exposure_time()
+    self.period_time = cfg.get_period_time()
+    self.daq_cycle_time = cfg.get_daq_cycle_time()
 
-    delay_samples = cfg.get_delay_samples()
-    rest_samples = cfg.get_rest_samples()
-    exposure_samples = cfg.get_exposure_samples()
-    daq_cycle_samples = cfg.get_daq_cycle_samples()
-    period_samples = numpy.linspace(0, 2*math.pi, period_samples)
+    self.delay_samples = cfg.get_delay_samples()
+    self.rest_samples = cfg.get_rest_samples()
+    self.exposure_samples = cfg.get_exposure_samples()
+    self.period_samples = cfg.get_period_samples()
+    self.daq_cycle_samples = cfg.get_daq_cycle_samples()
+
+    self.time_samples = numpy.linspace(0, 2*math.pi, period_samples)
 
     # Create table that holds an entire cycle's worth of pts.
     # External trigger signal is the last value. Aside from that,
@@ -58,116 +57,104 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     # consistent with the signal order that the WaveformGenerator creates
     # tasks. We can ensure this by iterating through the same data structure
     # in the cfg as we do when we create tasks with the WaveformGenerator.
+
     voltages_t = np.zeros((cfg.daq_used_channels, daq_cycle_samples))
     t = np.linspace(0, daq_cycle_time, daq_num_samples, endpoint=False)
 
-    period_samples = numpy.linspace(0, 2*math.pi, daq_cycle_samples)
+    galvo_y_left, galvo_y_right, galvo_x_left, galvo_x_right = galvo_waveforms()
+    etl_left, etl_right = etl_waveforms()
+    camera_left, camera_right = camera_waveforms()
+    laser = laser_waveforms()
 
-    # Delay for all signals except the external trigger.
-    sof_shift_count = round(cfg.daq_update_freq * cfg.start_of_frame_delay)
-    # Delay for all signals except the ETL.
-    etl_shift_count = round(cfg.daq_update_freq * etl_delay)
-    # Iterate through all laser channels and create the corresponding waveform.
-    for index, ao_name in enumerate(cfg.daq_ao_names_to_channels.keys()):
-        # Generate Laser Signal. Signal should be:
-        # a pulse for the active laser but a flatline for inactive lasers.
-        if ao_name in [str(nm) for nm in cfg.laser_wavelengths]:
-            specs = cfg.laser_specs[ao_name]
-            disable_voltage = specs['disable_voltage']
-            enable_voltage = specs['disable_voltage']
-            # Only enable the active wavelengths.
-            if ao_name == str(active_wavelength):
-                enable_voltage = specs['enable_voltage']
-            # Generate Laser Signal analog time series.
-            laser_amplitude = (enable_voltage - disable_voltage)/2.0
-            laser_dc_offset = disable_voltage + laser_amplitude
-            voltages_t[index] = laser_amplitude * \
-                                square(2*pi / waveform_cycle_time*t,
-                                       duty=laser_duty_cycle) + laser_dc_offset
-            # Apply start of frame delay to all waveforms (except external trigger)
-            voltages_t[index] = np.roll(voltages_t[index], sof_shift_count)
-            # Stuff the trough value at the beginning.
-            np.put(voltages_t[index], range(sof_shift_count),
-                   laser_dc_offset - laser_amplitude)
-            # Apply ETL shift
-            voltages_t[index] = np.roll(voltages_t[index], etl_shift_count)
-            # Stuff the trough value at the beginning.
-            np.put(voltages_t[index], range(etl_shift_count),
-                   laser_dc_offset - laser_amplitude)
-        # Generate ETL signal, a pure sawtooth followed by delay time.
-        elif ao_name.startswith("etl"):
-            # ETL settings are specific to the active laser.
-            etl_amplitude = (etl_max_voltage - etl_min_voltage) / 2.0
-            etl_offset = etl_min_voltage + etl_amplitude
-            sawtooth_period = cfg.total_exposure_time + etl_delay
-            voltages_t[index] = \
-                etl_amplitude * sawtooth(2*pi/sawtooth_period*t, width=1.0) + \
-                etl_offset
-            # Flatten out end of sawtooth wave by stuffing it with min value.
-            end_of_sawtooth_sample = round(sawtooth_period*cfg.daq_update_freq)
-            np.put(voltages_t[index],
-                   range(end_of_sawtooth_sample, daq_num_samples),
-                   etl_offset - etl_amplitude)
-            # Apply start of frame delay to all waveforms (except external trigger)
-            voltages_t[index] = np.roll(voltages_t[index], sof_shift_count)
-            # Stuff the trough value at the beginning.
-            np.put(voltages_t[index], range(sof_shift_count),
-                   etl_offset - etl_amplitude)
-        # Generate differential voltages for the adjustment galvo.
-        # These signals are fixed throughout and don't need shifting.
-        elif ao_name.startswith("galvo") and ao_name.endswith("plus"):
-            voltages_t[index] = 0.5 * cfg.trim_galvo_setpoint * np.ones(len(t))
-        elif ao_name.startswith("galvo") and ao_name.endswith("minus"):
-            voltages_t[index] = -0.5 * cfg.trim_galvo_setpoint * np.ones(len(t))
-        else:
-            raise RuntimeError(f"{ao_name} does not have any plotting criteria.")
-
-    # Generate External Trigger signal.
-    np.put(voltages_t[-1], range(round(10e-6 * cfg.daq_update_freq)), 1)
-    # Apply etl delay.
-    voltages_t[-1] = np.roll(voltages_t[-1], etl_shift_count)
-    np.put(voltages_t[-1], range(etl_shift_count), 0)
+    # Add left y galvo waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_y_left'], self.delay_samples:self.delay_samples+self.period_samples] = galvo_y_left
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_y_left'], self.period_samples::] = galvo_y_left[-1]
+    # Add right y galvo waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_y_right'], 0:self.period_samples] =  galvo_y_right
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_y_right'], self.period_samples::] = galvo_y_right[0]
+    # Add left x galvo waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_x_left'], self.delay_samples:self.delay_samples+self.period_samples] = galvo_x_left
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_x_left'], self.period_samples::] = galvo_x_left[-1]
+    # Add right x galvo waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_x_right'], 0:self.period_samples] =  galvo_x_right
+    voltages_t[cfg.daq_ao_names_to_channels['galvo_x_right'], self.period_samples::] = galvo_x_right[0]
+    # Add etl  waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['etl_left'], :] = etl_left
+    voltages_t[cfg.daq_ao_names_to_channels['etl_right'], :] = etl_right
+    # Add camera waveforms
+    voltages_t[cfg.daq_ao_names_to_channels['camera_left'], :] = camera_left
+    voltages_t[cfg.daq_ao_names_to_channels['camera_right'], :] = camera_right
+    # Add active laser waveforms
+    voltages_t[cfg.daq_ao_names_to_channels[str(active_wavelength)], :] = laser
 
     return t, voltages_t
 
+def galvo_waveforms():
+    """Generate galvo waveforms."""
+    # Sawtooth duty cycle is adjusted to snapback slowly over the specified rest time
+    # x-axis galvos correct for MEMs mirror bow artifact. are quadratic with the y-axis galvo with some scaling amplitude and offset.
+    galvo_y_left = -self.galvo_y_left_amplitude*signal.sawtooth(self.time_samples, width=self.exposure_samples*1.0/self.period_samples) + self.galvo_y_left_offset
+    galvo_y_right = self.galvo_y_right_amplitude*signal.sawtooth(self.time_samples, width=self.exposure_samples*1.0/self.period_samples) + self.galvo_y_right_offset
+    galvo_x_left = abs((self.galvo_y_left_amplitude - self.galvo_y_left_offset)**2)*self.galvo_x_left_amplitude + self.galvo_x_left_offset
+    galvo_x_right = abs((self.galvo_y_right_amplitude - self.galvo_y_right_offset)**2)*self.galvo_x_right_amplitude + self.galvo_x_right_offset
+
+    return galvo_y_left, galvo_y_right, galvo_x_left, galvo_x_right
+
+def etl_waveforms():
+    """Generate etl waveforms."""
+    # ETLs are not actually and are held at DC voltage to correct for axial chromatic shifts.
+    etl_left = self.etl_amplitude_left
+    etl_right = self.etl_amplitude_right
+
+    return etl_left, etl_right
+
+def camera_waveforms():
+    """Generate camera waveforms."""
+    # Cameras are triggered with some offset specified as % of total exposure time. TODO make this a specified time... not %.
+    # Each camera is additionally delay by some time specified by delay time.
+    camera_right = numpy.zeros((1,self.daq_cycle_samples))
+    camera_right[int(self.exposure_samples*self.camera_right_offset):int(self.exposure_samples*self.camera_right_offset) + self.exposure_samples] = 5.0
+    camera_left = numpy.zeros((1,self.daq_cycle_samples))
+    camera_left[self.delay_samples + int(self.exposure_samples*self.camera_left_offset):self.delay_samples + int(self.exposure_samples*self.camera_left_offset) + self.exposure_samples] = 5.0
+
+    return camera_left, camera_right
+
+def laser_waveforms():
+    """Generate laser waveforms."""
+    # Lasers are triggered and strobed only when the camera is exposing.
+    laser = numpy.zeros((1,self.daq_cycle_samples))
+    laser[int(self.exposure_samples*self.camera_right_offset):self.delay_samples + int(self.exposure_samples*self.camera_left_offset) + self.exposure_samples] = 5.0
+
+    return laser
 
 def plot_waveforms_to_pdf(cfg: MesospimConfig, t: np.array,
                           voltages_t: np.array, active_wavelength: int,
                           filename: str = "plot.pdf"):
-    """Write a pdf plot output of the waveforms."""
-    # Plot the data for sanity checking.
-    fig = plt.figure(figsize=(20, 7))
-    ax = fig.gca()
-    # first plot: the whole thing.
-    fig.suptitle("One Image Capture Sequence.")
-    for index, ao_name in enumerate(cfg.daq_ao_names_to_channels.keys()):
-        ax.plot(t, voltages_t[index], label=ao_name)
-    # Last time series is the Camera Trigger and is not an analog output.
-    ax.plot(t, voltages_t[-1], label="camera trigger")
-    # Plot desired etl signal
-    #etl_shift_count = round(cfg.daq_update_freq * cfg.etl_delay)
-    #axes[0].plot(t, np.roll(etl_t, etl_shift_count), label="desired liquid lens")
 
-    # Include exposure time stats on plot.
-    last_row_start_time = cfg.row_interval*cfg.sensor_row_count + \
-                          cfg.get_waveform_delay(active_wavelength)
-    last_row_stop_time = cfg.total_exposure_time + \
-                         cfg.get_waveform_delay(active_wavelength)
-    ax.axvline(last_row_start_time, ls='--', color='cyan',
-                    label=f"last row start: {last_row_start_time*1e3:.2f}[ms]")
-    ax.axvline(last_row_stop_time, ls='--', color='magenta',
-                    label=f"last row fin: {last_row_stop_time * 1e3:.2f}[ms]")
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(10, 7))
 
-    ax.set_xlabel("time [s]")
-    ax.set_ylabel("amplitude [V]")
-    ax.legend(loc="upper right")#loc="center left")
+        axes.set_title("One Image Capture Sequence.")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['galvo_x_left']], label="galvo_x_left")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['galvo_x_right']], label="galvo_x_right")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['galvo_y_left']], label="galvo_y_left")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['galvo_y_right']], label="galvo_y_right")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['etl_left']], label="etl_left")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['etl_right']], label="etl_right")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['camera_left']], label="camera_left")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['camera_right']], label="camera_right")
+        axes.plot(t, voltages_t[cfg.daq_ao_names_to_channels['laser']], label=str(active_wavelength))
+        axes.set_xlabel("time [s]")
+        axes.set_ylabel("amplitude [V]")
+        axes.set_ylim(0,5)
+        axes.legend(loc="center")
 
-    try:
-        fig.savefig(filename)
-    except OSError as e:
-        print("Error: cannot save figure. Another program may be using it.")
-        raise e
+        axes.legend(loc="upper right")
 
+        try:
+            fig.savefig(filename)
+        except OSError as e:
+            print("Error: cannot save figure. Another program may be using it.")
+            raise e
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -178,9 +165,9 @@ if __name__ == "__main__":
     # grab a config filepath.
     args = parser.parse_args()
     config = MesospimConfig(args.config_path)
-    # Generate a plot for the first laser.
-    first_laser_wavelength = config.laser_wavelengths[0]
-    t, voltages_t = generate_waveforms(config, first_laser_wavelength)
+    # Generate a plot for the active laser. FIX HERE TO GRAB ACTIVE WAVELENGTH
+    active_wavelength = config.laser_wavelengths[0] # FIX HERE TO GRAB ACTIVE WAVELENGTH
+    t, voltages_t = generate_waveforms(config, active_wavelength)
     # plot the waveforms.
-    plot_waveforms_to_pdf(config, t, voltages_t, first_laser_wavelength,
-                          f"{first_laser_wavelength}nm_active_plot.pdf")
+    plot_waveforms_to_pdf(config, t, voltages_t, active_wavelength,
+                          f"{active_wavelength}nm_active_plot.pdf")
