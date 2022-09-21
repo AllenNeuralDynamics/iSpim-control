@@ -48,7 +48,7 @@ class Dispim(Spim):
         """Configure the sample stage for the Exaspim according to the config."""
         # The tigerbox x axis is the sample pose z axis.
         #   TODO: map this in the config.
-        self.tigerbox.set_axis_backlash(x=0)
+        self.sample_pose.set_axis_backlash(z=0.0)
         # TODO: handle axis remapping here. Remapping should probably come from
         #   the config.
         # Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y
