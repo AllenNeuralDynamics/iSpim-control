@@ -85,6 +85,12 @@ class DispimConfig(SpimConfig):
         """Return the total waveform cycle time for a frame."""
         return round(self.daq_update_freq*self.get_daq_cycle_time())
 
+    # TODO: consider putting this in the base class since literally every
+    #   machine has a sample.
+    @property
+    def sample_pose_kwds(self):
+        return self.cfg['sample_pose_kwds']
+
     # @property
     # def row_interval(self):
     #     # Time between moving the slit by one row. (AKA: "line interval")

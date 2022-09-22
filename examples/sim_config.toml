@@ -116,6 +116,11 @@ port = 'COM4' # COM7 for ch2, COM4 for ch1
 [tiger_controller_driver_kwds]
 com_port='COM10'
 
+[sample_pose_kwds.axis_map]
+x = "z"  # TODO: signs??
+y = "x"
+z = "y"
+
 [filter_wheel_kwds]
 tiger_axis = 1 # filterwheel axis according to the tigerbox.
 
