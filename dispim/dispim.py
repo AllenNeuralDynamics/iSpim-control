@@ -8,7 +8,7 @@ from dispim.dispim_config import DispimConfig
 from dispim.devices.camera import Camera
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
-# TODO: consolodate these later.
+# TODO: consolidate these later.
 from mesospim.spim_base import Spim
 from mesospim.devices.tiger_components import SamplePose
 from math import ceil
@@ -117,18 +117,17 @@ class Dispim(Spim):
         # Disable backlash compensation on Z to minimize z axis settling time.
         # Disabling Z compensation is ok since we scan in one direction.
         self.sample_pose.set_axis_backlash(z=0.0)
+        # Return to start position and kill the frame grabber.
         # Apply a lead-in-move to take out backlash.
         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
         self.log.debug("Applying extra move to take out backlash.")
         self.sample_pose.move_absolute(z=round(z_backup_pos), wait=True)
         self.sample_pose.move_absolute(z=0, wait=True)
-
-        transfer_process = None
+        transfer_process = None  # Reference to external tiff transfer process.
         self.stage_x_pos, self.stage_y_pos = (0, 0)
         self.image_index = 1
         # Setup double buffer to capture images while reading out prior image.
-        # TODO: setup camera here
-
+        # TODO: setup daq here if not already setup.
         try:
             for j in range(ytiles):
                 self.stage_x_pos = 0
@@ -137,32 +136,26 @@ class Dispim(Spim):
                 for i in range(xtiles):
                     self.sample_pose.move_absolute(x=round(self.stage_x_pos),
                                                    wait=True)
-                    # Collect a zstack for every specified laser/filter combo.
-                    # TODO: does the laser have multiple channels?? No?
-                    # If not, we should remove this inner loop.
-                    for channel in channels:
-                        # Setup capture of next Z stack.
-                        # Open filters, enable active laser; disable the rest.
-                        # TODO: DAQ setup happens here
-                        self.setup_imaging_for_laser(channel)
-                        base_file_name = f"{tile_prefix}_{i}_{j}_{channel}"
-                        filename = Path(f"{base_file_name}.tiff")
-                        filepath_src = local_storage_dir/filename
-                        self._collect_stacked_tiff(ztiles, filepath_src)
-                        # Start transferring tiff file to its destination.
-                        # Note: Image transfer is faster than image capture.
-                        #   but we still wait for prior process to finish.
-                        if transfer_process is not None:
-                            self.log.info("Waiting for tiff transfer process "
-                                          "to complete.")
-                            transfer_process.join()
-                        if img_storage_dir is not None:
-                            self.log.info("Starting transfer process for "
-                                          f"{filename}.")
-                            filepath_dest = img_storage_dir/filename
-                            transfer_process = TiffTransfer(filepath_src,
-                                                            filepath_dest)
-                            transfer_process.start()
+                    # Setup capture of next Z stack.
+                    # Open filters, enable active laser; disable the rest.
+                    base_file_name = f"{tile_prefix}_{i}_{j}"
+                    filename = Path(f"{base_file_name}.tiff")
+                    filepath_src = local_storage_dir/filename
+                    self._collect_stacked_tiff(ztiles, filepath_src)
+                    # Start transferring tiff file to its destination.
+                    # Note: Image transfer is faster than image capture, but
+                    #   we still wait for prior process to finish.
+                    if transfer_process is not None:
+                        self.log.info("Waiting for tiff transfer process "
+                                      "to complete.")
+                        transfer_process.join()
+                    if img_storage_dir is not None:
+                        self.log.info("Starting transfer process for "
+                                      f"{filename}.")
+                        filepath_dest = img_storage_dir/filename
+                        transfer_process = TiffTransfer(filepath_src,
+                                                        filepath_dest)
+                        transfer_process.start()
                     self.stage_x_pos += x_grid_step_um * UM_TO_STEPS
                 self.stage_y_pos += y_grid_step_um * UM_TO_STEPS
         finally:
@@ -170,30 +163,37 @@ class Dispim(Spim):
             # ending voltage states.
             self.daq.wait_until_done()  # use default timeout of 1[s].
             self.log.info("Stopping camera.")
-            #TODO: Close calliphlox stuff here
             if transfer_process is not None:
                 self.log.debug("joining zstack transfer process.")
                 transfer_process.join()
-            # if mip_transfer_process is not None:
-            #     self.log.debug("joining MIP transfer process.")
-            #     mip_transfer_process.join()
             self.log.info("Returning to start position.")
             self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
 
     def _collect_stacked_tiff(self, frame_count, filepath_src):
         self.frame_grabber.setup_stack_capture((self.cfg.cols, self.cfg.rows),
-                                                filepath_src, frame_count)
+                                               filepath_src, frame_count)
+        # Setup scan
+        self.sample_pose.setup_scan(frame_count)
         self.frame_grabber.start()
-        # TODO: this function should block until all the frames are captured.
-        nframes = 0
-        while nframes < 100:
-            # TODO: this should totally get revisited for efficiency's sake.
-            if a := self.frame_grabber.runtime.get_available_data():
-                packet = a.get_frame_count()
-                f = next(a.frames())
-                im = f.data().squeeze()
-                nframes += packet
-        self.frame_grabber.stop()
+        try:
+            self.sample_pose.start_scan()
+            # TODO: this func should block until all the frames are captured.
+            nframes = 0
+            while nframes < 100:
+                # TODO: this should totally get revisited for efficiency.
+                if a := self.frame_grabber.runtime.get_available_data():
+                    packet = a.get_frame_count()
+                    f = next(a.frames())
+                    im = f.data().squeeze()
+                    nframes += packet
+        finally:
+            # Return to start position and kill the frame grabber.
+            # Apply a lead-in-move to take out backlash.
+            z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
+            self.log.debug("Applying extra move to take out backlash.")
+            self.sample_pose.move_absolute(z=round(z_backup_pos), wait=True)
+            self.sample_pose.move_absolute(z=0, wait=True)
+            self.frame_grabber.stop()
 
     def livestream(self):
         pass
