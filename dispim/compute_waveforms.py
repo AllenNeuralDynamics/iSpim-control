@@ -29,12 +29,12 @@ def generate_waveforms(cfg: MesospimConfig, active_wavelength: int):
     self.galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
     self.galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
     self.galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
-    self.camera_left_offset = cfg.camera_specs['camera_left']['offset']
-    self.camera_right_offset = cfg.camera_specs['camera_right']['offset']
+    self.camera_left_offset = cfg.camera_left_offset
+    self.camera_right_offset = cfg.camera_right_offset
 
-    self.delay_time = cfg.get_delay_time()
-    self.rest_time = cfg.get_rest_time()
-    self.exposure_time = cfg.get_exposure_time()
+    self.delay_time = cfg.delay_time
+    self.rest_time = cfg.rest_time
+    self.exposure_time = cfg.exposure_time
     self.period_time = cfg.get_period_time()
     self.daq_cycle_time = cfg.get_daq_cycle_time()
 
