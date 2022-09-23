@@ -5,8 +5,9 @@ from pathlib import Path
 from time import perf_counter
 from mock import NonCallableMock as Mock
 from dispim.dispim_config import DispimConfig
-from dispim.devices.camera import Camera
-from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
+from dispim.devices.frame_grabber import FrameGrabber
+from tigerasi.tiger_controller import TigerController, UM_TO_STEPS, \
+    UM_TO_ENC_TICKS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from mesospim.spim_base import Spim
@@ -26,14 +27,13 @@ class Dispim(Spim):
                          color_console_output, console_output_level, simulated)
         self.cfg = DispimConfig(config_filepath)
 
-        # Separate Processes.
-
         # Hardware
-        #self.cam = Camera() if not self.simulated else Mock(Camera())
+        self.frame_grabber = FrameGrabber()
         #self.ni = WaveformGenerator()
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
-        self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
+        self.sample_pose = SamplePose(self.tigerbox,
+                                      **self.cfg.sample_pose_kwds)
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
@@ -44,22 +44,18 @@ class Dispim(Spim):
 
         # Setup hardware according to the config.
         self._setup_motion_stage()
-        self._setup_camera()
+        self._setup_waveform_hardware()
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the Exaspim according to the config."""
         # The tigerbox x axis is the sample pose z axis.
-        #   TODO: map this in the config.
         self.sample_pose.set_axis_backlash(z=0.0)
-        # TODO: handle axis remapping here. Remapping should probably come from
-        #   the config.
-        # Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y
-        #self.sample_pose.apply_axis_remapping(self.cfg.axis_map)
+        # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
+        #   This axis remapping is handled upon SamplePose __init__.
 
-    def _setup_camera(self):
-        """Configure the camera for the Exaspim according to the config."""
-        # pass config parameters into object here.
-        # TODO: add calliphlox setup stuff here.
+    def setup_waveform_hardware(self):
+        # Compute voltages_t.
+        # Write it to hardware.
         pass
 
     def run_from_config(self):
@@ -138,10 +134,12 @@ class Dispim(Spim):
                                                    wait=True)
                     # Setup capture of next Z stack.
                     # Open filters, enable active laser; disable the rest.
-                    base_file_name = f"{tile_prefix}_{i}_{j}"
-                    filename = Path(f"{base_file_name}.tiff")
+                    filename = Path(f"{tile_prefix}_{i}_{j}.tiff")
                     filepath_src = local_storage_dir/filename
-                    self._collect_stacked_tiff(ztiles, filepath_src)
+                    # TODO: consider making step size a fn parameter instead of
+                    #   collected strictly from the config.
+                    self._collect_stacked_tiff(ztiles, self.cfg.z_step_size_um,
+                                               filepath_src)
                     # Start transferring tiff file to its destination.
                     # Note: Image transfer is faster than image capture, but
                     #   we still wait for prior process to finish.
@@ -169,11 +167,13 @@ class Dispim(Spim):
             self.log.info("Returning to start position.")
             self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
 
-    def _collect_stacked_tiff(self, frame_count, filepath_src):
+    def _collect_stacked_tiff(self, tile_count, tile_spacing_um: float,
+                              filepath_src):
         self.frame_grabber.setup_stack_capture((self.cfg.cols, self.cfg.rows),
-                                               filepath_src, frame_count)
+                                               filepath_src, tile_count)
         # Setup scan
-        self.sample_pose.setup_scan(frame_count)
+        self.sample_pose.setup_tile_scan('z', 0, tile_count,
+                                         round(tile_spacing_um*UM_TO_ENC_TICKS))
         self.frame_grabber.start()
         try:
             self.sample_pose.start_scan()
