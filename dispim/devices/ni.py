@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-"""Class for NI Hardware."""
-=======
 """
 NIDAQMX setup for timing/triggering using PCIe-6738 card.
 """
@@ -11,7 +8,6 @@ from nidaqmx.constants import AcquisitionType as AcqType
 from nidaqmx.constants import TaskMode
 from nidaqmx.constants import Edge, Slope
 from numpy import ndarray
->>>>>>> dev/config
 import logging
 
 
