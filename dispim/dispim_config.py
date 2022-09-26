@@ -45,19 +45,6 @@ class DispimConfig(SpimConfig):
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
 
-    def get_delay_time(self):
-        """Return the delay time between the left and right views."""
-        return self.waveform_specs['delay_time']
-
-    def get_rest_time(self):
-        """Return the delay time between the left and right views."""
-        return self.waveform_specs['rest_time']
-    
-    def get_exposure_time(self):
-        """Return the total exposure time for a frame."""
-        return self.design_specs['sensor_row_count']* \
-               self.camera_specs['row_interval']
-
     def get_period_time(self):
         """Return the total waveform cycle time for a frame."""
         return self.get_exposure_time() + \
@@ -179,6 +166,59 @@ class DispimConfig(SpimConfig):
     # These do NOT get setters.
     # FIXME: make separate getters for XY.
     #   Handle Overlap correctly.
+
+    @property
+    def delay_time(self):
+        """Return the delay time between the left and right views."""
+        return self.waveform_specs['delay_time']
+
+    @delay_time.setter
+    def delay_time(self, delay_time: float):
+        self.waveform_specs['delay_time'] = delay_time
+
+    @property
+    def rest_time(self):
+        """Return the delay time between the left and right views."""
+        return self.waveform_specs['rest_time']
+
+    @rest_time.setter
+    def rest_time(self, rest_time: float):
+        self.waveform_specs['rest_time'] = rest_time
+
+    # def get_exposure_time(self):
+    #     """Return the total exposure time for a frame."""
+    #     return self.design_specs['sensor_row_count']* \
+    #            self.camera_specs['row_interval']
+    #
+    # def get_exposure_time(self):
+    #
+    #     return self.design_specs['sensor_row_count']* \
+    #            self.camera_specs['row_interval']
+    #
+    @property
+    def exposure_time(self):
+        """Return the total exposure time for a frame."""
+        return self.waveform_specs['exposure_time']
+
+    @exposure_time.setter
+    def exposure_time(self, exposure_time: float):
+        self.waveform_specs['exposure_time'] = exposure_time
+
+    @property
+    def camera_left_offset(self):
+        return self.camera_specs['camera_left']['offset']
+
+    @camera_left_offset.setter
+    def camera_left_offset(self, left_offset: float ):
+        self.camera_specs['camera_left']['offset'] = left_offset
+
+    @property
+    def camera_right_offset(self):
+        return self.camera_specs['camera_right']['offset']
+
+    @camera_left_offset.setter
+    def camera_right_offset(self, right_offset: float):
+        self.camera_specs['camera_right']['offset'] = right_offset
 
     @property
     def laser_wavelengths(self):
