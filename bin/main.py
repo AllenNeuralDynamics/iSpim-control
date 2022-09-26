@@ -34,8 +34,9 @@ def main():
     # Create log handlers to dispatch:
     # - DEBUG level and above to write to a file called debug.log.
     # - User-specified level and above to print to console if specified.
-    #logger = logging.getLogger(__name__)
-    logger = logging.getLogger()
+    logger = logging.getLogger()  # get the root logger.
+    # logger level must be set to the lowest level of any handler.
+    logger.setLevel(logging.DEBUG)
     fmt = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
     fmt = "[SIM] " + fmt if args.simulated else fmt
     datefmt = '%Y-%m-%d,%H:%M:%S'
