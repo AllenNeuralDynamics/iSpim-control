@@ -53,11 +53,11 @@ class WaveformHardware:
 
         # Create counter for encoder pulses from same trigger source. assign to ctr0
         self.counter_task = nidaqmx.Task("counter_task")
-		self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(
-			f"{self.dev_name}/ctr0", edge = nidaqmx.constants.Edge.RISING)
-		self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
+        self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(
+            f"{self.dev_name}/ctr0", edge = nidaqmx.constants.Edge.RISING)
+        self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
-       	# NOT SURE IF WE NEED THIS?
+        # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.
         # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
         self.ao_task.out_stream.output_buf_size = sample_count
@@ -87,7 +87,7 @@ class WaveformHardware:
         return self.ao_task.is_task_done()
 
     def wait_until_done(self, timeout=1.0):
-    	# Check if ao task is finished
+        # Check if ao task is finished
         return self.ao_task.wait_until_done(timeout)
 
     def stop(self):
