@@ -4,9 +4,9 @@ local_storage_directory = 'C:\\test' # Storing on C (ssd) will yield faster file
 external_storage_directory = 'Z:\diSPIM'
 subject_id = "test" # Specimin name.
 tile_prefix = 'tile'  # Zstacks will be named: <tile_prefix>_<x>_<y>_<wavelength>.tiff.
+tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
-tile_overlap_z_percent = 15
-x_step_size_um = 0.25 # x spacing between images. Defaults to same as y,z spacing if not listed.
+z_step_size_um = 0.25 # x spacing between images. Defaults to same as y,z spacing if not listed.
 volume_x_um = 1000 # Sample volume x dimension that we want to stage scan.
 volume_y_um = 1000 # Sample volume y dimension that we want to tile.
 volume_z_um = 1000 # Sample volume z dimension that we want to tile.
@@ -175,6 +175,11 @@ camy = 2304 # number of y camera pixels
 dev_name = 'Dev1' # NI Card address as it appears to the PC.
 output_trigger_name = 'port0/line0'
 update_frequency = 4.0e5 # Hz
+
+[sample_pose_kwds.axis_map]
+x = "z"  # TODO: signs??
+y = "x"
+z = "y"
 
 [tiger_controller_driver_kwds]
 com_port='COM10' # TO ADD

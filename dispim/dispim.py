@@ -1,13 +1,14 @@
 """Abstraction of the DISPIM Instrument."""
 
+import logging
 import numpy as np
 from pathlib import Path
 from time import perf_counter
 from mock import NonCallableMock as Mock
 from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
-from tigerasi.tiger_controller import TigerController, UM_TO_STEPS, \
-    UM_TO_ENC_TICKS
+from dispim.devices.ni import WaveformHardware
+from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from mesospim.spim_base import Spim
@@ -18,18 +19,19 @@ from mesospim.tiff_transfer import TiffTransfer
 
 class Dispim(Spim):
 
-    def __init__(self, config_filepath: str, log_filename: str = 'debug.log',
-                 console_output: bool = True,
-                 color_console_output: bool = False,
-                 console_output_level: str = 'info', simulated: bool = False):
-
-        super().__init__(config_filepath, log_filename, console_output,
-                         color_console_output, console_output_level, simulated)
+    def __init__(self, config_filepath: str,
+                 simulated: bool = False):
+        #self.log = logging.getLogger(__package__)
+        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        # Log setup is handled in the parent class if we pass in a logger.
+        super().__init__(config_filepath, simulated)
         self.cfg = DispimConfig(config_filepath)
 
         # Hardware
-        self.frame_grabber = FrameGrabber()
-        #self.ni = WaveformGenerator()
+        self.frame_grabber = FrameGrabber() if not self.simulated else \
+            Mock(FrameGrabber)
+        self.ni = WaveformHardware() if not self.simulated else \
+            Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
         self.sample_pose = SamplePose(self.tigerbox,
@@ -53,16 +55,23 @@ class Dispim(Spim):
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
 
-    def setup_waveform_hardware(self):
+    def _setup_waveform_hardware(self):
         # Compute voltages_t.
         # Write it to hardware.
-        pass
+        self.log.error("Writing waveforms to hardware not yet implemented.")
+        # self.ni.configure(...)
+        # _, voltages_t = GenerateWaveforms(stuff)
+        # self.ni.assign_waveforms(voltages_t)
+
+    # TODO: this should be a base class thing.
+    def check_ext_disk_space(self, dataset_size):
+        self.log.warning("Checking disk space not implemented.")
 
     def run_from_config(self):
         self.collect_volumetric_image(self.cfg.volume_x_um,
                                       self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,
-                                      self.cfg.laser_wavelengths,  # TODO: fix this.
+                                      self.cfg.channels,
                                       self.cfg.tile_overlap_x_percent,
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
@@ -123,7 +132,7 @@ class Dispim(Spim):
         self.stage_x_pos, self.stage_y_pos = (0, 0)
         self.image_index = 1
         # Setup double buffer to capture images while reading out prior image.
-        # TODO: setup daq here if not already setup.
+        # TODO: setup nidaq here if not already setup.
         try:
             for j in range(ytiles):
                 self.stage_x_pos = 0
@@ -138,6 +147,7 @@ class Dispim(Spim):
                     filepath_src = local_storage_dir/filename
                     # TODO: consider making step size a fn parameter instead of
                     #   collected strictly from the config.
+                    self.log.debug(f"Collecting tile stack: {filename}.")
                     self._collect_stacked_tiff(ztiles, self.cfg.z_step_size_um,
                                                filepath_src)
                     # Start transferring tiff file to its destination.
@@ -159,7 +169,7 @@ class Dispim(Spim):
         finally:
             # Wait for waveform playback to finish so we leave signals in their
             # ending voltage states.
-            self.daq.wait_until_done()  # use default timeout of 1[s].
+            self.ni.wait_until_done()  # use default timeout of 1[s].
             self.log.info("Stopping camera.")
             if transfer_process is not None:
                 self.log.debug("joining zstack transfer process.")
@@ -169,23 +179,25 @@ class Dispim(Spim):
 
     def _collect_stacked_tiff(self, tile_count, tile_spacing_um: float,
                               filepath_src):
-        self.frame_grabber.setup_stack_capture((self.cfg.cols, self.cfg.rows),
-                                               filepath_src, tile_count)
         # Setup scan
-        self.sample_pose.setup_tile_scan('z', 0, tile_count,
-                                         round(tile_spacing_um*UM_TO_ENC_TICKS))
+        self.frame_grabber.setup_stack_capture((self.cfg.column_count_px,
+                                                self.cfg.row_count_px),
+                                               filepath_src, tile_count)
+
+        self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um)
         self.frame_grabber.start()
         try:
             self.sample_pose.start_scan()
             # TODO: this func should block until all the frames are captured.
             nframes = 0
-            while nframes < 100:
-                # TODO: this should totally get revisited for efficiency.
-                if a := self.frame_grabber.runtime.get_available_data():
-                    packet = a.get_frame_count()
-                    f = next(a.frames())
-                    im = f.data().squeeze()
-                    nframes += packet
+            self.log.error("Skipping stack acquisition from FrameGrabber.")
+            #while nframes < 100:
+            #    # TODO: this should totally get revisited for efficiency.
+            #    if a := self.frame_grabber.runtime.get_available_data():
+            #        packet = a.get_frame_count()
+            #        f = next(a.frames())
+            #        im = f.data().squeeze()
+            #        nframes += packet
         finally:
             # Return to start position and kill the frame grabber.
             # Apply a lead-in-move to take out backlash.

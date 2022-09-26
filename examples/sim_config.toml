@@ -1,130 +1,194 @@
 # No repeat values in here!
-[imaging_params]
-local_storage_directory = "."
-external_storage_directory = "."
-subject_id = "sim_test" # Specimin name.
+[imaging_specs]
+local_storage_directory = '.'#'C:\\test' # Storing on C (ssd) will yield faster file transfers.
+external_storage_directory = '.'#'Z:\diSPIM'
+subject_id = "test" # Specimin name.
 tile_prefix = 'tile'  # Zstacks will be named: <tile_prefix>_<x>_<y>_<wavelength>.tiff.
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
-z_step_size_um = 1 # z spacing between tiles. Defaults to same as x,y spacing if not listed.
-volume_x_um = 2048 # Sample volume x dimension that we want to tile.
-volume_y_um = 2048 # Sample volume y dimension that we want to tile.
-volume_z_um = 10
-laser_wavelengths = [488, 639]
+z_step_size_um = 0.25 # x spacing between images. Defaults to same as y,z spacing if not listed.
+volume_x_um = 2305 # Sample volume x dimension that we want to stage scan.
+volume_y_um = 2305 # Sample volume y dimension that we want to tile.
+volume_z_um = 1000 # Sample volume z dimension that we want to tile.
+laser_wavelengths = [488]
+
+[tile_specs]
+x_field_of_view_um = 2304 # X image field of view in [um].
+y_field_of_view_um = 2304 # Y image field of view in [um].
+row_count_pixels = 2304
+column_count_pixels = 2304
+data_type = "uint16"
 
 [design_specs]
-slit_width = 120 # pixels
-tile_size_um = 2048 # XY image field of view in [um]. This should not change.
-sensor_row_count = 2048
+slit_width_pixels = 294 # pixels
 
 # Stage
 [sample_stage_specs]
-move_time_um = 0.025 # time it takes the stage to move 1[um] and settle.
 backlash_reset_distance_um = 4 # [um]
+# encoder input pulses per um
 
 # Signals
 [waveform_specs]
-start_of_frame_delay = 950e-6 # seconds. Time between external trigger and first hsync.
-[waveform_specs.adjustment_galvo]
-voltage_setpoint = -0.06
+delay_time = 1.5e-3 # seconds. delay time between left and right views.
+rest_time = 5.0e-3 # seconds. dead time at end of frame.
+exposure_time = 12.0e-3 # seconds. total frame time of camera.
 
 # Laser Channels
 [channel_specs.405]
-driver = "Vortran"
+driver = "Oxxius"
 color = "purple"
-filter_index = 1
-ao_channel = 0
-disable_voltage = 0.0
-enable_voltage =  1.0
-camera_axis_position = 0 # absolute value in steps.
-[channel_specs.405.etl]
-delay = 0.0 # seconds. time to advance the etl waveform such that the actual signal arrives on time.
-settling_time = 0.025 # seconds. min time for the etl to recover to its start position.
-min_voltage = 2.55
-max_voltage = 3.10
-[channel_specs.405.kwds]
-port='COMxx'
-
-[channel_specs.488]
-driver = "Vortran"
-color = "blue"
-filter_index = 2
-ao_channel = 2
+filter_index = 1 # CHECK WITH XIAOYUN
+ao_channel = 12
 disable_voltage = 0.0
 enable_voltage =  5.0
-camera_axis_position = 1300 # absolute value in steps. (sending: M N=0)
-[channel_specs.488.etl]
-delay = 0.0 # seconds.
-settling_time = 0.025 # seconds.
-min_voltage = 2.37
-max_voltage = 2.96
-[channel_specs.488.kwds]
-port='COMxx'
+[channel_specs.405.etl_left]
+offset = 1.85
+amplitude = 0
+[channel_specs.405.etl_right]
+offset = 1.65
+ampitude = 0
+[channel_specs.405.galvo_x_left]
+offset = 2.40
+amplitude = -0.015
+[channel_specs.405.galvo_x_right]
+offset = 2.74
+amplitude = -0.015
+[channel_specs.405.galvo_y_left]
+offset = 2.56
+amplitude = 1.30
+[channel_specs.405.galvo_y_right]
+offset = 2.75
+amplitude = 1.30
+[channel_specs.405.kwds]
+port='COMxx' # TODO FOR OXXIUS LASERS
 
-[channel_specs.552]
-driver = "ObisLS"
-color = "green"
-filter_index = 3
-ao_channel = 3
+[channel_specs.488]
+driver = "Oxxius"
+color = "blue"
+filter_index = 2 # CHECK WITH XIAOYUN
+ao_channel = 11
 disable_voltage = 0.0
-enable_voltage =  1.0
-camera_axis_position = 0 # absolute value in steps.
-[channel_specs.552.etl]
-delay = 0.0 # seconds.
-settling_time = 0.025 # seconds.
-min_voltage = 2.38
-max_voltage = 2.98
-[channel_specs.552.kwds]
-port='COM15'
+enable_voltage =  5.0
+[channel_specs.488.etl_left]
+offset = 1.85
+amplitude = 0
+[channel_specs.488.etl_right]
+offset = 1.65
+ampitude = 0
+[channel_specs.488.galvo_x_left]
+offset = 2.40
+amplitude = -0.015
+[channel_specs.488.galvo_x_right]
+offset = 2.74
+amplitude = -0.015
+[channel_specs.488.galvo_y_left]
+offset = 2.56
+amplitude = 1.30
+[channel_specs.488.galvo_y_right]
+offset = 2.75
+amplitude = 1.30
+[channel_specs.488.kwds]
+port='COMxx' # TODO FOR OXXIUS LASERS
 
-[channel_specs.639]
-driver = "Vortran"
+[channel_specs.561]
+driver = "Oxxius"
+color = "green"
+filter_index = 3 # CHECK WITH XIAOYUN
+ao_channel = 9
+disable_voltage = 0.0
+enable_voltage =  5.0
+[channel_specs.561.etl_left]
+offset = 1.85
+amplitude = 0
+[channel_specs.561.etl_right]
+offset = 1.65
+ampitude = 0
+[channel_specs.561.galvo_x_left]
+offset = 2.40
+amplitude = -0.015
+[channel_specs.561.galvo_x_right]
+offset = 2.74
+amplitude = -0.015
+[channel_specs.561.galvo_y_left]
+offset = 2.56
+amplitude = 1.30
+[channel_specs.561.galvo_y_right]
+offset = 2.75
+amplitude = 1.30
+[channel_specs.561.kwds]
+port='COMxx' # TODO FOR OXXIUS LASERS
+
+[channel_specs.638]
+driver = "Oxxius"
 color = "red"
 filter_index = 4
-ao_channel = 4
+ao_channel = 8
 disable_voltage = 0.0
-enable_voltage =  1.0
-camera_axis_position = 0 # absolute value in steps.
-[channel_specs.639.etl]
-delay = 0.0 # seconds. time to advance the etl waveform such that the actual signal arrives on time.
-settling_time = 0.025 # seconds. min time for the etl to recover to its start position.
-min_voltage = 2.36 #2.43 #2.33 for fluorescein water#2.29 #2.287 good for ch1 no sample # 2.275 #2.58 for ch2 #2.545
-max_voltage = 2.98 #2.60 for center, glass chamber #2.92 for fluorescein water# 2.96 good for ch1 no sample # 2.9 #2.95 for ch1 #2.95#2.845 # 2.845#2.825
-[channel_specs.639.kwds]
-port='COMxx'
+enable_voltage =  5.0
+[channel_specs.638.etl_left]
+offset = 1.85
+amplitude = 0
+[channel_specs.638.etl_right]
+offset = 1.65
+ampitude = 0
+[channel_specs.638.galvo_x_left]
+offset = 2.40
+amplitude = -0.015
+[channel_specs.638.galvo_x_right]
+offset = 2.74
+amplitude = -0.015
+[channel_specs.638.galvo_y_left]
+offset = 2.56
+amplitude = 1.30
+[channel_specs.638.galvo_y_right]
+offset = 2.75
+amplitude = 1.30
+[channel_specs.638.kwds]
+port='COMxx' # TODO FOR OXXIUS LASERS
 
 [daq_ao_names_to_channels] # lookup table for named hardware to AO channels
-etl = 1
-galvo1_plus = 21
-galvo1_minus = 22
+galvo_y_left = 0
+galvo_y_right = 1
+galvo_x_left = 2
+galvo_x_right = 3
+etl_left = 4
+etl_right = 5
+camera_left = 6
+camera_right = 7
 # This will be further populated with the laser ao channels from channel_specs at runtime.
 
 # Devices
-[dcam_specs]
-row_interval = 15e-6 # seconds. Cannot be less then 10 [us].
+[camera_specs.camera_right]
+row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'FORWARD' #  BACKWARD for ch2 and FORWARD for ch1
+camx = 2304 # number of x camera pixels
+camy = 2304 # number of y camera pixels
+
+[camera_specs.camera_left]
+row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
+scan_direction = 'BACKWARD' #  BACKWARD for ch2 and FORWARD for ch1
+camx = 2304 # number of x camera pixels
+camy = 2304 # number of y camera pixels
 
 # <SOMETHING>_kwds will be splatted with **kwds to init the corresponding object.
 [daq_driver_kwds]
 dev_name = 'Dev1' # NI Card address as it appears to the PC.
 output_trigger_name = 'port0/line0'
-update_frequency = 4e5 # Hz
-
-[etl_driver_kwds]
-port = 'COM4' # COM7 for ch2, COM4 for ch1
-
-[tiger_controller_driver_kwds]
-com_port='COM10'
+update_frequency = 4.0e5 # Hz
 
 [sample_pose_kwds.axis_map]
 x = "z"  # TODO: signs??
 y = "x"
 z = "y"
 
-[filter_wheel_kwds]
+[tiger_controller_driver_kwds]
+com_port='COM10' # TO ADD
+
+[filter_wheel_left_kwds]
+tiger_axis = 0 # filterwheel axis according to the tigerbox.
+[filter_wheel_right_kwds]
 tiger_axis = 1 # filterwheel axis according to the tigerbox.
 
 # For imaging run estimations.
 [estimates]
 tiles_per_second = 15
-gigabytes_per_image = 0.8

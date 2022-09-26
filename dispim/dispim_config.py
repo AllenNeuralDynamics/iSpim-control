@@ -129,14 +129,6 @@ class DispimConfig(SpimConfig):
     #     self.design_specs['sensor_row_count'] = row_count
 
     # @property
-    # def stage_backlash_reset_dist_um(self):
-    #     return self.stage_specs['backlash_reset_distance_um']
-
-    # @stage_backlash_reset_dist_um.setter
-    # def stage_backlash_reset_dist_um(self, micrometers: int):
-    #     self.stage_specs['backlash_reset_distance_um'] = micrometers
-
-    # @property
     # def start_of_frame_delay(self):
     #     return self.cfg['waveform_specs']['start_of_frame_delay']
 
@@ -160,14 +152,25 @@ class DispimConfig(SpimConfig):
     # def daq_update_freq(self, hz: int):
     #     self.daq_obj_kwds['update_frequency_hz'] = hz
 
-    # @property
-    # def z_step_size_um(self):
-    #     return self.cfg['imaging_specs'].get('z_step_size_um',
-    #                                          self.xy_voxel_size_um)
+    # TODO: consider putting this in the parent class.
+    # TODO: handle case if we want this to default to something else.
+    @property
+    def z_step_size_um(self):
+        return self.cfg['imaging_specs']['z_step_size_um']
 
-    # @z_step_size_um.setter
-    # def z_step_size_um(self, um: float):
-    #     self.cfg['imaging_specs']['z_step_size_um'] = um
+    @z_step_size_um.setter
+    def z_step_size_um(self, um: float):
+        self.cfg['imaging_specs']['z_step_size_um'] = um
+
+    # TODO: consider putting this in the parent class.
+    @property
+    def stage_backlash_reset_dist_um(self):
+        return self.stage_specs['backlash_reset_distance_um']
+
+    @stage_backlash_reset_dist_um.setter
+    def stage_backlash_reset_dist_um(self, micrometers: int):
+        self.stage_specs['backlash_reset_distance_um'] = micrometers
+
 
     # Any derived parameter not explicitly in the config is an @property,
     # so we can reload the config without needing to recompute properties.

@@ -1,3 +1,3 @@
-# diSPIM
+# DiSPIM
 
-Software control of the ASI diSPIM.
+Software control of the ASI DiSPIM.
