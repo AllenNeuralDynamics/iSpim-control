@@ -230,15 +230,13 @@ class DispimConfig(SpimConfig):
     def daq_used_channels(self):
         """Return the total channels used on the daq."""
         # ao channels for lasers must be tallied up from channel_specs.
-        # add 1 for the digital "output trigger" signal.
         ao_laser_count = 0
         # Since it's possible that lasers aren't strictly driven by an
         # ao channel, we must tally them up.
-        for wavelen, specs in self.laser_specs.items():
+        for wavelength, specs in self.laser_specs.items():
             if 'ao_channel' in specs:
                 ao_laser_count += 1
-        return len(self.cfg['daq_ao_names_to_channels']) + \
-            ao_laser_count + 1
+        return len(self.cfg['daq_ao_names_to_channels']) + ao_laser_count
 
     @property
     def daq_ao_names_to_channels(self):

@@ -47,7 +47,7 @@ class WaveformHardware:
             samps_per_chan=sample_count)
         self.ao_task.triggers.start_trigger.retriggerable = True
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
-            trigger_source=f"/{self.dev_name}/{self.input_trigger_name}"
+            trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
             trigger_edge=Slope.RISING)
 
         # Create counter for encoder pulses from same trigger source. assign to ctr0
