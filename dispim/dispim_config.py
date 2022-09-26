@@ -32,6 +32,9 @@ class DispimConfig(SpimConfig):
         # Note: these are mutable, so reloading the toml doesn't affect them.
         self.stage_specs = self.cfg['sample_stage_specs']
         self.laser_specs = self.cfg['channel_specs']
+        self.design_specs = self.cfg['design_specs']
+        self.camera_specs = self.cfg['camera_specs']
+        self.waveform_specs = self.cfg['waveform_specs']
 
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
@@ -171,31 +174,15 @@ class DispimConfig(SpimConfig):
     def stage_backlash_reset_dist_um(self, micrometers: int):
         self.stage_specs['backlash_reset_distance_um'] = micrometers
 
-
     # Any derived parameter not explicitly in the config is an @property,
     # so we can reload the config without needing to recompute properties.
     # These do NOT get setters.
     # FIXME: make separate getters for XY.
     #   Handle Overlap correctly.
-    @property
-    def xy_voxel_size_um(self):
-        # Note that x and y are the same!
-        return float(self.tile_size_x_um) / self.sensor_row_count
-
-    @property
-    def row_exposure_time(self):
-        # Total time any row gets exposed to laser.
-        return self.row_interval*self.slit_width
-
-    @property
-    def total_exposure_time(self):
-        # Total time spent where any part of the sensor is being exposed.
-        return self.sensor_row_count*self.row_interval + self.row_exposure_time
 
     @property
     def laser_wavelengths(self):
         """Returns set of all configured laser wavelengths.
-
         Note: this is NOT the subset of wavelengths used for imaging."""
         return set([int(nm) for nm in self.cfg['channel_specs'].keys()])
 
@@ -237,42 +224,38 @@ class DispimConfig(SpimConfig):
     def tiles_per_second(self):
         return float(self.cfg['estimates']['tiles_per_second'])
 
-    def sanity_check(self):
-        """Check if the current (live) configuration passes all pre-checks.
+    # DO WE NEED THIS?
+    # def sanity_check(self):
+    #     """Check if the current (live) configuration passes all pre-checks.
+    #     It's worth calling this right before conducting an imaging run.
+    #     """
+    #     # Run through all checks first; raise an assertion error at the end.
+    #     # Do the Base Class Sanity Checks first and cascade them.
+    #     error_msgs = []
+    #     try:
+    #         super().sanity_check()
+    #     except AssertionError as e:
+    #         error_msgs.append(str(e))
 
-        It's worth calling this right before conducting an imaging run.
-        """
-        # Run through all checks first; raise an assertion error at the end.
-        # Do the Base Class Sanity Checks first and cascade them.
-        error_msgs = []
-        try:
-            super().sanity_check()
-        except AssertionError as e:
-            error_msgs.append(str(e))
+    #     # TODO: a bunch of DISPIM-specific sanity checks.
+    #     # TODO: put this in the base class.
+    #     assert self.local_storage_dir.exists(), \
+    #         f"Error: local storage directory '{self.local_storage_dir}' " \
+    #         "does not exist."
+    #     # Check if external storage path exists only if it was specified.
+    #     if self.ext_storage_dir is not None:
+    #         assert self.ext_storage_dir.exists(), \
+    #             "Error: external storage directory " \
+    #             f"'{self.ext_storage_dir}' does not exist."
 
-        # TODO: a bunch of DISPIM-specific sanity checks.
-        # TODO: put this in the base class.
-        assert self.local_storage_dir.exists(), \
-            f"Error: local storage directory '{self.local_storage_dir}' " \
-            "does not exist."
-        # Check if external storage path exists only if it was specified.
-        if self.ext_storage_dir is not None:
-            assert self.ext_storage_dir.exists(), \
-                "Error: external storage directory " \
-                f"'{self.ext_storage_dir}' does not exist."
-
-        # Create a big error message at the end.
-        if len(error_msgs):
-            all_msgs = "\n".join(error_msgs)
-            raise AssertionError(all_msgs)
+    #     # Create a big error message at the end.
+    #     if len(error_msgs):
+    #         all_msgs = "\n".join(error_msgs)
+    #         raise AssertionError(all_msgs)
 
     def print_summary_stats(self):
         # Print some stats:
-        print("--Config Stats--")
-        print("  Total \"sensor-active\" time (computed): "
-              f"{self.total_exposure_time*1e3:.3f} [ms]")
-        #print(f"  DAQ cycle time (computed): {self.daq_cycle_time*1e3:.3f} [ms]")
-        #print()
+        print("--Config Stats--") # TO DO ADD DISPIM VALUES HERE
         print("Volume Capture Stat:")
         print(f"  percent overlap x: {self.tile_overlap_x_percent:.1f}%")
         print(f"  percent overlap y: {self.tile_overlap_x_percent:.1f}%")
@@ -280,11 +263,6 @@ class DispimConfig(SpimConfig):
               f"{self.volume_x_um:.1f}[um] x "
               f"{self.volume_y_um:.1f}[um] x "
               f"{self.volume_z_um:.1f}[um].")
-        print(f"  voxel (x,y,z) size: {self.xy_voxel_size_um:.3f}[um] x "
-              f"{self.xy_voxel_size_um:.3f}[um] x "
-              f"{self.z_step_size_um:.3f}[um].")
         print()
-        print("GUI settings for debugging:")
-        print(f"  Line Interval: {self.row_interval*1e6:.3f} [us]")
-        print(f"  Exposure Time (computed): {self.row_exposure_time*1e3:.3f} [ms]")
+        print("GUI settings for debugging:") # TO DO ADD DISPIM VALUES HERE
         print()
