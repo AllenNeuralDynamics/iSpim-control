@@ -8,6 +8,7 @@ from mock import NonCallableMock as Mock
 from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
+from dispim.compute_waveforms import generate_waveforms
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
@@ -55,13 +56,13 @@ class Dispim(Spim):
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
 
-    def _setup_waveform_hardware(self):
+    def _setup_waveform_hardware(self, active_wavelength: int):
         # Compute voltages_t.
         # Write it to hardware.
         self.log.error("Writing waveforms to hardware not yet implemented.")
-        # self.ni.configure(...)
-        # _, voltages_t = GenerateWaveforms(stuff)
-        # self.ni.assign_waveforms(voltages_t)
+        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels)
+        _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
+        self.ni.assign_waveforms(voltages_t)
 
     # TODO: this should be a base class thing.
     def check_ext_disk_space(self, dataset_size):

@@ -1,6 +1,7 @@
 """Mesospim Config object to flatten item access in the TOML-based config."""
 
 from mesospim.config_base import SpimConfig
+import copy
 
 # A template from which we can generate a blank mesospim config toml file.
 TomlTemplate = \
@@ -47,31 +48,29 @@ class DispimConfig(SpimConfig):
 
     def get_period_time(self):
         """Return the total waveform cycle time for a frame."""
-        return self.get_exposure_time() + \
-               self.get_rest_time()
+        return self.exposure_time + self.rest_time
 
     def get_daq_cycle_time(self):
         """Return the total waveform cycle time for a frame."""
-        return self.get_period_time() + \
-               self.get_delay_time()
+        return self.get_period_time() + self.delay_time
 
     def get_delay_samples(self):
         """Return the delay samples between the left and right views."""
-        return round(self.daq_update_freq*self.get_delay_time())
+        return round(self.daq_update_freq*self.delay_time)
 
     def get_rest_samples(self):
         """Return the rest samples between the left and right views."""
-        return round(self.daq_update_freq*self.get_rest_time())
+        return round(self.daq_update_freq*self.rest_time)
 
     def get_exposure_samples(self):
         """Return the exposure samples between the left and right views."""
-        return round(self.daq_update_freq*self.get_exposure_time())
+        return round(self.daq_update_freq*self.exposure_time)
 
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""
         return round(self.daq_update_freq*self.get_period_time())
 
-    def get_daq_samples(self):
+    def get_daq_cycle_samples(self):
         """Return the total waveform cycle time for a frame."""
         return round(self.daq_update_freq*self.get_daq_cycle_time())
 
@@ -134,13 +133,13 @@ class DispimConfig(SpimConfig):
     # def trim_galvo_setpoint(self, volts: float):
     #     self.cfg['waveform_specs']['trim_galvo']['voltage_setpoint'] = volts
 
-    # @property
-    # def daq_update_freq(self):
-    #     return self.daq_obj_kwds['update_frequency_hz']
+    @property
+    def daq_update_freq(self):
+        return self.daq_obj_kwds['update_frequency_hz']
 
-    # @daq_update_freq.setter
-    # def daq_update_freq(self, hz: int):
-    #     self.daq_obj_kwds['update_frequency_hz'] = hz
+    @daq_update_freq.setter
+    def daq_update_freq(self, hz: int):
+        self.daq_obj_kwds['update_frequency_hz'] = hz
 
     # TODO: consider putting this in the parent class.
     # TODO: handle case if we want this to default to something else.
@@ -185,16 +184,6 @@ class DispimConfig(SpimConfig):
     def rest_time(self, rest_time: float):
         self.waveform_specs['rest_time'] = rest_time
 
-    # def get_exposure_time(self):
-    #     """Return the total exposure time for a frame."""
-    #     return self.design_specs['sensor_row_count']* \
-    #            self.camera_specs['row_interval']
-    #
-    # def get_exposure_time(self):
-    #
-    #     return self.design_specs['sensor_row_count']* \
-    #            self.camera_specs['row_interval']
-    #
     @property
     def exposure_time(self):
         """Return the total exposure time for a frame."""
@@ -240,7 +229,10 @@ class DispimConfig(SpimConfig):
 
     @property
     def daq_ao_names_to_channels(self):
-        """Return a dict of {<analog output signal name> : <daq ao channel>}"""
+        """Return a dict of {<analog output signal name> : <daq ao channel>}.
+
+        Laser signals are stuffed in as str(wavelength_in_nm).
+        """
         # Since this data is generated from mutable values, make a deepcopy
         # so we don't change TOML values if we later save the TOML.
         ao_names_to_channels = \

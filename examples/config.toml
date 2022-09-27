@@ -46,7 +46,7 @@ offset = 1.85
 amplitude = 0
 [channel_specs.405.etl_right]
 offset = 1.65
-ampitude = 0
+amplitude = 0
 [channel_specs.405.galvo_x_left]
 offset = 2.40
 amplitude = -0.015
@@ -74,7 +74,7 @@ offset = 1.85
 amplitude = 0
 [channel_specs.488.etl_right]
 offset = 1.65
-ampitude = 0
+amplitude = 0
 [channel_specs.488.galvo_x_left]
 offset = 2.40
 amplitude = -0.015
@@ -102,7 +102,7 @@ offset = 1.85
 amplitude = 0
 [channel_specs.561.etl_right]
 offset = 1.65
-ampitude = 0
+amplitude = 0
 [channel_specs.561.galvo_x_left]
 offset = 2.40
 amplitude = -0.015
@@ -130,7 +130,7 @@ offset = 1.85
 amplitude = 0
 [channel_specs.638.etl_right]
 offset = 1.65
-ampitude = 0
+amplitude = 0
 [channel_specs.638.galvo_x_left]
 offset = 2.40
 amplitude = -0.015
@@ -161,14 +161,14 @@ camera_right = 7
 [camera_specs.camera_right]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'FORWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 6 # percent delay in triggering on
+offset = 0.06 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
 [camera_specs.camera_left]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'BACKWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 6 # percent delay in triggering on
+offset = 0.06 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
@@ -176,7 +176,7 @@ camy = 2304 # number of y camera pixels
 [daq_driver_kwds]
 dev_name = 'Dev2' # NI Card address as it appears to the PC.
 input_trigger_name = 'PFI0'
-update_frequency = 4.0e5 # Hz
+update_frequency_hz = 4.0e5 # Hz
 
 [sample_pose_kwds.axis_map]
 x = "z"  # TODO: signs??
