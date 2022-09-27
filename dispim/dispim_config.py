@@ -31,7 +31,8 @@ class DispimConfig(SpimConfig):
         super().__init__(toml_filepath, TomlTemplate)
 
         # Note: these are mutable, so reloading the toml doesn't affect them.
-        self.stage_specs = self.cfg['sample_stage_specs']
+        self.stage_specs = self.cfg['stage_specs']
+        self.tiger_specs = self.cfg['tiger_specs']
         self.laser_specs = self.cfg['channel_specs']
         self.design_specs = self.cfg['design_specs']
         self.camera_specs = self.cfg['camera_specs']

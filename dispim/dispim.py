@@ -37,6 +37,7 @@ class Dispim(Spim):
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
         self.sample_pose = SamplePose(self.tigerbox,
                                       **self.cfg.sample_pose_kwds)
+        # TODO, setup oxxius laser
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
@@ -46,15 +47,35 @@ class Dispim(Spim):
         self.stage_y_pos = None
 
         # Setup hardware according to the config.
+        self._setup_camera()
+        self._setup_lasers()
         self._setup_motion_stage()
         self._setup_waveform_hardware()
 
+        # TODO, setup cameras with CPX -> frame_grabber()
+    def _setup_camera(self):
+            pass
+
+        # TODO, set laser powers and modulation mode for oxxius lasers
+    def _setup_lasers(self):
+        pass
+
     def _setup_motion_stage(self):
-        """Configure the sample stage for the Exaspim according to the config."""
+        """Configure the sample stage for the dispim according to the config."""
         # The tigerbox x axis is the sample pose z axis.
         self.sample_pose.set_axis_backlash(z=0.0)
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
+        # loop over axes and verify in external mode
+        for _, axis in self.cfg.tiger_specs['axes'].items():
+            self.tigerbox.pm(axis, 1)
+        # TODO, think about where to store this mapping in config
+        # TODO, merge dispim commands in tigerasi
+        # TODO, how to call this? via tigerbox?
+        # set card 31 (XY stage), 'X" (input), TTL to value of 1
+        self.tigerbox.ttl(31, 'X', 1)
+        # TODO, this needs to be buried somewhere else
+        # TODO, how to store card # mappings, in config?
 
     def _setup_waveform_hardware(self, active_wavelength: int):
         # Compute voltages_t.
@@ -162,6 +183,7 @@ class Dispim(Spim):
                         self.log.info("Starting transfer process for "
                                       f"{filename}.")
                         filepath_dest = img_storage_dir/filename
+                        # TODO, use xcopy transfer for speed
                         transfer_process = TiffTransfer(filepath_src,
                                                         filepath_dest)
                         transfer_process.start()

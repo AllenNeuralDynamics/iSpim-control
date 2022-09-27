@@ -23,9 +23,17 @@ data_type = "uint16"
 slit_width_pixels = 294 # pixels
 
 # Stage
-[sample_stage_specs]
+[stage_specs]
 backlash_reset_distance_um = 4 # [um]
-# encoder input pulses per um
+
+# Tiger
+[tiger_specs.axes]
+etl_left_axis = 'V'
+etl_right_axis = 'W'
+galvo_left_x_axis = 'A'
+galvo_left_y_axis = 'B'
+galvo_right_x_axis = 'C'
+galvo_right_y_axis = 'D'
 
 # Signals
 [waveform_specs]

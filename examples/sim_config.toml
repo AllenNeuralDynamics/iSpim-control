@@ -23,9 +23,17 @@ data_type = "uint16"
 slit_width_pixels = 294 # pixels
 
 # Stage
-[sample_stage_specs]
+[stage_specs]
 backlash_reset_distance_um = 4 # [um]
-# encoder input pulses per um
+
+# Tiger
+[tiger_specs.axes]
+etl_left_axis = 'V'
+etl_right_axis = 'W'
+galvo_left_x_axis = 'A'
+galvo_left_y_axis = 'B'
+galvo_right_x_axis = 'C'
+galvo_right_y_axis = 'D'
 
 # Signals
 [waveform_specs]
@@ -174,8 +182,8 @@ camy = 2304 # number of y camera pixels
 
 # <SOMETHING>_kwds will be splatted with **kwds to init the corresponding object.
 [daq_driver_kwds]
-dev_name = 'Dev1' # NI Card address as it appears to the PC.
-output_trigger_name = 'port0/line0'
+dev_name = 'Dev2' # NI Card address as it appears to the PC.
+input_trigger_name = 'PFI0'
 update_frequency_hz = 4.0e5 # Hz
 
 [sample_pose_kwds.axis_map]

@@ -80,6 +80,7 @@ def generate_waveforms(cfg: DispimConfig, active_wavelength: int):
     # Populate all waveforms in the order the NI card will create them.
     for index, (name, _) in enumerate(cfg.daq_ao_names_to_channels.items()):
         voltages_t[index] = waveforms[name]
+
     return t, voltages_t
 
 

@@ -69,10 +69,10 @@ class WaveformHardware:
         # Confirm digital signal waveform is a numpy array because we must
         # ultimately write the digital waveform to the device as bools.
 
-        assert type(voltages_t[-1]) == ndarray, \
+        assert type(voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
-        self.ao_task.write(voltages_t[:-1], auto_start=False)  # arrays of floats
+        self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
 
     def start(self):
         """start tasks."""
