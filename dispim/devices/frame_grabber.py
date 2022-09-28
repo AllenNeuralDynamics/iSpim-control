@@ -30,7 +30,8 @@ class FrameGrabber:
         self.p.camera.settings.binning = 1
         self.p.camera.settings.shape = (tile_shape[1], tile_shape[0])
         self.p.storage.identifier = self.dm.select(DeviceKind.Storage, name='Tiff')
-        self.p.storage.settings.filename = "out.tiff"
+        self.log.info(str(output_path.absolute()))
+        self.p.storage.settings.filename = str(output_path.absolute())
         self.p.max_frame_count = frame_count
         self.p.frame_average_count = 0  # disables
         self.runtime.set_configuration(self.p)
