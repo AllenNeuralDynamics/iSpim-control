@@ -157,9 +157,9 @@ class Dispim(Spim):
                 self.stage_x_pos = 0
                 self.log.info(f"Moving to y={self.stage_y_pos}.")
                 self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
-                while self.tigerbox.is_moving() == True:
+                while self.tigerbox.is_moving():
                     pos = self.tigerbox.get_position('Z')
-                    self.log.info(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
+                    self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
                     sleep(0.01)
 
                 for i in range(xtiles):
@@ -167,10 +167,9 @@ class Dispim(Spim):
                     # TODO, set speed of sample X / tiger Y axis to ~1 mm/s
                     self.log.info(f"Moving to x={self.stage_x_pos}.")
                     self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos), wait_for_output=True, wait_for_reply=True)
-                    while self.tigerbox.is_moving() == True:
-
+                    while self.tigerbox.is_moving():
                         pos = self.tigerbox.get_position('Y')
-                        self.log.info(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
+                        self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
                         sleep(0.01)
 
                     for ch in channels:
@@ -181,9 +180,9 @@ class Dispim(Spim):
                         self.tigerbox.move_axes_absolute(x=round(z_backup_pos), wait_for_output=True, wait_for_reply=True)
                         self.log.info(f"Moving to z={0}.")
                         self.tigerbox.move_axes_absolute(x=0, wait_for_output=True, wait_for_reply=True)
-                        while self.tigerbox.is_moving() == True:
+                        while self.tigerbox.is_moving():
                             pos = self.tigerbox.get_position('X')
-                            self.log.info(f"Stage is moving! Z =  {pos['X']} -> {0}")
+                            self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
                             sleep(0.01)
                         # TODO, set speed of sample Z / tiger X axis to ~0.01 mm/s
 
