@@ -12,11 +12,11 @@ import logging
 
 
 class WaveformHardware:
-    def __init__(self, dev_name, input_trigger_name, update_frequency):
+    def __init__(self, dev_name, input_trigger_name, update_frequency_hz):
 
         self.dev_name = dev_name # NI card address, i.e. Dev2
         self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
-        self.update_freq = update_frequency  # in [Hz]
+        self.update_freq = update_frequency_hz  # in [Hz]
         self.ao_task = None
         self.counter_task = None
         self.log = logging.getLogger(__name__)

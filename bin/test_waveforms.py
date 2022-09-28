@@ -19,10 +19,10 @@ if __name__ == "__main__":
                           f"{args.active_wavelength}nm_active_plot.pdf")
 
     # Prepare NIDAQ
-    ni = WaveformHardware(config.daq_obj_kwds['dev_name'], config.daq_obj_kwds['dev_name'], config.daq_obj_kwds['update_frequency_hz'])
+    ni = WaveformHardware(**config.daq_obj_kwds)
     ni.configure(config.get_daq_cycle_time(), config.daq_ao_names_to_channels)
     ni.assign_waveforms(voltages_of_t_)
-    ni.start()
-    time.sleep(10)
-    ni.stop()
-    ni.close()
+    # ni.start()
+    # time.sleep(10)
+    # ni.stop()
+    # ni.close()

@@ -1,8 +1,10 @@
 from argparse import ArgumentParser
 from dispim.dispim_config import DispimConfig
-from dispim.compute_waveforms import generate_waveforms, plot_waveforms_to_pdf
-from dispim.devices.ni import WaveformHardware
-import time
+from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
+from tigerasi.sim_tiger_controller import TigerController as SimTiger
+# TODO: consolidate these later.
+from mesospim.spim_base import Spim
+from mesospim.devices.tiger_components import SamplePose
 
 if __name__ == "__main__":
     # Argparse for a config file.
@@ -12,17 +14,13 @@ if __name__ == "__main__":
     # grab a config filepath.
     args = parser.parse_args()
     config = DispimConfig(args.config_path)
-    # Generate a plot for the active laser.
-    t_, voltages_of_t_ = generate_waveforms(config, args.active_wavelength)
-    # plot the waveforms.
-    plot_waveforms_to_pdf(config, t_, voltages_of_t_, args.active_wavelength,
-                          f"{args.active_wavelength}nm_active_plot.pdf")
 
-    # Prepare NIDAQ
-    ni = WaveformHardware(config.daq_obj_kwds['dev_name'], config.daq_obj_kwds['dev_name'], config.daq_obj_kwds['update_frequency_hz'])
-    ni.configure(config.get_daq_cycle_time(), config.daq_ao_names_to_channels)
-    ni.assign_waveforms(voltages_of_t_)
-    ni.start()
-    time.sleep(10)
-    ni.stop()
-    ni.close()
+    tigerbox = TigerController(**config.tiger_obj_kwds)
+    sample_pose = SamplePose(tigerbox, **config.sample_pose_kwds)
+
+    tigerbox.scanr(X=0, Y=1, Z=32)
+    tigerbox.scanv(X=0, Y=0 ,Z=1)
+
+    tigerbox.scan()
+    # sample_pose.move_absolute(z=1000, wait=True)
+    # tigerbox.move_axes_absolute(x=100, wait_for_output=True, wait_for_reply=True)

@@ -3,7 +3,7 @@
 import logging
 import numpy as np
 from pathlib import Path
-from time import perf_counter
+from time import perf_counter, sleep
 from mock import NonCallableMock as Mock
 from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
@@ -31,7 +31,7 @@ class Dispim(Spim):
         # Hardware
         self.frame_grabber = FrameGrabber() if not self.simulated else \
             Mock(FrameGrabber)
-        self.ni = WaveformHardware() if not self.simulated else \
+        self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
@@ -50,7 +50,6 @@ class Dispim(Spim):
         self._setup_camera()
         self._setup_lasers()
         self._setup_motion_stage()
-        self._setup_waveform_hardware()
 
         # TODO, setup cameras with CPX -> frame_grabber()
     def _setup_camera(self):
@@ -63,26 +62,30 @@ class Dispim(Spim):
     def _setup_motion_stage(self):
         """Configure the sample stage for the dispim according to the config."""
         # The tigerbox x axis is the sample pose z axis.
+        # TODO, this is duplicated in collect_volumetric_image()?
         self.sample_pose.set_axis_backlash(z=0.0)
+        # TODO, set speed of sample Z / tiger X axis to ~1
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
-        for _, axis in self.cfg.tiger_specs['axes'].items():
-            self.tigerbox.pm(axis, 1)
+        # for _, axis in self.cfg.tiger_specs['axes'].items():
+        #     self.tigerbox.pm(axis, 0)
         # TODO, think about where to store this mapping in config
         # TODO, merge dispim commands in tigerasi
         # TODO, how to call this? via tigerbox?
         # set card 31 (XY stage), 'X" (input), TTL to value of 1
-        self.tigerbox.ttl(31, 'X', 1)
+        # self.tigerbox.ttl(31, 'X', 1)
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
 
     def _setup_waveform_hardware(self, active_wavelength: int):
         # Compute voltages_t.
         # Write it to hardware.
-        self.log.error("Writing waveforms to hardware not yet implemented.")
+        self.log.info("Configuring waveforms for hardware.")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels)
+        self.log.info("Generating waveforms to hardware.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
+        self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
 
     # TODO: this should be a base class thing.
@@ -140,7 +143,7 @@ class Dispim(Spim):
             raise
 
         # Set the sample starting location as the origin.
-        self.sample_pose.home_in_place()
+        # self.sample_pose.home_in_place()
         # Disable backlash compensation on Z to minimize z axis settling time.
         # Disabling Z compensation is ok since we scan in one direction.
         self.sample_pose.set_axis_backlash(z=0.0)
@@ -149,50 +152,67 @@ class Dispim(Spim):
         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
         self.log.debug("Applying extra move to take out backlash.")
         self.sample_pose.move_absolute(z=round(z_backup_pos), wait=True)
+        print("Moving to z=0")
         self.sample_pose.move_absolute(z=0, wait=True)
         transfer_process = None  # Reference to external tiff transfer process.
         self.stage_x_pos, self.stage_y_pos = (0, 0)
         self.image_index = 1
         # Setup double buffer to capture images while reading out prior image.
-        # TODO: setup nidaq here if not already setup.
+
         try:
-            for j in range(ytiles):
-                self.stage_x_pos = 0
-                self.sample_pose.move_absolute(y=round(self.stage_y_pos),
-                                               wait=True)
-                for i in range(xtiles):
-                    self.sample_pose.move_absolute(x=round(self.stage_x_pos),
-                                                   wait=True)
-                    # Setup capture of next Z stack.
-                    # Open filters, enable active laser; disable the rest.
-                    filename = Path(f"{tile_prefix}_{i}_{j}.tiff")
-                    filepath_src = local_storage_dir/filename
-                    # TODO: consider making step size a fn parameter instead of
-                    #   collected strictly from the config.
-                    self.log.debug(f"Collecting tile stack: {filename}.")
-                    self._collect_stacked_tiff(ztiles, self.cfg.z_step_size_um,
-                                               filepath_src)
-                    # Start transferring tiff file to its destination.
-                    # Note: Image transfer is faster than image capture, but
-                    #   we still wait for prior process to finish.
-                    if transfer_process is not None:
-                        self.log.info("Waiting for tiff transfer process "
-                                      "to complete.")
-                        transfer_process.join()
-                    if img_storage_dir is not None:
-                        self.log.info("Starting transfer process for "
-                                      f"{filename}.")
-                        filepath_dest = img_storage_dir/filename
-                        # TODO, use xcopy transfer for speed
-                        transfer_process = TiffTransfer(filepath_src,
-                                                        filepath_dest)
-                        transfer_process.start()
-                    self.stage_x_pos += x_grid_step_um * UM_TO_STEPS
-                self.stage_y_pos += y_grid_step_um * UM_TO_STEPS
+            for ch in channels:
+                self.log.info('looping colors')
+                # TODO: setup channel specific items (filters, lasers)
+                self._setup_waveform_hardware(ch)
+                self.ni.start()
+
+                for j in range(ytiles):
+                    self.log.info('looping in y')
+                    self.stage_x_pos = 0
+                    self.log.info('before y move')
+                    self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
+                    # self.sample_pose.move_absolute(y=round(self.stage_y_pos),
+                                                   # wait=True)
+                    self.log.info('after y move')
+                    for i in range(xtiles):
+                        self.log.info('looping in z')
+                        #TODO, set speed of sample Z / tiger X axis to ~0.01
+                        self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos), wait_for_output=True, wait_for_reply=True)
+                        # self.sample_pose.move_absolute(x=round(self.stage_x_pos),
+                                                       # wait=True)
+                        # Setup capture of next Z stack.
+                        # Open filters, enable active laser; disable the rest.
+                        filename = Path(f"{tile_prefix}_{i}_{j}.tiff")
+                        filepath_src = local_storage_dir/filename
+                        # TODO: consider making step size a fn parameter instead of
+                        #   collected strictly from the config.
+                        self.log.debug(f"Collecting tile stack: {filename}.")
+                        self._collect_stacked_tiff(ztiles, self.cfg.z_step_size_um,
+                                                   filepath_src)
+                        # Start transferring tiff file to its destination.
+                        # Note: Image transfer is faster than image capture, but
+                        #   we still wait for prior process to finish.
+                        if transfer_process is not None:
+                            self.log.info("Waiting for tiff transfer process "
+                                          "to complete.")
+                            transfer_process.join()
+                        if img_storage_dir is not None:
+                            self.log.info("Starting transfer process for "
+                                          f"{filename}.")
+                            filepath_dest = img_storage_dir/filename
+                            # TODO, use xcopy transfer for speed
+                            transfer_process = TiffTransfer(filepath_src,
+                                                            filepath_dest)
+                            transfer_process.start()
+                        # TODO, set speed of sample Z / tiger X axis to ~1
+                        self.stage_x_pos += x_grid_step_um * UM_TO_STEPS
+                    self.stage_y_pos += y_grid_step_um * UM_TO_STEPS
+                self.ni.stop()
+                self.ni.close()
         finally:
             # Wait for waveform playback to finish so we leave signals in their
             # ending voltage states.
-            self.ni.wait_until_done()  # use default timeout of 1[s].
+            # self.ni.wait_until_done()  # use default timeout of 1[s].
             self.log.info("Stopping camera.")
             if transfer_process is not None:
                 self.log.debug("joining zstack transfer process.")
@@ -203,14 +223,17 @@ class Dispim(Spim):
     def _collect_stacked_tiff(self, tile_count, tile_spacing_um: float,
                               filepath_src):
         # Setup scan
-        self.frame_grabber.setup_stack_capture((self.cfg.column_count_px,
-                                                self.cfg.row_count_px),
-                                               filepath_src, tile_count)
+        # self.frame_grabber.setup_stack_capture((self.cfg.column_count_px,
+        #                                         self.cfg.row_count_px),
+        #                                        filepath_src, tile_count)
 
         self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um)
-        self.frame_grabber.start()
+        # self.frame_grabber.start()
+        # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.sample_pose.start_scan()
+            self.log.info('sleeping! for 2 min')
+            sleep(60)
             # TODO: this func should block until all the frames are captured.
             nframes = 0
             self.log.error("Skipping stack acquisition from FrameGrabber.")
@@ -224,11 +247,12 @@ class Dispim(Spim):
         finally:
             # Return to start position and kill the frame grabber.
             # Apply a lead-in-move to take out backlash.
-            z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
-            self.log.debug("Applying extra move to take out backlash.")
-            self.sample_pose.move_absolute(z=round(z_backup_pos), wait=True)
-            self.sample_pose.move_absolute(z=0, wait=True)
-            self.frame_grabber.stop()
+            # z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
+            # self.log.debug("Applying extra move to take out backlash.")
+            # self.sample_pose.move_absolute(z=round(z_backup_pos), wait=True)
+            # self.sample_pose.move_absolute(z=0, wait=True)
+            # self.frame_grabber.stop()
+            pass
 
     def livestream(self):
         pass
