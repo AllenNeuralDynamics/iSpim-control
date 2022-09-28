@@ -10,7 +10,7 @@ from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
-from tigerasi.device_codes import ControlMode
+# from tigerasi.device_codes import ControlMode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from mesospim.spim_base import Spim
@@ -80,11 +80,11 @@ class Dispim(Spim):
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
-        # Put all corresponding tigerbox components in external control mode.
-        externally_controlled_axes = \
-            {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.ni_controlled_tiger_axes}
-        self.tigerbox.pm(**externally_controlled_axes)
+        # TODO: Put all corresponding tigerbox components in external control mode.
+        # externally_controlled_axes = \
+        #     {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
+        #      self.cfg.ni_controlled_tiger_axes}
+        # self.tigerbox.pm(**externally_controlled_axes)
 
     # TODO: this should be a base class thing.
     def check_ext_disk_space(self, dataset_size):
@@ -159,7 +159,7 @@ class Dispim(Spim):
                 self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
                 while self.tigerbox.is_moving() == True:
                     pos = self.tigerbox.get_position('Z')
-                    self.log.info(f"Stage is moving! ! Y = {pos['Z']} -> {self.stage_y_pos}")
+                    self.log.info(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
                     sleep(0.01)
 
                 for i in range(xtiles):
@@ -170,7 +170,7 @@ class Dispim(Spim):
                     while self.tigerbox.is_moving() == True:
 
                         pos = self.tigerbox.get_position('Y')
-                        self.log.info(f"Stage is still moving! X = {pos['Y']} -> {self.stage_x_pos}")
+                        self.log.info(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
                         sleep(0.01)
 
                     for ch in channels:
