@@ -49,24 +49,21 @@ filter_index = 1 # CHECK WITH XIAOYUN
 ao_channel = 12
 disable_voltage = 0.0
 enable_voltage =  5.0
-[channel_specs.405.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.405.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.405.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.405.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.405.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.405.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
+[channel_specs.405.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.405.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
 [channel_specs.405.kwds]
 port='COMxx' # TODO FOR OXXIUS LASERS
 
@@ -77,24 +74,21 @@ filter_index = 2 # CHECK WITH XIAOYUN
 ao_channel = 11
 disable_voltage = 0.0
 enable_voltage =  5.0
-[channel_specs.488.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.488.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.488.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.488.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.488.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.488.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
+[channel_specs.488.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.488.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
 [channel_specs.488.kwds]
 port='COMxx' # TODO FOR OXXIUS LASERS
 
@@ -105,24 +99,21 @@ filter_index = 3 # CHECK WITH XIAOYUN
 ao_channel = 9
 disable_voltage = 0.0
 enable_voltage =  5.0
-[channel_specs.561.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.561.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.561.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.561.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.561.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.561.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
+[channel_specs.561.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.561.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
 [channel_specs.561.kwds]
 port='COMxx' # TODO FOR OXXIUS LASERS
 
@@ -133,24 +124,21 @@ filter_index = 4
 ao_channel = 8
 disable_voltage = 0.0
 enable_voltage =  5.0
-[channel_specs.638.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.638.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.638.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.638.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.638.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.638.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
+[channel_specs.638.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.638.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
 [channel_specs.638.kwds]
 port='COMxx' # TODO FOR OXXIUS LASERS
 

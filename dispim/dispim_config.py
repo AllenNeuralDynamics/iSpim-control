@@ -18,6 +18,7 @@ TomlTemplate = \
                 "volume_x_um": 2304,
                 "volume_y_um": 2304,
                 "volume_z_um": 1,
+                "laser_wavelengths" : [488],
             }
         # TODO: populate remaining fields.
     }
@@ -206,7 +207,7 @@ class DispimConfig(SpimConfig):
     def camera_right_offset(self):
         return self.camera_specs['camera_right']['offset']
 
-    @camera_left_offset.setter
+    @camera_right_offset.setter
     def camera_right_offset(self, right_offset: float):
         self.camera_specs['camera_right']['offset'] = right_offset
 

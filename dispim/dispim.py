@@ -25,7 +25,7 @@ class Dispim(Spim):
         #self.log = logging.getLogger(__package__)
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
-        super().__init__(config_filepath, simulated)
+        super().__init__(config_filepath, simulated = simulated)
         self.cfg = DispimConfig(config_filepath)
 
         # Instantiate hardware devices
@@ -65,13 +65,10 @@ class Dispim(Spim):
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
-        # for _, axis in self.cfg.tiger_specs['axes'].items():
-        #     self.tigerbox.pm(axis, 0)
         # TODO, think about where to store this mapping in config
         # TODO, merge dispim commands in tigerasi
         # TODO, how to call this? via tigerbox?
         # set card 31 (XY stage), 'X" (input), TTL to value of 1
-        # self.tigerbox.ttl(31, 'X', 1)
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
 
