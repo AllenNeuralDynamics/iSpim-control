@@ -18,18 +18,18 @@ def generate_waveforms(cfg: DispimConfig, active_wavelength: int):
     """
     # Create wavelength-dependent constants
     active_laser_specs = cfg.laser_specs[str(active_wavelength)]
-    etl_left_offset = active_laser_specs['etl_left']['offset']
-    etl_right_offset = active_laser_specs['etl_right']['offset']
-    etl_left_amplitude = active_laser_specs['etl_left']['amplitude']
-    etl_right_amplitude = active_laser_specs['etl_right']['amplitude']
-    galvo_x_left_offset = active_laser_specs['galvo_x_left']['offset']
-    galvo_x_right_offset = active_laser_specs['galvo_x_right']['offset']
-    galvo_y_left_offset = active_laser_specs['galvo_y_left']['offset']
-    galvo_y_right_offset = active_laser_specs['galvo_y_right']['offset']
-    galvo_x_left_amplitude = active_laser_specs['galvo_x_left']['amplitude']
-    galvo_x_right_amplitude = active_laser_specs['galvo_x_right']['amplitude']
-    galvo_y_left_amplitude = active_laser_specs['galvo_y_left']['amplitude']
-    galvo_y_right_amplitude = active_laser_specs['galvo_y_right']['amplitude']
+    etl_left_offset = active_laser_specs['etl']['left_offset']
+    etl_right_offset = active_laser_specs['etl']['right_offset']
+    etl_left_amplitude = active_laser_specs['etl']['left_amplitude']
+    etl_right_amplitude = active_laser_specs['etl']['right_amplitude']
+    galvo_x_left_offset = active_laser_specs['galvo']['x_left_offset']
+    galvo_x_right_offset = active_laser_specs['galvo']['x_right_offset']
+    galvo_y_left_offset = active_laser_specs['galvo']['y_left_offset']
+    galvo_y_right_offset = active_laser_specs['galvo']['y_right_offset']
+    galvo_x_left_amplitude = active_laser_specs['galvo']['x_left_amplitude']
+    galvo_x_right_amplitude = active_laser_specs['galvo']['x_right_amplitude']
+    galvo_y_left_amplitude = active_laser_specs['galvo']['y_left_amplitude']
+    galvo_y_right_amplitude = active_laser_specs['galvo']['y_right_amplitude']
     camera_left_offset = cfg.camera_specs['camera_left']['offset']
     camera_right_offset = cfg.camera_specs['camera_right']['offset']
 
@@ -102,6 +102,7 @@ def galvo_waveforms(galvo_x_left_amplitude, galvo_x_left_offset,
     # x-axis galvos correct for MEMs mirror bow artifact. are quadratic with the y-axis galvo with some scaling amplitude and offset.
     galvo_y_left = -galvo_y_left_amplitude*sawtooth(time_samples, width=exposure_samples*1.0/period_samples) + galvo_y_left_offset
     galvo_y_right = galvo_y_right_amplitude*sawtooth(time_samples, width=exposure_samples*1.0/period_samples) + galvo_y_right_offset
+
     # galvo x signal depends on its y signal value.
     galvo_x_left = abs((galvo_y_left - galvo_y_left_offset)**2)*galvo_x_left_amplitude + galvo_x_left_offset
     galvo_x_right = abs((galvo_y_right - galvo_y_right_offset)**2)*galvo_x_right_amplitude + galvo_x_right_offset
@@ -111,7 +112,9 @@ def galvo_waveforms(galvo_x_left_amplitude, galvo_x_left_offset,
     galvo_y_left_t[0:delay_samples] = galvo_y_left[-1]  # constant value
 
     galvo_y_right_t[0:period_samples] = galvo_y_right
-    galvo_y_right_t[period_samples::] = galvo_y_right[0]  # constant value
+    # delay snapback for first galvo
+    galvo_y_right_t[exposure_samples+delay_samples:exposure_samples+delay_samples+(period_samples-exposure_samples)] = galvo_y_right[exposure_samples:period_samples]
+    galvo_y_right_t[exposure_samples:exposure_samples+delay_samples] = galvo_y_right[exposure_samples]
 
     galvo_x_left_t[delay_samples:delay_samples+period_samples] = galvo_x_left
     galvo_x_left_t[0:delay_samples] = galvo_x_left[-1]   # constant value

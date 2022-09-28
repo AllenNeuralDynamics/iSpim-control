@@ -1,160 +1,36 @@
-# No repeat values in here!
 [imaging_specs]
-local_storage_directory = 'C:\\test' # Storing on C (ssd) will yield faster file transfers.
-external_storage_directory = 'Z:\diSPIM'
-subject_id = "test" # Specimin name.
-tile_prefix = 'tile'  # Zstacks will be named: <tile_prefix>_<x>_<y>_<wavelength>.tiff.
+local_storage_directory = "C:\\\\test"
+external_storage_directory = "Y:\\\\diSPIM"
+subject_id = "test"
+tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
-z_step_size_um = 0.25 # x spacing between images. Defaults to same as y,z spacing if not listed.
-volume_x_um = 1000 # Sample volume x dimension that we want to stage scan.
-volume_y_um = 1000 # Sample volume y dimension that we want to tile.
-volume_z_um = 1000 # Sample volume z dimension that we want to tile.
-laser_wavelengths = [488]
+z_step_size_um = 0.176
+volume_x_um = 600
+volume_y_um = 400
+volume_z_um = 100
+laser_wavelengths = [ 488,]
+possible_wavelengths = [ 488, 638, 405, 561,]
 
 [tile_specs]
-x_field_of_view_um = 2304 # X image field of view in [um].
-y_field_of_view_um = 2304 # Y image field of view in [um].
+x_field_of_view_um = 405.504
+y_field_of_view_um = 405.504
 row_count_pixels = 2304
 column_count_pixels = 2304
 data_type = "uint16"
 
 [design_specs]
-slit_width_pixels = 294 # pixels
+slit_width_pixels = 294
 
-# Stage
 [stage_specs]
-backlash_reset_distance_um = 4 # [um]
+backlash_reset_distance_um = 4
 
-# Tiger
-[tiger_specs.axes]
-etl_left_axis = 'V'
-etl_right_axis = 'W'
-galvo_left_x_axis = 'A'
-galvo_left_y_axis = 'B'
-galvo_right_x_axis = 'C'
-galvo_right_y_axis = 'D'
-
-# Signals
 [waveform_specs]
-delay_time = 1.5e-3 # seconds. delay time between left and right views.
-rest_time = 5.0e-3 # seconds. dead time at end of frame.
-exposure_time = 12.0e-3 # seconds. total frame time of camera.
+delay_time = 0.0015
+rest_time = 0.005
+exposure_time = 0.012
 
-# Laser Channels
-[channel_specs.405]
-driver = "Oxxius"
-color = "purple"
-filter_index = 1 # CHECK WITH XIAOYUN
-ao_channel = 12
-disable_voltage = 0.0
-enable_voltage =  5.0
-[channel_specs.405.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.405.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.405.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.405.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.405.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.405.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
-[channel_specs.405.kwds]
-port='COMxx' # TODO FOR OXXIUS LASERS
-
-[channel_specs.488]
-driver = "Oxxius"
-color = "blue"
-filter_index = 2 # CHECK WITH XIAOYUN
-ao_channel = 11
-disable_voltage = 0.0
-enable_voltage =  5.0
-[channel_specs.488.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.488.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.488.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.488.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.488.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.488.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
-[channel_specs.488.kwds]
-port='COMxx' # TODO FOR OXXIUS LASERS
-
-[channel_specs.561]
-driver = "Oxxius"
-color = "green"
-filter_index = 3 # CHECK WITH XIAOYUN
-ao_channel = 9
-disable_voltage = 0.0
-enable_voltage =  5.0
-[channel_specs.561.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.561.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.561.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.561.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.561.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.561.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
-[channel_specs.561.kwds]
-port='COMxx' # TODO FOR OXXIUS LASERS
-
-[channel_specs.638]
-driver = "Oxxius"
-color = "red"
-filter_index = 4
-ao_channel = 8
-disable_voltage = 0.0
-enable_voltage =  5.0
-[channel_specs.638.etl_left]
-offset = 1.85
-amplitude = 0
-[channel_specs.638.etl_right]
-offset = 1.65
-amplitude = 0
-[channel_specs.638.galvo_x_left]
-offset = 2.40
-amplitude = -0.015
-[channel_specs.638.galvo_x_right]
-offset = 2.74
-amplitude = -0.015
-[channel_specs.638.galvo_y_left]
-offset = 2.56
-amplitude = 1.30
-[channel_specs.638.galvo_y_right]
-offset = 2.75
-amplitude = 1.30
-[channel_specs.638.kwds]
-port='COMxx' # TODO FOR OXXIUS LASERS
-
-[daq_ao_names_to_channels] # lookup table for named hardware to AO channels
+[daq_ao_names_to_channels]
 galvo_y_left = 0
 galvo_y_right = 1
 galvo_x_left = 2
@@ -163,42 +39,155 @@ etl_left = 4
 etl_right = 5
 camera_left = 6
 camera_right = 7
-# This will be further populated with the laser ao channels from channel_specs at runtime.
 
-# Devices
-[camera_specs.camera_right]
-row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
-scan_direction = 'FORWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 0.06 # percent delay in triggering on
-camx = 2304 # number of x camera pixels
-camy = 2304 # number of y camera pixels
-
-[camera_specs.camera_left]
-row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
-scan_direction = 'BACKWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 0.06 # percent delay in triggering on
-camx = 2304 # number of x camera pixels
-camy = 2304 # number of y camera pixels
-
-# <SOMETHING>_kwds will be splatted with **kwds to init the corresponding object.
 [daq_driver_kwds]
-dev_name = 'Dev2' # NI Card address as it appears to the PC.
-input_trigger_name = 'PFI0'
-update_frequency_hz = 4.0e5 # Hz
-
-[sample_pose_kwds.axis_map]
-x = "z"  # TODO: signs??
-y = "x"
-z = "y"
+dev_name = "Dev2"
+input_trigger_name = "PFI0"
+update_frequency_hz = 400000.0
 
 [tiger_controller_driver_kwds]
-com_port='COM10' # TO ADD
+com_port = "COM3"
 
 [filter_wheel_left_kwds]
-tiger_axis = 0 # filterwheel axis according to the tigerbox.
-[filter_wheel_right_kwds]
-tiger_axis = 1 # filterwheel axis according to the tigerbox.
+tiger_axis = 0
 
-# For imaging run estimations.
+[filter_wheel_right_kwds]
+tiger_axis = 1
+
 [estimates]
 tiles_per_second = 15
+
+[tiger_specs.axes]
+etl_left_axis = "V"
+etl_right_axis = "W"
+galvo_left_x_axis = "A"
+galvo_left_y_axis = "B"
+galvo_right_x_axis = "C"
+galvo_right_y_axis = "D"
+
+[channel_specs.405]
+driver = "Oxxius"
+color = "purple"
+filter_index = 1
+ao_channel = 12
+disable_voltage = 0.0
+enable_voltage = 5.0
+
+[channel_specs.488]
+driver = "Oxxius"
+color = "blue"
+filter_index = 2
+ao_channel = 11
+disable_voltage = 0.0
+enable_voltage = 5.0
+
+[channel_specs.561]
+driver = "Oxxius"
+color = "green"
+filter_index = 3
+ao_channel = 9
+disable_voltage = 0.0
+enable_voltage = 5.0
+
+[channel_specs.638]
+driver = "Oxxius"
+color = "red"
+filter_index = 4
+ao_channel = 8
+disable_voltage = 0.0
+enable_voltage = 5.0
+
+[camera_specs.camera_right]
+row_interval = 5.867e-6
+scan_direction = "FORWARD"
+offset = 0.0
+camx = 2304
+camy = 2304
+
+[camera_specs.camera_left]
+row_interval = 5.867e-6
+scan_direction = "BACKWARD"
+offset = 0.0
+camx = 2304
+camy = 2304
+
+[sample_pose_kwds.axis_map]
+x = "y"
+y = "z"
+z = "x"
+
+[channel_specs.405.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.405.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
+
+[channel_specs.405.kwds]
+port = "COMxx"
+
+[channel_specs.488.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.488.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
+
+[channel_specs.488.kwds]
+port = "COMxx"
+
+[channel_specs.561.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.561.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
+
+[channel_specs.561.kwds]
+port = "COMxx"
+
+[channel_specs.638.etl]
+left_offset = 1.85
+left_amplitude = 0
+right_offset = 1.65
+right_amplitude = 0
+
+[channel_specs.638.galvo]
+x_left_offset = 2.4
+x_left_amplitude = -0.015
+x_right_offset = 2.74
+x_right_amplitude = -0.015
+y_left_offset = 2.56
+y_left_amplitude = 1.3
+y_right_offset = 2.75
+y_right_amplitude = 1.3
+
+[channel_specs.638.kwds]
+port = "COMxx"

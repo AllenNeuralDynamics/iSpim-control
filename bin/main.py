@@ -78,7 +78,8 @@ def main():
     try:
         #from inpromptu import Inpromptu
         #Inpromptu(instrument).cmdloop()
-        instrument.run(overwrite=args.simulated)
+        #instrument.run(overwrite=args.simulated)
+        instrument.run(overwrite=True)
     except KeyboardInterrupt:
         pass
     finally:

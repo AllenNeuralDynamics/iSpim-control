@@ -1,7 +1,9 @@
 import logging
 from mock import Mock
+
 try:
-    from calliphlox import DeviceKind, Trigger, Runtime
+    import calliphlox
+    from calliphlox import DeviceKind, Trigger
 except ImportError:
     print("WARNING: failed to import calliphlox")
 from pathlib import Path
@@ -9,10 +11,11 @@ from pathlib import Path
 
 class FrameGrabber:
 
-    def _init_(self):
-        self.runtime = Runtime()  # do we need one per stack or one ever?
+    def __init__(self):
+        self.runtime = calliphlox.Runtime()
         self.dm = self.runtime.device_manager()
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.p = self.runtime.get_configuration()
 
     def setup_stack_capture(self, tile_shape: tuple, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
@@ -22,32 +25,23 @@ class FrameGrabber:
         :param frame_count: how many tiles to grab from camera
 
         """
-        self.log.error("Skipping FrameGrabber stack capture setup!")
-        # # TODO: can we overwrite the runtime configuration over and over, or
-        # #   do we need to create a new Runtime object?
-        # p = self.runtime.get_configuration()
-
-        # p.camera.identifier = self.dm.select(DeviceKind.Camera,
-        #                                      name='C15440-20UP')
-        # p.camera.settings.binning = 1
-        # p.camera.settings.shape = tile_shape
-        # p.storage.identifier = self.dm.select(DeviceKind.Storage, name='Tiff')
-        # p.storage.settings.filename = str(output_path.absolute())
-        # p.max_frame_count = frame_count
-        # p.frame_average_count = 0  # disables
-        # #TODO: what is this?
-        # self.runtime.set_configuration(p)
+        self.log.info("Configuring camera.")
+        self.p.camera.identifier = self.dm.select(DeviceKind.Camera, name='C15440-20UP')
+        self.p.camera.settings.binning = 1
+        self.p.camera.settings.shape = (tile_shape[1], tile_shape[0])
+        self.p.storage.identifier = self.dm.select(DeviceKind.Storage, name='Tiff')
+        self.log.info(str(output_path.absolute()))
+        self.p.storage.settings.filename = str(output_path.absolute())
+        self.p.max_frame_count = frame_count
+        self.p.frame_average_count = 0  # disables
+        self.runtime.set_configuration(self.p)
 
     def start(self):
         """start the setup frame acquisition."""
-        self.log.error("Skipping FrameGrabber start.")
-        #self.runtime.start()
-        # TODO: figure out some sensible way to know when this operation is
-        #  done?
+        self.log.info("Starting camera.")
+        self.runtime.start()
 
     def stop(self):
         """Stop frame acquisition and file writing."""
-        # TODO: what happens if we call this before capturing the correct
-        #  frame count?
-        self.log.error("Skipping FrameGrabber stop.")
-        #self.runtime.stop()
+        self.log.info("Stopping camera.")
+        self.runtime.stop()
