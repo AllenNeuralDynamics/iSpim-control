@@ -110,13 +110,13 @@ class DispimConfig(SpimConfig):
     #     """Sets the slit width in pixels."""
     #     self.design_specs['slit_width'] = width
 
-    # @property
-    # def sensor_row_count(self):
-    #     return self.tile_specs['row_count_pixels']
+    @property
+    def sensor_row_count(self):
+        return self.tile_specs['row_count_pixels']
 
-    # @sensor_row_count.setter
-    # def sensor_row_count(self, row_count):
-    #     self.design_specs['sensor_row_count'] = row_count
+    @property
+    def sensor_column_count(self):
+        return self.tile_specs['column_count_pixels']
 
     # @property
     # def start_of_frame_delay(self):

@@ -238,31 +238,26 @@ class Dispim(Spim):
         # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.log.info(f"Configuring framegrabber")
-            # self.frame_grabber.setup_stack_capture((self.cfg.column_count_px,
-            #                                         self.cfg.row_count_px),
-            #                                        filepath_src, tile_count)
+            self.frame_grabber.setup_stack_capture((self.cfg.sensor_column_count,
+                                                    self.cfg.sensor_row_count),
+                                                   filepath_src, tile_count)
             self.log.info(f"Configuring stage scan parameters")
             self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
 
             self.log.info(f"Starting framegrabber")
-            # self.frame_grabber.start()
+            self.frame_grabber.start()
             self.log.info(f"Starting NIDAQ")
             self.ni.start()
             self.log.info(f"Starting stage")
             self.sample_pose.start_scan()
 
-            t = 60
-            self.log.info(f'Sleeping! for {t} sec')
-            sleep(t)
+            frames = 0
+            while frames < tile_count:
+                frames = self.ni.counter_task.read()
+                self.log.info(f"{frames} frames captured")
+                sleep(0.01)
 
-            # TODO: this func should block until all the frames are captured.
-            # nframes = 0
-            # while nframes < 100:
-            #    if a := self.frame_grabber.runtime.get_available_data():
-            #        packet = a.get_frame_count()
-            #        f = next(a.frames())
-            #        im = f.data().squeeze()
-            #        nframes += packet
+            sleep(10)
 
         finally:
             self.log.info(f"Stopping NIDAQ")
@@ -270,7 +265,7 @@ class Dispim(Spim):
             self.log.info(f"Closing NIDAQ")
             self.ni.close()
             self.log.info(f"Stopping framegrabber")
-            # self.frame_grabber.stop()
+            self.frame_grabber.stop()
 
     def livestream(self):
         pass

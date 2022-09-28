@@ -9,7 +9,7 @@ tile_overlap_y_percent = 15
 z_step_size_um = 0.176 # x spacing between images. Defaults to same as y,z spacing if not listed.
 volume_x_um = 600 # Sample volume x dimension that we want to stage scan.
 volume_y_um = 400 # Sample volume y dimension that we want to tile.
-volume_z_um = 400 # Sample volume z dimension that we want to tile.
+volume_z_um = 100 # Sample volume z dimension that we want to tile.
 laser_wavelengths = [488]
 
 [tile_specs]
