@@ -10,6 +10,7 @@ from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
+from tigerasi.device_codes import ControlMode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from mesospim.spim_base import Spim
@@ -84,6 +85,11 @@ class Dispim(Spim):
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels)
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.ni.assign_waveforms(voltages_t)
+        # Put all corresponding tigerbox components in external control mode.
+        externally_controlled_axes = \
+            {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
+             self.cfg.ni_controlled_tiger_axes}
+        self.tigerbox.pm(**externally_controlled_axes)
 
     # TODO: this should be a base class thing.
     def check_ext_disk_space(self, dataset_size):

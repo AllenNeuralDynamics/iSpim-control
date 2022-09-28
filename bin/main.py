@@ -9,6 +9,14 @@ import argparse
 import os
 import sys
 
+
+class SpimLogFiler(logging.Filter):
+    VALID_LOGGERS = {'mesospim', 'dispim'}
+
+    def filter(self, record):
+        return record.name.split('.')[0].lower() in self.__class__.VALID_LOGGERS
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=None)
@@ -56,6 +64,7 @@ def main():
             log_handlers[-1].setFormatter(log_format)
     for handler in log_handlers:
         logger.addHandler(handler)
+        logger.addFilter(SpimLogFiler())
 
     # Windows-based console needs to accept colored logs if running with color.
     if os.name == 'nt' and args.color_console_output:
