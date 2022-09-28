@@ -1,7 +1,7 @@
 # No repeat values in here!
 [imaging_specs]
 local_storage_directory = 'C:\\test' # Storing on C (ssd) will yield faster file transfers.
-external_storage_directory = 'C:\diSPIM'
+external_storage_directory = 'Y:\\diSPIM'
 subject_id = "test" # Specimin name.
 tile_prefix = 'tile'  # Zstacks will be named: <tile_prefix>_<x>_<y>_<wavelength>.tiff.
 tile_overlap_x_percent = 15
@@ -169,14 +169,14 @@ camera_right = 7
 [camera_specs.camera_right]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'FORWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 0.06 # percent delay in triggering on
+offset = 0.0 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
 [camera_specs.camera_left]
 row_interval = 5.867e-6 # seconds. Cannot be less then 5 [us].
 scan_direction = 'BACKWARD' #  BACKWARD for ch2 and FORWARD for ch1
-offset = 0.06 # percent delay in triggering on
+offset = 0.0 # percent delay in triggering on
 camx = 2304 # number of x camera pixels
 camy = 2304 # number of y camera pixels
 
