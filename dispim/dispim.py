@@ -5,6 +5,8 @@ import numpy as np
 from pathlib import Path
 from time import perf_counter, sleep
 from mock import NonCallableMock as Mock
+from threading import Thread, Event
+from collections import deque
 from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
@@ -59,6 +61,10 @@ class Dispim(Spim):
         self.livestream_enabled = Event()
         self.image_in_hw_buffer = Event()
         self.img_deque = deque(maxlen=2)  # circular buffer
+
+        # derived constants.
+        self.IMG_MIN = 0
+        self.IMG_MAX = (1 << (8 * self.cfg.image_dtype.itemsize)) - 1
 
     def _setup_camera(self):
         pass
@@ -310,19 +316,20 @@ class Dispim(Spim):
 
     def _livestream_worker(self, wavelength):
         """Pulls images from the camera and puts them into the ring buffer."""
-        image_wait_time = round(5*self.cfg.get_daq_cycle_time*1e3)
+        image_wait_time = round(5*self.cfg.get_daq_cycle_time()*1e3)
         # self.cam.buf_alloc(2)
         # self.cam.cap_start()
         self.frame_grabber.start() #?
         while self.livestream_enabled.is_set():
-            if not self.cam.wait_capevent_frameready(image_wait_time):
-                self.log.error(f"Camera failed to capture image with error"
-                               f"{str(self.cam.lasterr())}")
             if self.simulated:
                 sleep(1./16)
-            framedata = self.frame_grabber.runtime.get_available_data()
-            lastframe = next(framedata.frames())
-            self.img_deque.append(lastframe.data().squeeze())
+                im = np.zeros((self.cfg.row_count_px,
+                          self.cfg.column_count_px),
+                         dtype=self.cfg.image_dtype)
+            elif framedata := self.frame_grabber.runtime.get_available_data():
+                lastframe = next(framedata.frames())
+                im = astframe.data().squeeze()
+            self.img_deque.append(im)
         self.frame_grabber.stop()  # ?
         #self.cam.buf_release()
 
@@ -341,7 +348,7 @@ class Dispim(Spim):
         # Reprovision the DAQ.
         self.configure_ni(wavelength, live)
         self.active_laser = wavelength
-        self.lasers[self.active_laser].enable()
+        #self.lasers[self.active_laser].enable()
 
     def configure_ni(self, active_wavelenth: int, live: bool = False):
         """Setup DAQ to play waveforms according to wavelength to image with.
@@ -366,6 +373,15 @@ class Dispim(Spim):
     def get_latest_img(self):
         """returns the latest image as a 2d numpy array. Useful for UIs."""
         return self.img_deque[0]
+
+    # def apply_contrast(self,data):
+    #     """Apply the current contrast settings to the input image."""
+    #     # Apply current exposure settings.
+    #     # Point Slope Formula.
+    #     m = int(self.IMG_MAX / (np.amax(data) - self.IMG_MIN))
+    #     data = np.round(np.clip(m * data - m * self.IMG_MIN,
+    #                             self.IMG_MIN, self.IMG_MAX))
+    #     return data
 
     def close(self):
         """Safely close all open hardware connections."""
