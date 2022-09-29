@@ -43,9 +43,10 @@ class WaveformHardware:
         self.ao_task.timing.cfg_samp_clk_timing(
             rate=self.update_freq,
             active_edge=Edge.RISING,
-            sample_mode=AcqType.FINITE,
+            sample_mode=AcqType.CONTINUOUS if live else AcqType.FINITE,
             samps_per_chan=sample_count)
-        self.ao_task.triggers.start_trigger.retriggerable = True
+        self.ao_task.triggers.start_trigger.retriggerable = not live
+        #TODO: Need if statement if live is True?
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
             trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
             trigger_edge=Slope.RISING)

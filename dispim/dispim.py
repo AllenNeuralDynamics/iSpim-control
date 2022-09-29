@@ -52,6 +52,14 @@ class Dispim(Spim):
         # TODO, setup cameras with CPX -> frame_grabber()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
+        self.active_laser = None  # Bookkeep which laser is configured.
+        self.live_status = None  # Bookkeep if we are running in live mode.
+
+        self.livestream_worker = None  # captures images during livestream
+        self.livestream_enabled = Event()
+        self.image_in_hw_buffer = Event()
+        self.img_deque = deque(maxlen=2)  # circular buffer
+
     def _setup_camera(self):
         pass
 
@@ -264,8 +272,100 @@ class Dispim(Spim):
             self.log.info(f"Stopping framegrabber")
             self.frame_grabber.stop()
 
-    def livestream(self):
-        pass
+    def start_livestream(self, wavelength: int):
+        """Repeatedly play the daq waveforms and buffer incoming images."""
+        if wavelength not in self.cfg.channels:
+            self.log.error(f"Aborting. {wavelength}[nm] laser is not a valid "
+                           "laser.")
+            return
+        # Bail early if it's started.
+        if self.livestream_enabled.is_set():
+            self.log.warning("Not starting. Livestream is already running.")
+            return
+        self.log.debug("Starting livestream.")
+        self.log.warning(f"Turning on the {wavelength}[nm] laser.")
+        self.setup_imaging_for_laser(wavelength, live=True)
+        self.ni.start()
+        self.livestream_enabled.set()
+        self.livestream_worker = Thread(target=self._livestream_worker,
+                                        args=(wavelength,), daemon=True)
+        self.livestream_worker.start()
+        # Launch thread for picking up camera images.
+
+    def stop_livestream(self, wait: bool = False):
+        # Bail early if it's already stopped.
+        if not self.livestream_enabled.is_set():
+            self.log.warning("Not starting. Livestream is already stopped.")
+            return
+        wait_cond = "" if wait else "not "
+        self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
+        self.livestream_enabled.clear()
+
+        if wait:
+            self.livestream_worker.join()
+        self.ni.stop()
+        self.ni.close()
+        self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
+        self.active_laser = None
+
+    def _livestream_worker(self, wavelength):
+        """Pulls images from the camera and puts them into the ring buffer."""
+        image_wait_time = round(5*self.cfg.get_daq_cycle_time*1e3)
+        # self.cam.buf_alloc(2)
+        # self.cam.cap_start()
+        self.frame_grabber.start() #?
+        while self.livestream_enabled.is_set():
+            if not self.cam.wait_capevent_frameready(image_wait_time):
+                self.log.error(f"Camera failed to capture image with error"
+                               f"{str(self.cam.lasterr())}")
+            if self.simulated:
+                sleep(1./16)
+            framedata = self.frame_grabber.runtime.get_available_data()
+            lastframe = next(framedata.frames())
+            self.img_deque.append(lastframe.data().squeeze())
+        self.frame_grabber.stop()  # ?
+        #self.cam.buf_release()
+
+    def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
+        """Configure system to image with the desired laser wavelength.
+        """
+        # Bail early if this laser is already setup in the previously set mode.
+        if self.active_laser == wavelength and self.live_status == live:
+            self.log.debug("Skipping daq setup. Laser already provisioned.")
+            return
+        self.live_status = live
+        live_status_msg = " in live mode" if live else ""
+        self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
+        if self.active_laser is not None:
+            self.lasers[self.active_laser].disable()
+        # Reprovision the DAQ.
+        self.configure_ni(wavelength, live)
+        self.active_laser = wavelength
+        self.lasers[self.active_laser].enable()
+
+    def configure_ni(self, active_wavelenth: int, live: bool = False):
+        """Setup DAQ to play waveforms according to wavelength to image with.
+
+        Note: DAQ waveforms depend on the laser wavelength we are imaging with.
+
+        :param active_wavelenth: the laser wavelength to configure the daq for.
+            Only one laser wavelength may be turned on at a time.
+        :param live: True if we want the waveforms to play on loop.
+        """
+        # TODO: cache this.
+        self.log.debug(f"Computing waveforms for {active_wavelenth}[nm] laser.")
+        _, voltages_t = generate_waveforms(self.cfg, active_wavelenth)
+        self.log.debug("Setting up daq.")
+        period_time = self.cfg.get_daq_cycle_time
+        ao_names_to_channels = self.cfg.daq_ao_names_to_channels
+        self.ni.configure(period_time, ao_names_to_channels, live)
+        self.ni.assign_waveforms(voltages_t)
+        # TODO: Consider plotting waveforms and saving to data collection
+        #  folder at the beginning of an imaging run.
+
+    def get_latest_img(self):
+        """returns the latest image as a 2d numpy array. Useful for UIs."""
+        return self.img_deque[0]
 
     def close(self):
         """Safely close all open hardware connections."""
