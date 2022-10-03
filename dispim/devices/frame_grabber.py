@@ -12,10 +12,8 @@ from pathlib import Path
 class FrameGrabber:
 
     def __init__(self):
-        self.runtime = calliphlox.Runtime()
-        self.dm = self.runtime.device_manager()
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self.p = self.runtime.get_configuration()
+        self.runtime = calliphlox.Runtime()
 
     def setup_stack_capture(self, tile_shape: tuple, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
@@ -26,15 +24,16 @@ class FrameGrabber:
 
         """
         self.log.info("Configuring camera.")
+        self.dm = self.runtime.device_manager()
+        self.p = self.runtime.get_configuration()
         self.p.camera.identifier = self.dm.select(DeviceKind.Camera, name='C15440-20UP')
         self.p.camera.settings.binning = 1
         self.p.camera.settings.shape = (tile_shape[1], tile_shape[0])
         self.p.storage.identifier = self.dm.select(DeviceKind.Storage, name='Tiff')
-        self.log.info(str(output_path.absolute()))
         self.p.storage.settings.filename = str(output_path.absolute())
         self.p.max_frame_count = frame_count
         self.p.frame_average_count = 0  # disables
-        self.runtime.set_configuration(self.p)
+        self.p = self.runtime.set_configuration(self.p)
 
     def start(self):
         """start the setup frame acquisition."""

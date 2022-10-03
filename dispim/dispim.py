@@ -61,8 +61,10 @@ class Dispim(Spim):
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the dispim according to the config."""
-        self.sample_pose.set_axis_backlash(z=0.0)
-        # TODO, set speed of sample Z / tiger X axis to ~1
+        self.log.info("Setting backlash in Z to 0")
+        self.sample_pose.set_axis_backlash(Z=0.0)
+        self.log.info("Setting speeds to 1.0 mm/sec")
+        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
@@ -119,7 +121,7 @@ class Dispim(Spim):
         y_grid_step_um = \
             (1 - tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um
 
-        # Calculate number of tiles in XYUZ
+        # Calculate number of tiles in XYZ
         # Always round up so that we cover the desired imaging region.
         xtiles = ceil((volume_x_um - self.cfg.tile_size_x_um)
                       / x_grid_step_um)
@@ -153,28 +155,41 @@ class Dispim(Spim):
             for j in range(ytiles):
                 # Move X position back to 0
                 # Move to specified Y position
-                # TODO, set speed of sample Y / tiger Z axis to ~1 mm/s
+                self.log.info("Setting speed in Y to 1.0 mm/sec")
+                self.tigerbox.set_speed(Z=1.0)
                 self.stage_x_pos = 0
                 self.log.info(f"Moving to y={self.stage_y_pos}.")
                 self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
                 while self.tigerbox.is_moving():
                     pos = self.tigerbox.get_position('Z')
-                    self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
-                    sleep(0.01)
+                    distance = abs(pos['Z'] - round(self.stage_y_pos))
+                    if distance < 1.0:
+                        self.tigerbox.halt()
+                        break
+                    else:
+                        self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
+                        sleep(0.1)
 
                 for i in range(xtiles):
                     # Move to specified X position
-                    # TODO, set speed of sample X / tiger Y axis to ~1 mm/s
-                    self.log.info(f"Moving to x={self.stage_x_pos}.")
+                    self.log.info("Setting speed in X to 1.0 mm/sec")
+                    self.tigerbox.set_speed(Y=1.0)
+                    self.log.info(f"Moving to x={round(self.stage_x_pos)}.")
                     self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos), wait_for_output=True, wait_for_reply=True)
                     while self.tigerbox.is_moving():
                         pos = self.tigerbox.get_position('Y')
-                        self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
-                        sleep(0.01)
+                        distance = abs(pos['Y'] - round(self.stage_x_pos))
+                        if distance < 1.0:
+                            self.tigerbox.halt()
+                            break
+                        else:
+                            self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
+                            sleep(0.1)
 
                     for ch in channels:
                         # Move to specified Z position
-                        # TODO, set speed of sample Z / tiger X axis to ~1 mm/s
+                        self.log.info("Setting speed in Z to 1.0 mm/sec")
+                        self.tigerbox.set_speed(X=1.0)
                         self.log.info("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_axes_absolute(x=round(z_backup_pos), wait_for_output=True, wait_for_reply=True)
@@ -182,9 +197,16 @@ class Dispim(Spim):
                         self.tigerbox.move_axes_absolute(x=0, wait_for_output=True, wait_for_reply=True)
                         while self.tigerbox.is_moving():
                             pos = self.tigerbox.get_position('X')
-                            self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
-                            sleep(0.01)
-                        # TODO, set speed of sample Z / tiger X axis to ~0.01 mm/s
+                            distance = abs(pos['X'] - round(0))
+                            if distance < 1.0:
+                                self.tigerbox.halt()
+                                break
+                            else:
+                                self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
+                                sleep(0.1)
+
+                        self.log.info("Setting speed in Z to 0.01 mm/sec")
+                        self.tigerbox.set_speed(X=0.01)
 
                         # TODO: setup other channel specific items (filters, lasers)
                         self.log.info(f"Setting up NIDAQ for active channel: {ch}")
@@ -237,7 +259,6 @@ class Dispim(Spim):
 
     def _collect_stacked_tiff(self, tile_position, tile_count, tile_spacing_um: float,
                               filepath_src):
-        # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.log.info(f"Configuring framegrabber")
             self.frame_grabber.setup_stack_capture((self.cfg.sensor_column_count,

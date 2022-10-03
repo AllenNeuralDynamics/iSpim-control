@@ -9,7 +9,7 @@ z_step_size_um = 0.176
 volume_x_um = 600
 volume_y_um = 400
 volume_z_um = 100
-laser_wavelengths = [ 488,]
+laser_wavelengths = []
 possible_wavelengths = [ 488, 638, 405, 561,]
 
 [tile_specs]
@@ -100,6 +100,7 @@ enable_voltage = 5.0
 [camera_specs.camera_right]
 row_interval = 5.867e-6
 scan_direction = "FORWARD"
+shutter_mode = "LIGHTSHEET"
 offset = 0.0
 camx = 2304
 camy = 2304
@@ -107,6 +108,7 @@ camy = 2304
 [camera_specs.camera_left]
 row_interval = 5.867e-6
 scan_direction = "BACKWARD"
+shutter_mode = "LIGHTSHEET"
 offset = 0.0
 camx = 2304
 camy = 2304
