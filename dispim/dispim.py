@@ -29,7 +29,7 @@ class Dispim(Spim):
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated = simulated)
         self.cfg = DispimConfig(config_filepath)
-
+        print(self.cfg.imaging_specs['laser_wavelengths'])
         # Instantiate hardware devices
         self.frame_grabber = FrameGrabber() if not self.simulated else \
             Mock(FrameGrabber)
@@ -60,6 +60,7 @@ class Dispim(Spim):
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
         self.image_in_hw_buffer = Event()
+        self.volumetric_imaging = Event()
         self.img_deque = deque(maxlen=2)  # circular buffer
 
         # derived constants.
@@ -156,7 +157,7 @@ class Dispim(Spim):
 
         transfer_process = None  # Reference to external tiff transfer process.
         self.stage_x_pos, self.stage_y_pos = (0, 0)
-
+        self.volumetric_imaging.set()
         try:
             for j in range(ytiles):
                 # Move X position back to 0
@@ -240,6 +241,7 @@ class Dispim(Spim):
             self.log.info(f"Closing camera")
             # TODO, is this needed?
             # self.frame_grabber.close()
+            self.volumetric_imaging.clear()
             if transfer_process is not None:
                 self.log.info("Joining file transfer process.")
                 transfer_process.join()
@@ -322,10 +324,12 @@ class Dispim(Spim):
         self.frame_grabber.start() #?
         while self.livestream_enabled.is_set():
             if self.simulated:
-                sleep(1./16)
-                im = np.zeros((self.cfg.row_count_px,
+                blank = np.zeros((self.cfg.row_count_px,
                           self.cfg.column_count_px),
                          dtype=self.cfg.image_dtype)
+                noise = np.random.normal(0, .1, blank.shape)
+                im = blank + noise
+                sleep(1. / 16)
             elif framedata := self.frame_grabber.runtime.get_available_data():
                 lastframe = next(framedata.frames())
                 im = astframe.data().squeeze()
@@ -382,6 +386,13 @@ class Dispim(Spim):
     #     data = np.round(np.clip(m * data - m * self.IMG_MIN,
     #                             self.IMG_MIN, self.IMG_MAX))
     #     return data
+
+    def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
+        """Convenience func for moving the sample from a UI (units: steps)."""
+        self.sample_pose.move_relative(x=x, y=y, z=z, wait=True)
+
+    def get_sample_position(self):
+        return self.sample_pose.get_position()
 
     def close(self):
         """Safely close all open hardware connections."""

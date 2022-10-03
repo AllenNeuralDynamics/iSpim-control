@@ -18,7 +18,6 @@ TomlTemplate = \
                 "volume_x_um": 2304,
                 "volume_y_um": 2304,
                 "volume_z_um": 1,
-                "laser_wavelengths" : [488],
             }
         # TODO: populate remaining fields.
     }
@@ -38,7 +37,6 @@ class DispimConfig(SpimConfig):
         self.design_specs = self.cfg['design_specs']
         self.camera_specs = self.cfg['camera_specs']
         self.waveform_specs = self.cfg['waveform_specs']
-
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
         # TODO: dispim has 2 filterwheels. We must set the location of both
