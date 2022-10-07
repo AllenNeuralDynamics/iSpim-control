@@ -24,10 +24,10 @@ class Dispim(Spim):
 
     def __init__(self, config_filepath: str,
                  simulated: bool = False):
-        #self.log = logging.getLogger(__package__)
+        # self.log = logging.getLogger(__package__)
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
-        super().__init__(config_filepath, simulated = simulated)
+        super().__init__(config_filepath, simulated=simulated)
         self.cfg = DispimConfig(config_filepath)
         print(self.cfg.imaging_specs['laser_wavelengths'])
         # Instantiate hardware devices
@@ -46,6 +46,8 @@ class Dispim(Spim):
         self.total_tiles = 0  # tiles to be captured.
         self.stage_x_pos = None
         self.stage_y_pos = None
+        self.blending = False  # Specifying if livestream should pull off both
+        # cameras or one
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -68,7 +70,9 @@ class Dispim(Spim):
         self.IMG_MAX = (1 << (8 * self.cfg.image_dtype.itemsize)) - 1
 
     def _setup_camera(self):
-        pass
+        """Configure general settings for both"""
+        self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
+                                          self.cfg.sensor_row_count))
 
     def _setup_lasers(self):
         pass
@@ -175,9 +179,9 @@ class Dispim(Spim):
                     # Move to specified X position
                     # TODO, set speed of sample X / tiger Y axis to ~1 mm/s
                     self.log.info(f"Moving to x={self.stage_x_pos}.")
-                    self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos), wait_for_output=True, wait_for_reply=True)
+                    self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos), wait_for_output=True,
+                                                     wait_for_reply=True)
                     while self.tigerbox.is_moving() == True:
-
                         pos = self.tigerbox.get_position('Y')
                         self.log.info(f"Stage is still moving! X = {pos['Y']} -> {self.stage_x_pos}")
                         sleep(0.01)
@@ -187,7 +191,8 @@ class Dispim(Spim):
                         # TODO, set speed of sample Z / tiger X axis to ~1 mm/s
                         self.log.info("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_axes_absolute(x=round(z_backup_pos), wait_for_output=True, wait_for_reply=True)
+                        self.tigerbox.move_axes_absolute(x=round(z_backup_pos), wait_for_output=True,
+                                                         wait_for_reply=True)
                         self.log.info(f"Moving to z={0}.")
                         self.tigerbox.move_axes_absolute(x=0, wait_for_output=True, wait_for_reply=True)
                         while self.tigerbox.is_moving() == True:
@@ -202,12 +207,12 @@ class Dispim(Spim):
 
                         # Setup capture of next Z stack.
                         filename = Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}.tiff")
-                        filepath_src = local_storage_dir/filename
+                        filepath_src = local_storage_dir / filename
                         self.log.info(f"Collecting tile stack: {filepath_src}")
 
                         # TODO: consider making step size a fn parameter instead of
                         #   collected strictly from the config.
-                        tile_position = self.stage_x_pos/UM_TO_STEPS/1000.0 # convert to [mm] units
+                        tile_position = self.stage_x_pos / UM_TO_STEPS / 1000.0  # convert to [mm] units
                         self.log.info(f"Tile position [mm]: {tile_position}.")
                         self.log.info(f"Tiles [#]: {ztiles}.")
                         self.log.info(f"Tile spacing [um]: {self.cfg.z_step_size_um}.")
@@ -222,7 +227,7 @@ class Dispim(Spim):
                                           "to complete.")
                             transfer_process.join()
                         if img_storage_dir is not None:
-                            filepath_dest = img_storage_dir/filename
+                            filepath_dest = img_storage_dir / filename
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dest}.")
                             # TODO, use xcopy transfer for speed
@@ -251,9 +256,7 @@ class Dispim(Spim):
         # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture((self.cfg.sensor_column_count,
-                                                    self.cfg.sensor_row_count),
-                                                   filepath_src, tile_count)
+            self.frame_grabber.setup_stack_capture(filepath_src, tile_count)
             self.log.info(f"Configuring stage scan parameters")
             self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
 
@@ -293,6 +296,7 @@ class Dispim(Spim):
         self.log.debug("Starting livestream.")
         self.log.warning(f"Turning on the {wavelength}[nm] laser.")
         self.setup_imaging_for_laser(wavelength, live=True)
+        self.frame_grabber.setup_live()
         self.ni.start()
         self.livestream_enabled.set()
         self.livestream_worker = Thread(target=self._livestream_worker,
@@ -318,24 +322,34 @@ class Dispim(Spim):
 
     def _livestream_worker(self, wavelength):
         """Pulls images from the camera and puts them into the ring buffer."""
-        image_wait_time = round(5*self.cfg.get_daq_cycle_time()*1e3)
+        image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
         # self.cam.buf_alloc(2)
         # self.cam.cap_start()
-        self.frame_grabber.start() #?
+        self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
+            sleep(1. / 16)
             if self.simulated:
                 blank = np.zeros((self.cfg.row_count_px,
-                          self.cfg.column_count_px),
-                         dtype=self.cfg.image_dtype)
+                                  self.cfg.column_count_px),
+                                 dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
                 im = blank + noise
-                sleep(1. / 16)
-            elif framedata := self.frame_grabber.runtime.get_available_data():
-                lastframe = next(framedata.frames())
-                im = astframe.data().squeeze()
-            self.img_deque.append(im)
+
+            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
+
+                f = next(packet.frames())
+                im = f.data().squeeze().copy()  # TODO: copy?
+
+                f = None  # <-- will fail to get the last frames if this is held?
+                packet = None  # <-- will fail to get the last frames if this is held?
+
+                if self.blending:
+                    self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
+
+                self.img_deque.append(im)
+
         self.frame_grabber.stop()  # ?
-        #self.cam.buf_release()
+        # self.cam.buf_release()
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
         """Configure system to image with the desired laser wavelength.
@@ -352,7 +366,7 @@ class Dispim(Spim):
         # Reprovision the DAQ.
         self.configure_ni(wavelength, live)
         self.active_laser = wavelength
-        #self.lasers[self.active_laser].enable()
+        # self.lasers[self.active_laser].enable()
 
     def configure_ni(self, active_wavelenth: int, live: bool = False):
         """Setup DAQ to play waveforms according to wavelength to image with.

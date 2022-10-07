@@ -115,6 +115,7 @@ class DispimConfig(SpimConfig):
 
     @property
     def sensor_column_count(self):
+        """Pixels in column?"""
         return self.tile_specs['column_count_pixels']
 
     # @property
@@ -135,6 +136,7 @@ class DispimConfig(SpimConfig):
 
     @property
     def daq_update_freq(self):
+        """Frequency DAQ updates"""
         return self.daq_obj_kwds['update_frequency_hz']
 
     @daq_update_freq.setter
@@ -145,6 +147,7 @@ class DispimConfig(SpimConfig):
     # TODO: handle case if we want this to default to something else.
     @property
     def z_step_size_um(self):
+        """z step size in um"""
         return self.cfg['imaging_specs']['z_step_size_um']
 
     @z_step_size_um.setter
@@ -154,6 +157,7 @@ class DispimConfig(SpimConfig):
     # TODO: consider putting this in the parent class.
     @property
     def stage_backlash_reset_dist_um(self):
+        """stage backlash reset distance um"""
         return self.stage_specs['backlash_reset_distance_um']
 
     @stage_backlash_reset_dist_um.setter
@@ -195,6 +199,7 @@ class DispimConfig(SpimConfig):
 
     @property
     def camera_left_offset(self):
+        """Offset of left camera"""
         return self.camera_specs['camera_left']['offset']
 
     @camera_left_offset.setter
@@ -203,6 +208,7 @@ class DispimConfig(SpimConfig):
 
     @property
     def camera_right_offset(self):
+        """Offset of right camera"""
         return self.camera_specs['camera_right']['offset']
 
     @camera_right_offset.setter

@@ -3,7 +3,7 @@ from mock import Mock
 
 try:
     import calliphlox
-    from calliphlox import DeviceKind, Trigger
+    from calliphlox import DeviceKind, Trigger, SampleType
 except ImportError:
     print("WARNING: failed to import calliphlox")
 from pathlib import Path
@@ -14,26 +14,53 @@ class FrameGrabber:
     def __init__(self):
         self.runtime = calliphlox.Runtime()
         self.dm = self.runtime.device_manager()
-        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.p = self.runtime.get_configuration()
 
-    def setup_stack_capture(self, tile_shape: tuple, output_path: Path, frame_count: int):
+        self.cameras = [
+            d.name
+            for d in self.dm.devices()
+            if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
+        ]
+
+        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
+    def setup_cameras(self, tile_shape: tuple):
+        """General setup for both cameras for both livestream and stack capture
+
+        :param tile_shape: size 2 tuple of (columns, rows) for single tile"""
+
+        for stream_id in self.cameras:
+            self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
+            self.p.video[stream_id].camera.settings.binning = 1
+            self.p.video[stream_id].camera.settings.shape = (tile_shape[1], tile_shape[0])
+            self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
+            self.p.video[stream_id].frame_average_count = 0  # disables
+
+    def setup_stack_capture(self, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
 
-        :param tile_shape: size 2 tuple of (columns, rows) for single tile
         :param output_path: path where tiff will be saved
         :param frame_count: how many tiles to grab from camera
-
         """
-        self.log.info("Configuring camera.")
-        self.p.camera.identifier = self.dm.select(DeviceKind.Camera, name='C15440-20UP')
-        self.p.camera.settings.binning = 1
-        self.p.camera.settings.shape = (tile_shape[1], tile_shape[0])
-        self.p.storage.identifier = self.dm.select(DeviceKind.Storage, name='Tiff')
-        self.log.info(str(output_path.absolute()))
-        self.p.storage.settings.filename = str(output_path.absolute())
-        self.p.max_frame_count = frame_count
-        self.p.frame_average_count = 0  # disables
+        #TODO: Should this be looped over so we can configure both cameras at the same time?
+        # is there ever a time where there would be different configurations for stack capture?
+
+        for stream_id in self.cameras:
+            self.log.info(f"Configuring camera {stream_id}.")
+            self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
+            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
+            self.log.info(str(output_path.absolute()))
+            self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
+            self.p.video[stream_id].max_frame_count = frame_count
+
+        self.runtime.set_configuration(self.p)
+
+    def setup_live(self):
+        """Setup for live view. Images are sent to trash and there is no max frame count"""
+
+        for stream_id in self.cameras:
+            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
+            #self.p.video[stream_id].max_frame_count = inf
         self.runtime.set_configuration(self.p)
 
     def start(self):

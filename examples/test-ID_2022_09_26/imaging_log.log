@@ -1,0 +1,58 @@
+[SIM] 2022-09-26,13:29:06.325 DEBUG git.util: Failed checking if running in CYGWIN due to: FileNotFoundError(2, 'The system cannot find the file specified', None, 2, None)
+[SIM] 2022-09-26,13:29:06.325 DEBUG git.cmd: Popen(['git', 'cat-file', '--batch-check'], cwd=c:\users\administrator\projects\mesospim-prime, universal_newlines=False, shell=None, istream=<valid stream>)
+[SIM] 2022-09-26,13:29:06.498 DEBUG mesospim.spim_base.Dispim: mesospim 0.0.1 on branch dev/spim_parity at ce8d21ab1d013d03c94ed674bf112b3aaa1505b5
+[SIM] 2022-09-26,13:29:06.498 DEBUG git.cmd: Popen(['git', 'diff', '--cached', '--abbrev=40', '--full-index', '--raw'], cwd=c:\users\administrator\projects\mesospim-prime, universal_newlines=False, shell=None, istream=None)
+[SIM] 2022-09-26,13:29:06.651 DEBUG git.cmd: Popen(['git', 'diff', '--abbrev=40', '--full-index', '--raw'], cwd=c:\users\administrator\projects\mesospim-prime, universal_newlines=False, shell=None, istream=None)
+[SIM] 2022-09-26,13:29:06.773 DEBUG git.cmd: Popen(['git', 'cat-file', '--batch-check'], cwd=c:\users\administrator\projects\tigerasi, universal_newlines=False, shell=None, istream=<valid stream>)
+[SIM] 2022-09-26,13:29:06.914 DEBUG mesospim.spim_base.Dispim: TigerASI 0.0.1 on branch dev/hw_encoder_to_mm at 49201d2847a07803027afc42c08912c5d2272d01
+[SIM] 2022-09-26,13:29:06.914 DEBUG git.cmd: Popen(['git', 'diff', '--cached', '--abbrev=40', '--full-index', '--raw'], cwd=c:\users\administrator\projects\tigerasi, universal_newlines=False, shell=None, istream=None)
+[SIM] 2022-09-26,13:29:07.038 DEBUG git.cmd: Popen(['git', 'diff', '--abbrev=40', '--full-index', '--raw'], cwd=c:\users\administrator\projects\tigerasi, universal_newlines=False, shell=None, istream=None)
+[SIM] 2022-09-26,13:29:07.169 WARNING mesospim.spim_base.Dispim: Checking disk space not implemented.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.spim_base.Dispim: Applying extra move to take out backlash.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=-40.000 and waiting.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: y=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: x=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.169 DEBUG mesospim.spim_base.Dispim: Collecting tile stack: tile_0_0.tiff.
+[SIM] 2022-09-26,13:29:07.179 DEBUG mesospim.devices.tiger_components.SamplePose: Requested tile scan spacing: 0.25[um]. Actual spacing: 45[um].
+[SIM] 2022-09-26,13:29:07.179 ERROR mesospim.devices.tiger_components.SamplePose: Skipping writing tile scan parameters to hardware for now...
+[SIM] 2022-09-26,13:29:07.179 ERROR mesospim.spim_base.Dispim: Skipping stack acquisition from FrameGrabber.
+[SIM] 2022-09-26,13:29:07.179 DEBUG mesospim.spim_base.Dispim: Applying extra move to take out backlash.
+[SIM] 2022-09-26,13:29:07.179 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=-40.000 and waiting.
+[SIM] 2022-09-26,13:29:07.179 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.179 INFO mesospim.spim_base.Dispim: Starting transfer process for tile_0_0.tiff.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: x=19584.000 and waiting.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.spim_base.Dispim: Collecting tile stack: tile_1_0.tiff.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.devices.tiger_components.SamplePose: Requested tile scan spacing: 0.25[um]. Actual spacing: 45[um].
+[SIM] 2022-09-26,13:29:07.219 ERROR mesospim.devices.tiger_components.SamplePose: Skipping writing tile scan parameters to hardware for now...
+[SIM] 2022-09-26,13:29:07.219 ERROR mesospim.spim_base.Dispim: Skipping stack acquisition from FrameGrabber.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.spim_base.Dispim: Applying extra move to take out backlash.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=-40.000 and waiting.
+[SIM] 2022-09-26,13:29:07.219 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.219 INFO mesospim.spim_base.Dispim: Waiting for tiff transfer process to complete.
+[SIM] 2022-09-26,13:29:07.402 INFO mesospim.spim_base.Dispim: Starting transfer process for tile_1_0.tiff.
+[SIM] 2022-09-26,13:29:07.412 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: y=19584.000 and waiting.
+[SIM] 2022-09-26,13:29:07.412 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: x=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.412 DEBUG mesospim.spim_base.Dispim: Collecting tile stack: tile_0_1.tiff.
+[SIM] 2022-09-26,13:29:07.412 DEBUG mesospim.devices.tiger_components.SamplePose: Requested tile scan spacing: 0.25[um]. Actual spacing: 45[um].
+[SIM] 2022-09-26,13:29:07.412 ERROR mesospim.devices.tiger_components.SamplePose: Skipping writing tile scan parameters to hardware for now...
+[SIM] 2022-09-26,13:29:07.412 ERROR mesospim.spim_base.Dispim: Skipping stack acquisition from FrameGrabber.
+[SIM] 2022-09-26,13:29:07.412 DEBUG mesospim.spim_base.Dispim: Applying extra move to take out backlash.
+[SIM] 2022-09-26,13:29:07.422 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=-40.000 and waiting.
+[SIM] 2022-09-26,13:29:07.422 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.422 INFO mesospim.spim_base.Dispim: Waiting for tiff transfer process to complete.
+[SIM] 2022-09-26,13:29:07.598 INFO mesospim.spim_base.Dispim: Starting transfer process for tile_0_1.tiff.
+[SIM] 2022-09-26,13:29:07.618 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: x=19584.000 and waiting.
+[SIM] 2022-09-26,13:29:07.618 DEBUG mesospim.spim_base.Dispim: Collecting tile stack: tile_1_1.tiff.
+[SIM] 2022-09-26,13:29:07.618 DEBUG mesospim.devices.tiger_components.SamplePose: Requested tile scan spacing: 0.25[um]. Actual spacing: 45[um].
+[SIM] 2022-09-26,13:29:07.618 ERROR mesospim.devices.tiger_components.SamplePose: Skipping writing tile scan parameters to hardware for now...
+[SIM] 2022-09-26,13:29:07.618 ERROR mesospim.spim_base.Dispim: Skipping stack acquisition from FrameGrabber.
+[SIM] 2022-09-26,13:29:07.628 DEBUG mesospim.spim_base.Dispim: Applying extra move to take out backlash.
+[SIM] 2022-09-26,13:29:07.628 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=-40.000 and waiting.
+[SIM] 2022-09-26,13:29:07.628 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: z=0.000 and waiting.
+[SIM] 2022-09-26,13:29:07.628 INFO mesospim.spim_base.Dispim: Waiting for tiff transfer process to complete.
+[SIM] 2022-09-26,13:29:07.781 INFO mesospim.spim_base.Dispim: Starting transfer process for tile_1_1.tiff.
+[SIM] 2022-09-26,13:29:07.791 INFO mesospim.spim_base.Dispim: Stopping camera.
+[SIM] 2022-09-26,13:29:07.801 DEBUG mesospim.spim_base.Dispim: joining zstack transfer process.
+[SIM] 2022-09-26,13:29:07.984 INFO mesospim.spim_base.Dispim: Returning to start position.
+[SIM] 2022-09-26,13:29:07.984 DEBUG mesospim.devices.tiger_components.SamplePose: Absolute move to: x=0.000 y=0.000 z=0.000 and waiting.
