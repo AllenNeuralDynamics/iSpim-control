@@ -29,7 +29,7 @@ class FrameGrabber:
 
         :param tile_shape: size 2 tuple of (columns, rows) for single tile"""
 
-        for stream_id in self.cameras:
+        for stream_id in range(0,2):
             self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[1], tile_shape[0])
@@ -45,7 +45,7 @@ class FrameGrabber:
         #TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
 
-        for stream_id in self.cameras:
+        for stream_id in range(0,2):
             self.log.info(f"Configuring camera {stream_id}.")
             self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
@@ -58,7 +58,7 @@ class FrameGrabber:
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""
 
-        for stream_id in self.cameras:
+        for stream_id in range(0,2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
             #self.p.video[stream_id].max_frame_count = inf
         self.runtime.set_configuration(self.p)

@@ -1,5 +1,6 @@
 """Abstraction of the DISPIM Instrument."""
 
+
 import logging
 import numpy as np
 from pathlib import Path
@@ -11,6 +12,8 @@ from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
+from dispim.devices.oxxius_components import LaserHub
+from serial import Serial, EIGHTBITS, STOPBITS_ONE, PARITY_NONE
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
@@ -19,6 +22,15 @@ from mesospim.devices.tiger_components import SamplePose
 from math import ceil
 from mesospim.tiff_transfer import TiffTransfer
 
+OXXIUS_COM_SETUP = \
+            {
+                "baudrate": 9600,
+                "bytesize": EIGHTBITS,
+                "parity": PARITY_NONE,
+                "stopbits": STOPBITS_ONE,
+                "xonxoff": False,
+                "timeout": 1
+            }
 
 class Dispim(Spim):
 
@@ -29,7 +41,6 @@ class Dispim(Spim):
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated=simulated)
         self.cfg = DispimConfig(config_filepath)
-        print(self.cfg.imaging_specs['laser_wavelengths'])
         # Instantiate hardware devices
         self.frame_grabber = FrameGrabber() if not self.simulated else \
             Mock(FrameGrabber)
@@ -40,14 +51,13 @@ class Dispim(Spim):
         self.sample_pose = SamplePose(self.tigerbox,
                                       **self.cfg.sample_pose_kwds)
         # TODO, setup oxxius laser
+        self.lasers = {}  # populated in _setup_lasers.
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
         self.total_tiles = 0  # tiles to be captured.
         self.stage_x_pos = None
         self.stage_y_pos = None
-        self.blending = False  # Specifying if livestream should pull off both
-        # cameras or one
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -56,6 +66,7 @@ class Dispim(Spim):
         # TODO, setup cameras with CPX -> frame_grabber()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
+        # Internal state attributes.
         self.active_laser = None  # Bookkeep which laser is configured.
         self.live_status = None  # Bookkeep if we are running in live mode.
 
@@ -69,18 +80,32 @@ class Dispim(Spim):
         self.IMG_MIN = 0
         self.IMG_MAX = (1 << (8 * self.cfg.image_dtype.itemsize)) - 1
 
+        # camera id number
+        self.stream_id = 0
+        self.not_stream_id = 1
+
     def _setup_camera(self):
-        """Configure general settings for both"""
+        """Configure general settings"""
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
 
     def _setup_lasers(self):
-        pass
+        """Setup lasers that will be used for imaging. Warm them up, etc."""
+        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP)
+        self.lasers = {405: LaserHub('L6', self.ser),
+                       488: LaserHub('L5', self.ser),
+                       561: LaserHub('L3', self.ser),
+                       638: LaserHub('L1', self.ser)
+                       }
+        for wavelength_str, specs in self.cfg.laser_specs.items():
+            self.log.debug(f"Setting up {specs['color']} laser.")
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the dispim according to the config."""
-        self.sample_pose.set_axis_backlash(z=0.0)
-        # TODO, set speed of sample Z / tiger X axis to ~1
+        self.log.info("Setting backlash in Z to 0")
+        self.sample_pose.set_axis_backlash(Z=0.0)
+        self.log.info("Setting speeds to 1.0 mm/sec")
+        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
@@ -91,13 +116,18 @@ class Dispim(Spim):
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
 
-    def _setup_waveform_hardware(self, active_wavelength: int):
+    def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
         self.log.info("Configuring waveforms for hardware.")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels)
         self.log.info("Generating waveforms to hardware.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
+        # TODO: Put all corresponding tigerbox components in external control mode.
+        # externally_controlled_axes = \
+        #     {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
+        #      self.cfg.ni_controlled_tiger_axes}
+        # self.tigerbox.pm(**externally_controlled_axes)
 
     # TODO: this should be a base class thing.
     def check_ext_disk_space(self, dataset_size):
@@ -107,7 +137,7 @@ class Dispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um,
                                       self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,
-                                      self.cfg.channels,
+                                      self.cfg.imaging_specs.laser_wavelengths,
                                       self.cfg.tile_overlap_x_percent,
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
@@ -285,7 +315,7 @@ class Dispim(Spim):
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
-        if wavelength not in self.cfg.channels:
+        if wavelength not in self.cfg.imaging_specs['laser_wavelengths']:
             self.log.error(f"Aborting. {wavelength}[nm] laser is not a valid "
                            "laser.")
             return
@@ -327,24 +357,23 @@ class Dispim(Spim):
         # self.cam.cap_start()
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
-            sleep(1. / 16)
+
             if self.simulated:
-                blank = np.zeros((self.cfg.row_count_px,
-                                  self.cfg.column_count_px),
+                sleep(1 / 16)
+                blank = np.zeros((self.cfg.sensor_row_count,
+                                  self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                im = blank + noise
+                self.img_deque.append(blank + noise)
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
-
                 f = next(packet.frames())
                 im = f.data().squeeze().copy()  # TODO: copy?
 
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
 
-                if self.blending:
-                    self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
+                self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
 
                 self.img_deque.append(im)
 
@@ -364,29 +393,9 @@ class Dispim(Spim):
         if self.active_laser is not None:
             self.lasers[self.active_laser].disable()
         # Reprovision the DAQ.
-        self.configure_ni(wavelength, live)
+        self._setup_waveform_hardware(wavelength, live)
         self.active_laser = wavelength
-        # self.lasers[self.active_laser].enable()
-
-    def configure_ni(self, active_wavelenth: int, live: bool = False):
-        """Setup DAQ to play waveforms according to wavelength to image with.
-
-        Note: DAQ waveforms depend on the laser wavelength we are imaging with.
-
-        :param active_wavelenth: the laser wavelength to configure the daq for.
-            Only one laser wavelength may be turned on at a time.
-        :param live: True if we want the waveforms to play on loop.
-        """
-        # TODO: cache this.
-        self.log.debug(f"Computing waveforms for {active_wavelenth}[nm] laser.")
-        _, voltages_t = generate_waveforms(self.cfg, active_wavelenth)
-        self.log.debug("Setting up daq.")
-        period_time = self.cfg.get_daq_cycle_time
-        ao_names_to_channels = self.cfg.daq_ao_names_to_channels
-        self.ni.configure(period_time, ao_names_to_channels, live)
-        self.ni.assign_waveforms(voltages_t)
-        # TODO: Consider plotting waveforms and saving to data collection
-        #  folder at the beginning of an imaging run.
+        self.lasers[self.active_laser].enable()
 
     def get_latest_img(self):
         """returns the latest image as a 2d numpy array. Useful for UIs."""
