@@ -1,6 +1,6 @@
 """Abstraction of the DISPIM Instrument."""
 
-
+from napari.qt.threading import thread_worker
 import logging
 import numpy as np
 from pathlib import Path
@@ -329,9 +329,6 @@ class Dispim(Spim):
         self.frame_grabber.setup_live()
         self.ni.start()
         self.livestream_enabled.set()
-        self.livestream_worker = Thread(target=self._livestream_worker,
-                                        args=(wavelength,), daemon=True)
-        self.livestream_worker.start()
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
@@ -350,7 +347,8 @@ class Dispim(Spim):
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
         self.active_laser = None
 
-    def _livestream_worker(self, wavelength):
+    @thread_worker
+    def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
         # self.cam.buf_alloc(2)
@@ -364,7 +362,7 @@ class Dispim(Spim):
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                self.img_deque.append(blank + noise)
+                yield noise + blank
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
                 f = next(packet.frames())
@@ -375,7 +373,7 @@ class Dispim(Spim):
 
                 self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
 
-                self.img_deque.append(im)
+                yield im
 
         self.frame_grabber.stop()  # ?
         # self.cam.buf_release()
@@ -400,15 +398,6 @@ class Dispim(Spim):
     def get_latest_img(self):
         """returns the latest image as a 2d numpy array. Useful for UIs."""
         return self.img_deque[0]
-
-    # def apply_contrast(self,data):
-    #     """Apply the current contrast settings to the input image."""
-    #     # Apply current exposure settings.
-    #     # Point Slope Formula.
-    #     m = int(self.IMG_MAX / (np.amax(data) - self.IMG_MIN))
-    #     data = np.round(np.clip(m * data - m * self.IMG_MIN,
-    #                             self.IMG_MIN, self.IMG_MAX))
-    #     return data
 
     def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
         """Convenience func for moving the sample from a UI (units: steps)."""
