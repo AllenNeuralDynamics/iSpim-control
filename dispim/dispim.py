@@ -117,8 +117,9 @@ class Dispim(Spim):
         # TODO, how to store card # mappings, in config?
 
     def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
+
         self.log.info("Configuring waveforms for hardware.")
-        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels)
+        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
         self.log.info("Generating waveforms to hardware.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
@@ -339,9 +340,8 @@ class Dispim(Spim):
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
         self.livestream_enabled.clear()
+        self.frame_grabber.stop()
 
-        if wait:
-            self.livestream_worker.join()
         self.ni.stop()
         self.ni.close()
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
@@ -375,8 +375,6 @@ class Dispim(Spim):
 
                 yield im
 
-        self.frame_grabber.stop()  # ?
-        # self.cam.buf_release()
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
         """Configure system to image with the desired laser wavelength.
@@ -409,4 +407,9 @@ class Dispim(Spim):
     def close(self):
         """Safely close all open hardware connections."""
         # stuff here.
+        self.ni.close()
+        for wavelength, laser in self.lasers.items():
+            self.log.info(f"Powering down {wavelength}[nm] laser.")
+            laser.disable()
+        self.frame_grabber.close()
         super().close()

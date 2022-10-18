@@ -5,7 +5,7 @@ NIDAQMX setup for timing/triggering using PCIe-6738 card.
 import nidaqmx
 import numpy as np
 from nidaqmx.constants import AcquisitionType as AcqType
-from nidaqmx.constants import TaskMode
+from nidaqmx.constants import TaskMode, FrequencyUnits, Level
 from nidaqmx.constants import Edge, Slope
 from numpy import ndarray
 import logging
@@ -14,7 +14,7 @@ import logging
 class WaveformHardware:
     def __init__(self, dev_name, input_trigger_name, update_frequency_hz):
 
-        self.dev_name = dev_name # NI card address, i.e. Dev2
+        self.dev_name = dev_name  # NI card address, i.e. Dev2
         self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
         self.update_freq = update_frequency_hz  # in [Hz]
         self.ao_task = None
@@ -32,7 +32,7 @@ class WaveformHardware:
             self.stop()
             self.close()
         self.live = live
-        sample_count = round(self.update_freq*period_time)
+        sample_count = round(self.update_freq * period_time)
         # Create AO task and initialize the required channels
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
@@ -43,18 +43,31 @@ class WaveformHardware:
         self.ao_task.timing.cfg_samp_clk_timing(
             rate=self.update_freq,
             active_edge=Edge.RISING,
-            sample_mode=AcqType.CONTINUOUS if live else AcqType.FINITE,
+            sample_mode=AcqType.FINITE,
             samps_per_chan=sample_count)
-        self.ao_task.triggers.start_trigger.retriggerable = not live
+        self.ao_task.triggers.start_trigger.retriggerable = True
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
             trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
             trigger_edge=Slope.RISING)
 
-        # Create counter for encoder pulses from same trigger source. assign to ctr0
-        self.counter_task = nidaqmx.Task("counter_task")
-        self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(
-            f"{self.dev_name}/ctr0", edge = nidaqmx.constants.Edge.RISING)
-        self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
+        if live:
+            self.counter_task = nidaqmx.Task("counter_task")
+            self.counter_task.co_channels.add_co_pulse_chan_freq(f'{self.dev_name}/ctr0',
+                                                                 units=FrequencyUnits.HZ,
+                                                                 idle_state=Level.LOW,
+                                                                 initial_delay=0.0,
+                                                                 freq=5,
+                                                                 duty_cycle=0.5)
+            self.counter_task.ci_count_edges_term = f'{self.dev_name}/PFI2'
+            self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
+            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI3",
+                                                                        # if in live mode PFI3 trigger_edge = Slope.RISING)
+                                                                        trigger_edge=Slope.RISING)
+        else:
+
+            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
+                trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
+                trigger_edge=Slope.RISING)
 
         # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.

@@ -79,7 +79,7 @@ color = "blue"
 filter_index = 2
 ao_channel = 11
 disable_voltage = 0.0
-enable_voltage = 5.0
+enable_voltage = 4.5
 
 [channel_specs.561]
 driver = "Oxxius"

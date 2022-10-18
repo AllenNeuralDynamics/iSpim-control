@@ -72,3 +72,6 @@ class FrameGrabber:
         """Stop frame acquisition and file writing."""
         self.log.info("Stopping camera.")
         self.runtime.stop()
+
+    def close(self):
+        pass
