@@ -29,7 +29,7 @@ class FrameGrabber:
 
         :param tile_shape: size 2 tuple of (columns, rows) for single tile"""
 
-        for stream_id in range(0,2):
+        for stream_id in range(0, 2):
             self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[1], tile_shape[0])
@@ -42,12 +42,11 @@ class FrameGrabber:
         :param output_path: path where tiff will be saved
         :param frame_count: how many tiles to grab from camera
         """
-        #TODO: Should this be looped over so we can configure both cameras at the same time?
+        # TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
 
-        for stream_id in range(0,2):
+        for stream_id in range(0, 2):
             self.log.info(f"Configuring camera {stream_id}.")
-            self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
             self.log.info(str(output_path.absolute()))
             self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
@@ -58,10 +57,26 @@ class FrameGrabber:
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""
 
-        for stream_id in range(0,2):
+        for stream_id in range(0, 2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            #self.p.video[stream_id].max_frame_count = inf
+            # self.p.video[stream_id].max_frame_count = inf
         self.runtime.set_configuration(self.p)
+
+    @property
+    def exposure_time(self, stream_id: int):
+        return self.p.video[stream_id].camera.settings.exposure_time_us
+
+    @exposure_time.setter
+    def exposure_time(self, stream_id: int, exp_time: float):
+        self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
+
+    @property
+    def line_interval(self, stream_id: int):
+        return self.p.video[stream_id].camera.settings.line_interval_us
+
+    @line_interval.setter
+    def line_interval(self, stream_id: int, line_int: float):
+        self.p.video[stream_id].camera.settings.line_interval_us = line_int
 
     def start(self):
         """start the setup frame acquisition."""

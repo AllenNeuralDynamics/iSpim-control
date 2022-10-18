@@ -135,6 +135,9 @@ class Dispim(Spim):
         self.log.warning("Checking disk space not implemented.")
 
     def run_from_config(self):
+
+        if self.livestream_enabled.is_set():
+            self.stop_livestream()
         self.collect_volumetric_image(self.cfg.volume_x_um,
                                       self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,
@@ -218,6 +221,8 @@ class Dispim(Spim):
                         sleep(0.01)
 
                     for ch in channels:
+
+                        self.setup_imaging_for_laser(ch)
                         # Move to specified Z position
                         # TODO, set speed of sample Z / tiger X axis to ~1 mm/s
                         self.log.info("Applying extra move to take out backlash.")
@@ -276,7 +281,7 @@ class Dispim(Spim):
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
             self.log.info(f"Closing camera")
             # TODO, is this needed?
-            # self.frame_grabber.close()
+            self.frame_grabber.close()
             self.volumetric_imaging.clear()
             if transfer_process is not None:
                 self.log.info("Joining file transfer process.")
@@ -393,9 +398,9 @@ class Dispim(Spim):
         self.active_laser = wavelength
         self.lasers[self.active_laser].enable()
 
-    def get_latest_img(self):
-        """returns the latest image as a 2d numpy array. Useful for UIs."""
-        return self.img_deque[0]
+    def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
+         """Convenience function for moving the sample from a UI."""
+         self.sample_pose.move_absolute(x=x, y=y, z=z, wait=True)
 
     def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
         """Convenience func for moving the sample from a UI (units: steps)."""
