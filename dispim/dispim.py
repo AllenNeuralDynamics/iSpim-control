@@ -141,7 +141,7 @@ class Dispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um,
                                       self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,
-                                      self.cfg.imaging_specs.laser_wavelengths,
+                                      self.cfg.imaging_specs['laser_wavelengths'],
                                       self.cfg.tile_overlap_x_percent,
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
@@ -166,7 +166,7 @@ class Dispim(Spim):
         y_grid_step_um = \
             (1 - tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um
 
-        # Calculate number of tiles in XYUZ
+        # Calculate number of tiles in XYZ
         # Always round up so that we cover the desired imaging region.
         xtiles = ceil((volume_x_um - self.cfg.tile_size_x_um)
                       / x_grid_step_um)
@@ -416,5 +416,7 @@ class Dispim(Spim):
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
+        self.ser.close()
+        self.tigerbox.ser.close()
         self.frame_grabber.close()
         super().close()

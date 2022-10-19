@@ -31,10 +31,10 @@ rest_time = 0.005
 exposure_time = 0.012
 
 [daq_ao_names_to_channels]
-galvo_y_left = 0
-galvo_y_right = 1
-galvo_x_left = 2
-galvo_x_right = 3
+galvo_y_right = 0
+galvo_y_left = 1
+galvo_x_right = 2
+galvo_x_left = 3
 etl_left = 4
 etl_right = 5
 camera_left = 6
@@ -79,7 +79,7 @@ color = "blue"
 filter_index = 2
 ao_channel = 11
 disable_voltage = 0.0
-enable_voltage = 4.5
+enable_voltage = 5.0
 
 [channel_specs.561]
 driver = "Oxxius"
