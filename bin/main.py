@@ -9,6 +9,19 @@ import argparse
 import os
 import sys
 
+# Remove any handlers already attached to the root logger.
+logging.getLogger().handlers.clear()
+
+
+class SpimLogFiler(logging.Filter):
+    # Note: calliphlox lib is quite chatty.
+    VALID_LOGGER_BASES = {'mesospim', 'dispim', 'calliphlox'}
+
+    def filter(self, record):
+        return record.name.split('.')[0].lower() in \
+               self.__class__.VALID_LOGGER_BASES
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=None)
@@ -32,7 +45,6 @@ def main():
 
     # Setup logging.
     # Create log handlers to dispatch:
-    # - DEBUG level and above to write to a file called debug.log.
     # - User-specified level and above to print to console if specified.
     logger = logging.getLogger()  # get the root logger.
     # logger level must be set to the lowest level of any handler.
@@ -40,32 +52,22 @@ def main():
     fmt = '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s'
     fmt = "[SIM] " + fmt if args.simulated else fmt
     datefmt = '%Y-%m-%d,%H:%M:%S'
-    log_format = logging.Formatter(fmt=fmt, datefmt=datefmt)
-    log_handlers = []
-    #debug_filepath = Path(log_filename)
-    #self.log_handlers.append(logging.FileHandler(debug_filepath, 'w'))
-    #log_handlers[-1].setLevel(logging.DEBUG)
-    #log_handlers[-1].setFormatter(log_format)
+    log_formatter = ColoredFormatter(fmt=fmt, datefmt=datefmt) \
+        if args.color_console_output \
+        else logging.Formatter(fmt=fmt, datefmt=datefmt)
     if args.console_output:
-        log_handlers.append(logging.StreamHandler(sys.stdout))
-        log_handlers[-1].setLevel(args.log_level)
-        if args.color_console_output:
-            colored_formatter = ColoredFormatter(fmt=fmt, datefmt=datefmt)
-            log_handlers[-1].setFormatter(colored_formatter)
-        else:
-            log_handlers[-1].setFormatter(log_format)
-    for handler in log_handlers:
-        logger.addHandler(handler)
+        log_handler = logging.StreamHandler(sys.stdout)
+        log_handler.addFilter(SpimLogFiler())
+        log_handler.setLevel(args.log_level)
+        log_handler.setFormatter(log_formatter)
+        logger.addHandler(log_handler)
 
     # Windows-based console needs to accept colored logs if running with color.
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
-    instrument = Dispim(config_filepath=args.config,
-                          #console_output_level=args.log_level,
-                          #color_console_output=args.color_console_output,
-                          simulated=args.simulated)
+    instrument = Dispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu
         #Inpromptu(instrument).cmdloop()
