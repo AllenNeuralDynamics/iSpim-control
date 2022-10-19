@@ -15,6 +15,7 @@ class FrameGrabber:
         self.runtime = calliphlox.Runtime()
         self.dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
+        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         self.cameras = [
             d.name
@@ -39,8 +40,10 @@ class FrameGrabber:
     def setup_stack_capture(self, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
 
+        :param tile_shape: size 2 tuple of (columns, rows) for single tile
         :param output_path: path where tiff will be saved
         :param frame_count: how many tiles to grab from camera
+
         """
         # TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
