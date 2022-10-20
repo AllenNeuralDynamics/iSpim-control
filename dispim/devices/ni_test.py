@@ -17,13 +17,13 @@ ni.assign_waveforms(voltages_t)
 ni.start()
 time.sleep(5)
 
-counter_task = nidaqmx.Task("counter_task")
-counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
-                                                                 units=FrequencyUnits.HZ,
-                                                                 idle_state=Level.LOW, initial_delay=0.0,
-                                                                 freq=15,  # change 15 - 30 Hz, change to config value
-                                                                 duty_cycle=0.5)
-counter_task.ci_count_edges_term = '/Dev2/PFI2'
-counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
+# counter_task = nidaqmx.Task("counter_task")
+# counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
+#                                                                  units=FrequencyUnits.HZ,
+#                                                                  idle_state=Level.LOW, initial_delay=0.0,
+#                                                                  freq=15,  # change 15 - 30 Hz, change to config value
+#                                                                  duty_cycle=0.5)
+# counter_task.ci_count_edges_term = '/Dev2/PFI3'
+# counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
 # counter_task.start()
 # time.sleep(10)

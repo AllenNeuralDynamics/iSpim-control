@@ -146,6 +146,16 @@ class DispimConfig(SpimConfig):
 
     # TODO: consider putting this in the parent class.
     # TODO: handle case if we want this to default to something else.
+
+    @property
+    def imaging_wavelengths(self):
+        """laser wavelengths used in imaging"""
+        return self.cfg['imaging_specs']['laser_wavelengths']
+
+    @imaging_wavelengths.setter
+    def imaging_wavelengths(self, wl: int):
+        self.cfg['imaging_specs']['laser_wavelengths'] = wl
+
     @property
     def z_step_size_um(self):
         """z step size in um"""

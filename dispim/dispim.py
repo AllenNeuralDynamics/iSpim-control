@@ -123,7 +123,7 @@ class Dispim(Spim):
         self.log.info("Configuring waveforms for hardware.")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
         self.log.info("Generating waveforms to hardware.")
-        _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
+        _, voltages_t = generate_waveforms(self.cfg, 488)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
         # TODO: Put all corresponding tigerbox components in external control mode.
@@ -361,7 +361,6 @@ class Dispim(Spim):
         self.frame_grabber.setup_live()
         self.ni.start()
         self.livestream_enabled.set()
-        # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
         # Bail early if it's already stopped.
@@ -382,8 +381,6 @@ class Dispim(Spim):
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
-        # self.cam.buf_alloc(2)
-        # self.cam.cap_start()
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
 
@@ -404,7 +401,7 @@ class Dispim(Spim):
 
                 self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
 
-                yield im
+                yield im, self.not_stream_id
 
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):

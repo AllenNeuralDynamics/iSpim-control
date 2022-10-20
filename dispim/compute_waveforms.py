@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Generate waveforms from config params. If standalone, save a graph only."""
 import numpy as np
+import sys
+np.set_printoptions(threshold=sys.maxsize)
 from numpy import pi
 import matplotlib.pyplot as plt
 from scipy.signal import sawtooth
@@ -79,6 +81,7 @@ def generate_waveforms(cfg: DispimConfig, active_wavelength: int):
 
     # Populate all waveforms in the order the NI card will create them.
     for index, (name, _) in enumerate(cfg.daq_ao_names_to_channels.items()):
+
         voltages_t[index] = waveforms[name]
 
     return t, voltages_t
@@ -171,7 +174,7 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         if ao_name == str(active_wavelen):
             enable_voltage = laser_specs[ao_name]['enable_voltage']
         # Generate Laser Signal analog time series.
-        laser_t = disable_voltage * np.ones((1, daq_cycle_samples))
+        laser_t = disable_voltage*np.ones(daq_cycle_samples)
         laser_t[int(exposure_samples*camera_right_offset):delay_samples + int(exposure_samples*camera_left_offset) + exposure_samples] = enable_voltage
         lasers_t[ao_name] = laser_t
     return lasers_t

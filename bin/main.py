@@ -25,7 +25,7 @@ class SpimLogFiler(logging.Filter):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=None)
-    parser.add_argument("--log_level", type=str, default="INFO",
+    parser.add_argument("--log_level", type=str, default="DEBUG",
                         choices=["INFO", "DEBUG"])
     parser.add_argument("--simulated", default=False, action="store_true",
                         help="Simulate hardware device connections.")
