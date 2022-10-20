@@ -123,7 +123,7 @@ class Dispim(Spim):
         self.log.info("Configuring waveforms for hardware.")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
         self.log.info("Generating waveforms to hardware.")
-        _, voltages_t = generate_waveforms(self.cfg, 488)
+        _, voltages_t = generate_waveforms(self.cfg, self.active_laser)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
         # TODO: Put all corresponding tigerbox components in external control mode.
