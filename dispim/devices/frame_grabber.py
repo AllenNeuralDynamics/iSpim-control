@@ -22,6 +22,7 @@ class FrameGrabber:
             d.name
             for d in self.dm.devices()
             if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
+
         ]
 
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
