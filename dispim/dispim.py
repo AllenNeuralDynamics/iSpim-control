@@ -52,6 +52,7 @@ class Dispim(Spim):
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
         self.sample_pose = SamplePose(self.tigerbox,
                                       **self.cfg.sample_pose_kwds)
+
         # TODO, setup oxxius laser
         self.lasers = {}  # populated in _setup_lasers.
 
