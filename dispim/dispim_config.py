@@ -18,7 +18,7 @@ TomlTemplate = \
                 "volume_x_um": 2304,
                 "volume_y_um": 2304,
                 "volume_z_um": 1,
-                "laser_wavelengths": [ 488,]
+                "laser_wavelengths": [488, ]
             }
         # TODO: populate remaining fields.
     }
@@ -42,7 +42,7 @@ class DispimConfig(SpimConfig):
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
         # TODO: dispim has 2 filterwheels. We must set the location of both
         #   programmatically.
-        #self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
+        # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
@@ -57,23 +57,23 @@ class DispimConfig(SpimConfig):
 
     def get_delay_samples(self):
         """Return the delay samples between the left and right views."""
-        return round(self.daq_update_freq*self.delay_time)
+        return round(self.daq_update_freq * self.delay_time)
 
     def get_rest_samples(self):
         """Return the rest samples between the left and right views."""
-        return round(self.daq_update_freq*self.rest_time)
+        return round(self.daq_update_freq * self.rest_time)
 
     def get_exposure_samples(self):
         """Return the exposure samples between the left and right views."""
-        return round(self.daq_update_freq*self.exposure_time)
+        return round(self.daq_update_freq * self.exposure_time)
 
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""
-        return round(self.daq_update_freq*self.get_period_time())
+        return round(self.daq_update_freq * self.get_period_time())
 
     def get_daq_cycle_samples(self):
         """Return the total waveform cycle time for a frame."""
-        return round(self.daq_update_freq*self.get_daq_cycle_time())
+        return round(self.daq_update_freq * self.get_daq_cycle_time())
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
@@ -214,7 +214,7 @@ class DispimConfig(SpimConfig):
         return self.camera_specs['camera_left']['offset']
 
     @camera_left_offset.setter
-    def camera_left_offset(self, left_offset: float ):
+    def camera_left_offset(self, left_offset: float):
         self.camera_specs['camera_left']['offset'] = left_offset
 
     @property
@@ -231,7 +231,6 @@ class DispimConfig(SpimConfig):
         """Returns set of all configured laser wavelengths.
         Note: this is NOT the subset of wavelengths used for imaging."""
         return set([int(nm) for nm in self.cfg['channel_specs'].keys()])
-
 
     @property
     def daq_used_channels(self):
@@ -303,7 +302,7 @@ class DispimConfig(SpimConfig):
 
     def print_summary_stats(self):
         # Print some stats:
-        print("--Config Stats--") # TO DO ADD DISPIM VALUES HERE
+        print("--Config Stats--")  # TO DO ADD DISPIM VALUES HERE
         print("Volume Capture Stat:")
         print(f"  percent overlap x: {self.tile_overlap_x_percent:.1f}%")
         print(f"  percent overlap y: {self.tile_overlap_x_percent:.1f}%")
@@ -312,5 +311,5 @@ class DispimConfig(SpimConfig):
               f"{self.volume_y_um:.1f}[um] x "
               f"{self.volume_z_um:.1f}[um].")
         print()
-        print("GUI settings for debugging:") # TO DO ADD DISPIM VALUES HERE
+        print("GUI settings for debugging:")  # TO DO ADD DISPIM VALUES HERE
         print()
