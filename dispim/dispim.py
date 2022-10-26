@@ -380,7 +380,9 @@ class Dispim(Spim):
         self.ni.stop()
         self.ni.close()
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
+        self.lasers[self.active_laser].disable()
         self.active_laser = None
+
 
     @thread_worker
     def _livestream_worker(self):
