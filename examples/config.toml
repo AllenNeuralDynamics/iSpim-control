@@ -1,6 +1,6 @@
 [imaging_specs]
-local_storage_directory = "C:\\\\test"
-external_storage_directory = "Y:\\\\diSPIM"
+local_storage_directory = "C:\\test"
+external_storage_directory = "Y:\\diSPIM"
 subject_id = "test"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
@@ -9,7 +9,7 @@ z_step_size_um = 0.176
 volume_x_um = 600
 volume_y_um = 400
 volume_z_um = 100
-laser_wavelengths = [ 488, 638, 405,]
+laser_wavelengths = [ 561, 488,]
 possible_wavelengths = [ 488, 638, 405, 561,]
 
 [tile_specs]
@@ -125,7 +125,7 @@ z = "x"
 [channel_specs.405.etl]
 left_offset = 1.85
 left_amplitude = 0
-right_offset = 1.65
+right_offset = 1.9
 right_amplitude = 0
 
 [channel_specs.405.galvo]
