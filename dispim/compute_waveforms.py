@@ -171,7 +171,7 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         if ao_name == str(active_wavelen):
             enable_voltage = laser_specs[ao_name]['enable_voltage']
         # Generate Laser Signal analog time series.
-        laser_t = disable_voltage * np.ones((1, daq_cycle_samples))
+        laser_t = disable_voltage * np.ones((daq_cycle_samples))
         laser_t[int(exposure_samples*camera_right_offset):delay_samples + int(exposure_samples*camera_left_offset) + exposure_samples] = enable_voltage
         lasers_t[ao_name] = laser_t
     return lasers_t

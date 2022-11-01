@@ -99,6 +99,7 @@ class Dispim(Spim):
                        561: LaserHub('L3', self.ser),
                        638: LaserHub('L1', self.ser)
                        }
+        #self.lasers[488].get(Query.LaserDriverControlMode)
         for wavelength_str, specs in self.cfg.laser_specs.items():
             self.log.debug(f"Setting up {specs['color']} laser.")
 
@@ -386,7 +387,7 @@ class Dispim(Spim):
         # self.cam.cap_start()
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
-
+            self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
             if self.simulated:
                 sleep(1 / 16)
                 blank = np.zeros((self.cfg.sensor_row_count,
@@ -402,9 +403,7 @@ class Dispim(Spim):
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
 
-                self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
-
-                yield im
+                yield im, self.stream_id
 
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
@@ -438,11 +437,13 @@ class Dispim(Spim):
     def close(self):
         """Safely close all open hardware connections."""
         # stuff here.
+        super().close()
+        self.tigerbox.ser.close()
+        self.frame_grabber.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
+        print('before')
         self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
-        self.tigerbox.ser.close()
-        self.frame_grabber.close()
-        super().close()
+        print('after')
