@@ -8,7 +8,7 @@ from dispim.dispim_config import DispimConfig
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
 import time
-
+#
 cfg = DispimConfig(r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml')
 ni = WaveformHardware(**cfg.daq_obj_kwds)
 ni.configure(cfg.get_daq_cycle_time(), cfg.daq_ao_names_to_channels, live = True)
