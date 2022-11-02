@@ -50,10 +50,10 @@ class Dispim(Spim):
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
-        self.sample_pose = SamplePose(self.tigerbox,
-                                      **self.cfg.sample_pose_kwds)
+        self.sample_pose = SamplePose(self.tigerbox,)
+                                      #**self.cfg.sample_pose_kwds)
+        #TODO: Comment back in. Check if sample_pose_kwds is in dispim
 
-        # TODO, setup oxxius laser
         self.lasers = {}  # populated in _setup_lasers.
 
         # Extra Internal State attributes for the current image capture
@@ -66,7 +66,6 @@ class Dispim(Spim):
         self._setup_camera()
         self._setup_lasers()
         self._setup_motion_stage()
-        # TODO, setup cameras with CPX -> frame_grabber()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
         # Internal state attributes.
@@ -94,21 +93,23 @@ class Dispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP)
-        self.lasers = {405: LaserHub('L6', self.ser),
-                       488: LaserHub('L5', self.ser),
-                       561: LaserHub('L3', self.ser),
-                       638: LaserHub('L1', self.ser)
-                       }
-        for wavelength_str, specs in self.cfg.laser_specs.items():
+
+        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
+
+        for wl, specs in self.cfg.laser_specs.items():
+            self.lasers[int(wl)] = LaserHub(specs['prefix'], self.ser) if not self.simulated \
+                else Mock(LaserHub)
+
             self.log.debug(f"Setting up {specs['color']} laser.")
+
+        print(self.lasers)
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the dispim according to the config."""
         self.log.info("Setting backlash in Z to 0")
-        self.sample_pose.set_axis_backlash(Z=0.0)
+        #self.sample_pose.set_axis_backlash(Z=0.0)
         self.log.info("Setting speeds to 1.0 mm/sec")
-        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
+        #self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
@@ -379,7 +380,9 @@ class Dispim(Spim):
         self.ni.stop()
         self.ni.close()
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
+        self.lasers[self.active_laser].disable()
         self.active_laser = None
+
 
     @thread_worker
     def _livestream_worker(self):
@@ -387,14 +390,15 @@ class Dispim(Spim):
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
-
+            # switching between cameras each time data is pulled
+            self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
             if self.simulated:
                 sleep(1 / 16)
                 blank = np.zeros((self.cfg.sensor_row_count,
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank
+                yield noise + blank, self.stream_id
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
                 f = next(packet.frames())
@@ -403,9 +407,7 @@ class Dispim(Spim):
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
 
-                self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
-
-                yield im, self.not_stream_id
+                yield im, self.stream_id
 
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
@@ -439,11 +441,13 @@ class Dispim(Spim):
     def close(self):
         """Safely close all open hardware connections."""
         # stuff here.
+
+        super().close()
+        self.tigerbox.ser.close()
+        self.frame_grabber.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
         self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
-        self.tigerbox.ser.close()
-        self.frame_grabber.close()
-        super().close()
+

@@ -106,13 +106,16 @@ class WaveformHardware:
         # closing to ensure the waveforms exit in known state.
         # We need to write an array as the same size as what the task was
         # provisioned with.
-        if self.live:
-            ao_data = np.zeros((len(self.ao_task.ao_channels), self.ao_task.out_stream.output_buf_size))
-            self.ao_task.write(ao_data)
-
+        # if self.live:
+        #     ao_data = np.zeros((len(self.ao_task.ao_channels), self.ao_task.out_stream.output_buf_size))
+        #     self.ao_task.write(ao_data)
+        #TODO: Why is this not working?
         self.log.debug("Issuing a task stop.")
         self.counter_task.stop()
+        self.counter_task.wait_until_done(1)
+        # sleep(.5)
         self.ao_task.stop()
+
 
     def restart(self):
         # Restart ao task

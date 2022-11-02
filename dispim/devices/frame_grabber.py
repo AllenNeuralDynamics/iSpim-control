@@ -12,6 +12,7 @@ from pathlib import Path
 class FrameGrabber:
 
     def __init__(self):
+
         self.runtime = calliphlox.Runtime()
         self.dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
@@ -66,7 +67,6 @@ class FrameGrabber:
             # self.p.video[stream_id].max_frame_count = inf
         self.runtime.set_configuration(self.p)
 
-
     def get_exposure_time(self, stream_id: int):
 
         if self.p.video[stream_id].camera.settings.exposure_time_us == 0:
@@ -77,7 +77,7 @@ class FrameGrabber:
 
     def set_exposure_time(self, stream_id: int, exp_time: float):
         self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
-
+        print(self.get_exposure_time(stream_id))
 
     def get_line_interval(self, stream_id: int):
         if self.p.video[stream_id].camera.settings.line_interval_us == 0:
@@ -87,6 +87,8 @@ class FrameGrabber:
 
     def set_line_interval(self, stream_id: int, line_int: float):
         self.p.video[stream_id].camera.settings.line_interval_us = line_int
+        print(self.get_line_interval(stream_id))
+
 
     def start(self):
         """start the setup frame acquisition."""
