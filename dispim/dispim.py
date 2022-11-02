@@ -444,6 +444,4 @@ class Dispim(Spim):
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
-        print('before')
         self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
-        print('after')

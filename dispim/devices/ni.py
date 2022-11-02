@@ -57,12 +57,11 @@ class WaveformHardware:
                                                                  units=FrequencyUnits.HZ,
                                                                  idle_state=Level.LOW,
                                                                  initial_delay=0.0,
-                                                                 freq=5,
+                                                                 freq=15,
                                                                  duty_cycle=0.5)
             self.counter_task.ci_count_edges_term = f'{self.dev_name}/PFI2'
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI3",
-                                                                        # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
         else:
 

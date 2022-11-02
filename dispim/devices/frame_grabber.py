@@ -3,7 +3,7 @@ from mock import Mock
 
 try:
     import calliphlox
-    from calliphlox import DeviceKind, Trigger, SampleType
+    from calliphlox import DeviceKind, Trigger, SampleType,TriggerEvent
 except ImportError:
     print("WARNING: failed to import calliphlox")
 from pathlib import Path
@@ -54,7 +54,12 @@ class FrameGrabber:
             self.log.info(str(output_path.absolute()))
             self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
             self.p.video[stream_id].max_frame_count = frame_count
-
+            self.p.video[stream_id].camera.settings.triggers = Trigger(
+                                                    enable='True',
+                                                    line=0,
+                                                    event='AcquisitionStart',
+                                                    kind='Input',
+                                                    edge='Rising')
         self.runtime.set_configuration(self.p)
 
     def setup_live(self):
@@ -62,8 +67,32 @@ class FrameGrabber:
 
         for stream_id in range(0, 2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            # self.p.video[stream_id].max_frame_count = inf
-        self.runtime.set_configuration(self.p)
+            self.p.video[stream_id].max_frame_count = 0
+            live_trigger_0 = Trigger(enable='True',
+                                   line=0,
+                                   event='FrameStart',
+                                   kind='Input',
+                                   edge='Rising')
+            live_trigger_1 = Trigger(enable='False',
+                                     line=1,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
+            live_trigger_2 = Trigger(enable='False',
+                                     line=2,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
+            live_trigger_3 = Trigger(enable='False',
+                                     line=3,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
+            self.p.video[stream_id].camera.settings.triggers = [live_trigger_0, live_trigger_1, live_trigger_2, live_trigger_3]
+            print(self.p.video[stream_id].camera.settings.dict())
+        out = self.runtime.set_configuration(self.p)
+        print(out.dict())
+
 
     @property
     def exposure_time(self, stream_id: int):
