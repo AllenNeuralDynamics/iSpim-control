@@ -22,6 +22,7 @@ class FrameGrabber:
             d.name
             for d in self.dm.devices()
             if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
+
         ]
 
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -76,7 +77,7 @@ class FrameGrabber:
 
     def set_exposure_time(self, stream_id: int, exp_time: float):
         self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
-
+        print(self.get_exposure_time(stream_id))
 
     def get_line_interval(self, stream_id: int):
         if self.p.video[stream_id].camera.settings.line_interval_us == 0:
@@ -86,6 +87,7 @@ class FrameGrabber:
 
     def set_line_interval(self, stream_id: int, line_int: float):
         self.p.video[stream_id].camera.settings.line_interval_us = line_int
+        print(self.get_line_interval(stream_id))
 
 
     def start(self):

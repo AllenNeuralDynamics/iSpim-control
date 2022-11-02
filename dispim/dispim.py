@@ -380,7 +380,9 @@ class Dispim(Spim):
         self.ni.stop()
         self.ni.close()
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
+        self.lasers[self.active_laser].disable()
         self.active_laser = None
+
 
     @thread_worker
     def _livestream_worker(self):
@@ -439,11 +441,13 @@ class Dispim(Spim):
     def close(self):
         """Safely close all open hardware connections."""
         # stuff here.
+
+        super().close()
+        self.tigerbox.ser.close()
+        self.frame_grabber.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
         self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
-        self.tigerbox.ser.close()
-        self.frame_grabber.close()
-        super().close()
+
