@@ -50,9 +50,10 @@ class Dispim(Spim):
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
-        self.sample_pose = SamplePose(self.tigerbox,
-                                      **self.cfg.sample_pose_kwds)
-        # TODO, setup oxxius laser
+        self.sample_pose = SamplePose(self.tigerbox,)
+                                      #**self.cfg.sample_pose_kwds)
+        #TODO: Comment back in. Check if sample_pose_kwds is in dispim
+
         self.lasers = {}  # populated in _setup_lasers.
 
         # Extra Internal State attributes for the current image capture
@@ -65,7 +66,6 @@ class Dispim(Spim):
         self._setup_camera()
         self._setup_lasers()
         self._setup_motion_stage()
-        # TODO, setup cameras with CPX -> frame_grabber()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
         # Internal state attributes.
@@ -93,13 +93,13 @@ class Dispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP)
-        self.lasers = {405: LaserHub('L6', self.ser),
-                       488: LaserHub('L5', self.ser),
-                       561: LaserHub('L3', self.ser),
-                       638: LaserHub('L1', self.ser)
-                       }
-        for wavelength_str, specs in self.cfg.laser_specs.items():
+
+        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
+
+        for wl, specs in self.cfg.laser_specs.items():
+            self.lasers[int(wl)] = LaserHub(specs['prefix'], self.ser) if not self.simulated \
+                else Mock(LaserHub)
+
             self.log.debug(f"Setting up {specs['color']} laser.")
 
     def _setup_motion_stage(self):
@@ -388,6 +388,7 @@ class Dispim(Spim):
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
+            # switching between cameras each time data is pulled
             self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
             if self.simulated:
                 sleep(1 / 16)
