@@ -38,7 +38,7 @@ class WaveformHardware:
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
             physical_name = f"/{self.dev_name}/ao{channel_index}"
-            self.log.debug(f"Setting up ao channel {channel_name} "
+            self.log.info(f"Setting up ao channel {channel_name} "
                            f"on {physical_name}")
             self.ao_task.ao_channels.add_ao_voltage_chan(physical_name)
         self.ao_task.timing.cfg_samp_clk_timing(
@@ -53,15 +53,15 @@ class WaveformHardware:
 
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
-            self.counter_task.co_channels.add_co_pulse_chan_freq(f'{self.dev_name}/ctr0',
-                                                                 units=FrequencyUnits.HZ,
-                                                                 idle_state=Level.LOW,
-                                                                 initial_delay=0.0,
-                                                                 freq=15,
-                                                                 duty_cycle=0.5)
-            self.counter_task.ci_count_edges_term = f'{self.dev_name}/PFI2'
+            self.counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
+                                                            units=FrequencyUnits.HZ,
+                                                            idle_state=Level.LOW, initial_delay=0.0,
+                                                            freq=5,  # change 15 - 30 Hz, change to config value
+                                                            duty_cycle=0.5)
+            self.counter_task.ci_count_edges_term = '/Dev2/PFI3'
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
-            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI3",
+            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI2",
+                                                                        # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
         else:
 
@@ -111,10 +111,11 @@ class WaveformHardware:
         # if self.live:
         #     ao_data = np.zeros((len(self.ao_task.ao_channels), self.ao_task.out_stream.output_buf_size))
         #     self.ao_task.write(ao_data)
-
+        #TODO: Why is this not working?
         self.log.debug("Issuing a task stop.")
         self.counter_task.stop()
-        sleep(.5) #TODO:Sleeping statement is required because ao_task.write is bugging out
+        self.counter_task.wait_until_done(1)
+        # sleep(.5)
         self.ao_task.stop()
 
     def restart(self):

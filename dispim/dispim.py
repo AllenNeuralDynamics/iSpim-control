@@ -99,7 +99,6 @@ class Dispim(Spim):
                        561: LaserHub('L3', self.ser),
                        638: LaserHub('L1', self.ser)
                        }
-        #self.lasers[488].get(Query.LaserDriverControlMode)
         for wavelength_str, specs in self.cfg.laser_specs.items():
             self.log.debug(f"Setting up {specs['color']} laser.")
 
@@ -133,7 +132,10 @@ class Dispim(Spim):
         #      self.cfg.ni_controlled_tiger_axes}
         # self.tigerbox.pm(**externally_controlled_axes)
 
-    # TODO: this should be a base class thing.
+        if self.active_laser is not None and self.live_status == live:
+            self.ni.start()
+
+    # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
         self.log.warning("Checking disk space not implemented.")
 
@@ -377,14 +379,13 @@ class Dispim(Spim):
         self.ni.stop()
         self.ni.close()
         self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
+        self.lasers[self.active_laser].disable()
         self.active_laser = None
 
     @thread_worker
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
-        # self.cam.buf_alloc(2)
-        # self.cam.cap_start()
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
             self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
@@ -394,7 +395,7 @@ class Dispim(Spim):
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank
+                yield noise + blank, self.stream_id
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
                 f = next(packet.frames())
