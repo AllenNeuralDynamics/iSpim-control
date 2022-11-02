@@ -100,15 +100,15 @@ class DispimConfig(SpimConfig):
     # def scan_direction(self, direction: DCAMPROP.READOUT_DIRECTION):
     #     self.dcam_specs['scan_direction'] = direction.name
 
-    # @property
-    # def slit_width(self):
-    #     """Returns the slit width in pixels."""
-    #     return self.design_specs['slit_width']
+    @property
+    def slit_width(self):
+        """Returns the slit width in pixels."""
+        return self.design_specs['slit_width_pixels']
 
-    # @slit_width.setter
-    # def slit_width(self, width: int):
-    #     """Sets the slit width in pixels."""
-    #     self.design_specs['slit_width'] = width
+    @slit_width.setter
+    def slit_width(self, width: int):
+        """Sets the slit width in pixels."""
+        self.design_specs['slit_width_pixels'] = width
 
     @property
     def sensor_row_count(self):

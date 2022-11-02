@@ -3,7 +3,7 @@ from mock import Mock
 
 try:
     import calliphlox
-    from calliphlox import DeviceKind, Trigger, SampleType,TriggerEvent
+    from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent
 except ImportError:
     print("WARNING: failed to import calliphlox")
 from pathlib import Path
@@ -34,6 +34,7 @@ class FrameGrabber:
 
         for stream_id in range(0, 2):
             self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
+            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[1], tile_shape[0])
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
@@ -57,11 +58,11 @@ class FrameGrabber:
             self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
             self.p.video[stream_id].max_frame_count = frame_count
             self.p.video[stream_id].camera.settings.triggers = Trigger(
-                                                    enable='True',
-                                                    line=0,
-                                                    event='AcquisitionStart',
-                                                    kind='Input',
-                                                    edge='Rising')
+                enable='True',
+                line=0,
+                event='AcquisitionStart',
+                kind='Input',
+                edge='Rising')
         self.runtime.set_configuration(self.p)
 
     def setup_live(self):
@@ -69,55 +70,73 @@ class FrameGrabber:
 
         for stream_id in range(0, 2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            self.p.video[stream_id].max_frame_count = 0
-            live_trigger_0 = Trigger(enable='True',
-                                   line=0,
-                                   event='FrameStart',
-                                   kind='Input',
-                                   edge='Rising')
-            live_trigger_1 = Trigger(enable='False',
-                                     line=1,
-                                     event='FrameStart',
-                                     kind='Input',
-                                     edge='Rising')
-            live_trigger_2 = Trigger(enable='False',
-                                     line=2,
-                                     event='FrameStart',
-                                     kind='Input',
-                                     edge='Rising')
-            live_trigger_3 = Trigger(enable='False',
-                                     line=3,
-                                     event='FrameStart',
-                                     kind='Input',
-                                     edge='Rising')
-            self.p.video[stream_id].camera.settings.triggers = [live_trigger_0, live_trigger_1, live_trigger_2, live_trigger_3]
-            print(self.p.video[stream_id].camera.settings.dict())
+            #self.p.video[stream_id].max_frame_count = 0
+            # live_trigger_0 = Trigger(enable='True',
+            #                          line=0,
+            #                          event='FrameStart',
+            #                          kind='Input',
+            #                          edge='Rising')
+            # live_trigger_1 = Trigger(enable='False',
+            #                          line=1,
+            #                          event='FrameStart',
+            #                          kind='Input',
+            #                          edge='Rising')
+            # live_trigger_2 = Trigger(enable='False',
+            #                          line=2,
+            #                          event='FrameStart',
+            #                          kind='Input',
+            #                          edge='Rising')
+            # live_trigger_3 = Trigger(enable='False',
+            #                          line=3,
+            #                          event='FrameStart',
+            #                          kind='Input',
+            #                          edge='Rising')
+            # self.p.video[stream_id].camera.settings.triggers = [live_trigger_0, live_trigger_1, live_trigger_2,
+            #                                                     live_trigger_3]
+            # print(self.p.video[stream_id].camera.settings.dict())
         out = self.runtime.set_configuration(self.p)
-        print(out.dict())
+        #print(out.dict())
 
+    def get_exposure_time(self):
+        exposure_time = [
+            self.p.video[stream_id].camera.settings.exposure_time_us
+            for stream_id in range(0, 2)
+        ]
+        return exposure_time
 
-    def get_exposure_time(self, stream_id: int):
+    def set_exposure_time(self, exp_time: float, live: bool = False):
+        print(exp_time)
+        for stream_id in range(0, 2):
+            self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
+        if live:
+            self.stop()
+            self.runtime.set_configuration(self.p)
+            self.start()
+        else:
+            self.runtime.set_configuration(self.p)
+        print('exposure', self.get_exposure_time())
+        print(self.runtime.get_configuration())
 
-        if self.p.video[stream_id].camera.settings.exposure_time_us == 0:
-            self.p.video[stream_id].camera.settings.exposure_time_us = 1
+    def get_line_interval(self):
+        line_interval = [
+            self.p.video[stream_id].camera.settings.line_interval_us
+            for stream_id in range(0, 2)
+        ]
+        return line_interval
 
-        return self.p.video[stream_id].camera.settings.exposure_time_us
+    def set_line_interval(self, line_int: float, live: bool = False):
+        print(line_int)
+        for stream_id in range(0, 2):
+            self.p.video[stream_id].camera.settings.line_interval_us = line_int
+        if live:
+            self.stop()
+            self.runtime.set_configuration(self.p)
+            self.start()
+        else:
+            self.runtime.set_configuration(self.p)
 
-
-    def set_exposure_time(self, stream_id: int, exp_time: float):
-        self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
-        print(self.get_exposure_time(stream_id))
-
-    def get_line_interval(self, stream_id: int):
-        if self.p.video[stream_id].camera.settings.line_interval_us == 0:
-            self.p.video[stream_id].camera.settings.line_interval_us = 1
-        return self.p.video[stream_id].camera.settings.line_interval_us
-
-
-    def set_line_interval(self, stream_id: int, line_int: float):
-        self.p.video[stream_id].camera.settings.line_interval_us = line_int
-        print(self.get_line_interval(stream_id))
-
+        print('line', self.get_line_interval())
+        print(self.runtime.get_configuration())
 
     def start(self):
         """start the setup frame acquisition."""

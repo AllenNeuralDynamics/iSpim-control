@@ -90,6 +90,14 @@ class Dispim(Spim):
         """Configure general settings"""
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
+        self.frame_grabber.set_line_interval((self.cfg.exposure_time*1000000)/
+                                             self.cfg.sensor_column_count)
+
+        # TODO: This is assuming that the line_interval is set the same in
+        #  both cameras. Should have some fail safe in case not?
+        cpx_line_interval = self.frame_grabber.get_line_interval()
+        self.frame_grabber.set_exposure_time(self.cfg.slit_width*
+                                             cpx_line_interval[0])
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
