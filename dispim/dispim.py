@@ -52,7 +52,8 @@ class Dispim(Spim):
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
         self.sample_pose = SamplePose(self.tigerbox,)
                                       #**self.cfg.sample_pose_kwds)
-        # TODO, setup oxxius laser
+        #TODO: Comment back in. Check if sample_pose_kwds is in dispim
+
         self.lasers = {}  # populated in _setup_lasers.
 
         # Extra Internal State attributes for the current image capture
@@ -65,7 +66,6 @@ class Dispim(Spim):
         self._setup_camera()
         self._setup_lasers()
         self._setup_motion_stage()
-        # TODO, setup cameras with CPX -> frame_grabber()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
         # Internal state attributes.
@@ -388,6 +388,7 @@ class Dispim(Spim):
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
+            # switching between cameras each time data is pulled
             self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
             if self.simulated:
                 sleep(1 / 16)
