@@ -1,5 +1,5 @@
 [imaging_specs]
-local_storage_directory = "C:\\\\test"
+local_storage_directory = "C:\\test"
 external_storage_directory = "Y:\\\\diSPIM"
 subject_id = "test"
 tile_prefix = "tile"
@@ -20,15 +20,15 @@ column_count_pixels = 2304
 data_type = "uint16"
 
 [design_specs]
-slit_width_pixels = 294
+slit_width_pixels = 250
 
 [stage_specs]
 backlash_reset_distance_um = 4
 
 [waveform_specs]
 delay_time = 0.0015
-rest_time = 0.005
-exposure_time = 0.012
+rest_time = 0.004
+exposure_time = 0.0015
 
 [daq_ao_names_to_channels]
 galvo_y_right = 0
@@ -105,7 +105,7 @@ enable_voltage = 5.0
 row_interval = 5.867e-6
 scan_direction = "FORWARD"
 shutter_mode = "LIGHTSHEET"
-offset = 0.0
+offset = 0.1
 camx = 2304
 camy = 2304
 
@@ -113,7 +113,7 @@ camy = 2304
 row_interval = 5.867e-6
 scan_direction = "BACKWARD"
 shutter_mode = "LIGHTSHEET"
-offset = 0.0
+offset = 0.1
 camx = 2304
 camy = 2304
 
@@ -142,13 +142,13 @@ y_right_amplitude = 1.4
 port = "COMxx"
 
 [channel_specs.488.etl]
-left_offset = 1.7
+left_offset = 1.6
 left_amplitude = 0
 right_offset = 1.9
 right_amplitude = 0
 
 [channel_specs.488.galvo]
-x_left_offset = 2.46
+x_left_offset = 2.45
 x_left_amplitude = -0.015
 x_right_offset = 2.6
 x_right_amplitude = -0.015

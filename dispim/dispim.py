@@ -405,14 +405,13 @@ class Dispim(Spim):
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
                 yield noise + blank, self.stream_id
-
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
                 f = next(packet.frames())
                 im = f.data().squeeze().copy()  # TODO: copy?
-
+                self.log.info(im.shape)
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-
+                #TOD: Add sleep statement based on ni freq
                 yield im, self.stream_id
 
 
