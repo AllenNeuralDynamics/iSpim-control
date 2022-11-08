@@ -408,11 +408,14 @@ class Dispim(Spim):
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
                 f = next(packet.frames())
                 im = f.data().squeeze().copy()  # TODO: copy?
-                self.log.info(im.shape)
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-                #TOD: Add sleep statement based on ni freq
-                yield im, self.stream_id
+                sleep(.01)
+                #TODO: Add sleep statement based on ni freq but why
+                if self.stream_id == 0:
+                    yield np.flipud(im), self.stream_id
+                else:
+                    yield im, self.stream_id
 
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
