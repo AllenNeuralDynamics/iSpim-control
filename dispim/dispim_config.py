@@ -49,7 +49,7 @@ class DispimConfig(SpimConfig):
 
     def get_period_time(self):
         """Return the total waveform cycle time for a frame."""
-        return self.exposure_time + self.rest_time
+        return self.exposure_time + self.rest_time + self.slit_width*(self.line_time*1e-6)
 
     def get_daq_cycle_time(self):
         """Return the total waveform cycle time for a frame."""
@@ -65,7 +65,7 @@ class DispimConfig(SpimConfig):
 
     def get_exposure_samples(self):
         """Return the exposure samples between the left and right views."""
-        return round(self.daq_update_freq * self.exposure_time)
+        return round(self.daq_update_freq * (self.exposure_time + self.slit_width*(self.line_time*1e-6)))
 
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""
@@ -74,6 +74,14 @@ class DispimConfig(SpimConfig):
     def get_daq_cycle_samples(self):
         """Return the total waveform cycle time for a frame."""
         return round(self.daq_update_freq * self.get_daq_cycle_time())
+
+    def get_camera_left_delay_samples(self):
+        """Return the delay samples for triggering the left camera."""
+        return round(self.daq_update_freq * self.camera_left_delay)
+
+    def get_camera_right_delay_samples(self):
+        """Return the delay samples for triggering the right camera."""
+        return round(self.daq_update_freq * self.camera_right_delay)    
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
@@ -86,19 +94,39 @@ class DispimConfig(SpimConfig):
     #     # Time between moving the slit by one row. (AKA: "line interval")
     #     return self.camera_specs['row_interval']
 
-    # @property
-    # def scan_direction_left(self):
-    #     # Lightsheet scan direction: forward or backward.
-    #     return self.camera_specs['camera_left']['scan_direction']
+    @property
+    def scan_direction_left(self):
+        # Lightsheet scan direction: forward or backward.
+        return self.camera_specs['camera_left']['scan_direction']
 
-    # @property
-    # def scan_direction_left(self):
-    #     # Lightsheet scan direction: forward or backward.
-    #     return self.camera_specs['camera_right']['scan_direction']
+    @scan_direction_left.setter
+    def scan_direction_left(self, dir:str):
+        # Lightsheet scan direction: forward or backward.
+        self.camera_specs['camera_left']['scan_direction'] = dir
+
+    @property
+    def scan_direction_right(self):
+        # Lightsheet scan direction: forward or backward.
+        return self.camera_specs['camera_right']['scan_direction']
+
+    @scan_direction_right.setter
+    def scan_direction_right(self, dir: str):
+        # Lightsheet scan direction: forward or backward.
+        self.camera_specs['camera_right']['scan_direction'] = dir
 
     # @scan_direction_left.setter
     # def scan_direction(self, direction: DCAMPROP.READOUT_DIRECTION):
     #     self.dcam_specs['scan_direction'] = direction.name
+
+    @property
+    def line_time(self):
+        """Defines line rate of camera in us"""
+        return self.waveform_specs['line_time_us']
+
+    @line_time.setter
+    def line_time(self, us: float):
+        """Sets line rate of camera in us"""
+        self.waveform_specs['line_time_us'] = us
 
     @property
     def slit_width(self):
@@ -209,22 +237,22 @@ class DispimConfig(SpimConfig):
         self.waveform_specs['exposure_time'] = exposure_time
 
     @property
-    def camera_left_offset(self):
-        """Offset of left camera"""
-        return self.camera_specs['camera_left']['offset']
+    def camera_left_delay(self):
+        """Offset time of left camera"""
+        return self.camera_specs['camera_left']['delay']
 
-    @camera_left_offset.setter
-    def camera_left_offset(self, left_offset: float):
-        self.camera_specs['camera_left']['offset'] = left_offset
+    @camera_left_delay.setter
+    def camera_left_delay(self, left_delay: float):
+        self.camera_specs['camera_left']['delay'] = left_delay
 
     @property
-    def camera_right_offset(self):
-        """Offset of right camera"""
-        return self.camera_specs['camera_right']['offset']
+    def camera_right_delay(self):
+        """Offset time of right camera"""
+        return self.camera_specs['camera_right']['delay']
 
-    @camera_right_offset.setter
-    def camera_right_offset(self, right_offset: float):
-        self.camera_specs['camera_right']['offset'] = right_offset
+    @camera_right_delay.setter
+    def camera_right_delay(self, right_delay: float):
+        self.camera_specs['camera_right']['delay'] = right_delay
 
     @property
     def laser_wavelengths(self):

@@ -125,6 +125,14 @@ class FrameGrabber:
             self.runtime.set_configuration(self.p)
         print(self.runtime.get_configuration())
 
+    def get_scan_direction(self, stream_id):
+        return self.p.video[stream_id].camera.settings.readout_direction
+
+    def set_scan_direction(self, stream_id, direction:str):
+
+        direction = Direction.Forward if direction == 'FORWARD' else Direction.Backward
+        self.p.video[stream_id].camera.settings.readout_direction = direction
+
     def start(self):
         """start the setup frame acquisition."""
         self.log.info("Starting camera.")
