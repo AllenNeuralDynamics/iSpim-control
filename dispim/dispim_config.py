@@ -94,15 +94,25 @@ class DispimConfig(SpimConfig):
     #     # Time between moving the slit by one row. (AKA: "line interval")
     #     return self.camera_specs['row_interval']
 
-    # @property
-    # def scan_direction_left(self):
-    #     # Lightsheet scan direction: forward or backward.
-    #     return self.camera_specs['camera_left']['scan_direction']
+    @property
+    def scan_direction_left(self):
+        # Lightsheet scan direction: forward or backward.
+        return self.camera_specs['camera_left']['scan_direction']
 
-    # @property
-    # def scan_direction_left(self):
-    #     # Lightsheet scan direction: forward or backward.
-    #     return self.camera_specs['camera_right']['scan_direction']
+    @scan_direction_left.setter
+    def scan_direction_left(self, dir:str):
+        # Lightsheet scan direction: forward or backward.
+        self.camera_specs['camera_left']['scan_direction'] = dir
+
+    @property
+    def scan_direction_right(self):
+        # Lightsheet scan direction: forward or backward.
+        return self.camera_specs['camera_right']['scan_direction']
+
+    @scan_direction_right.setter
+    def scan_direction_right(self, dir: str):
+        # Lightsheet scan direction: forward or backward.
+        self.camera_specs['camera_right']['scan_direction'] = dir
 
     # @scan_direction_left.setter
     # def scan_direction(self, direction: DCAMPROP.READOUT_DIRECTION):

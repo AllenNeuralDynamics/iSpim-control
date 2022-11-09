@@ -9,7 +9,7 @@ z_step_size_um = 0.176
 volume_x_um = 600
 volume_y_um = 400
 volume_z_um = 100
-laser_wavelengths = [ 488,]
+laser_wavelengths = [ 488, 561,]
 possible_wavelengths = [ 488, 638, 405, 561,]
 
 [tile_specs]
@@ -29,7 +29,7 @@ backlash_reset_distance_um = 4
 delay_time = 0.002
 rest_time = 0.004
 exposure_time = 0.016
-line_time_us = 6.94
+line_time_us = 6.944444444444445
 
 [daq_ao_names_to_channels]
 galvo_y_right = 0
