@@ -56,7 +56,7 @@ class WaveformHardware:
             self.counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
                                                             units=FrequencyUnits.HZ,
                                                             idle_state=Level.LOW, initial_delay=0.0,
-                                                            freq=60,  # change 15 - 30 Hz, change to config value
+                                                            freq=20,  # change 15 - 30 Hz, change to config value
                                                             duty_cycle=0.5)
             self.counter_task.ci_count_edges_term = '/Dev2/PFI3'
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)

@@ -1,9 +1,10 @@
 import logging
 from mock import Mock
+from pprint import pprint
 
 try:
     import calliphlox
-    from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge
+    from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
 except ImportError:
     print("WARNING: failed to import calliphlox")
 from pathlib import Path
@@ -40,6 +41,10 @@ class FrameGrabber:
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
 
+        self.p.video[0].camera.settings.readout_direction = Direction.Forward
+        self.p.video[1].camera.settings.readout_direction = Direction.Backward
+
+
     def setup_stack_capture(self, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
 
@@ -57,12 +62,13 @@ class FrameGrabber:
             self.log.info(str(output_path.absolute()))
             self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
             self.p.video[stream_id].max_frame_count = frame_count
-            self.p.video[stream_id].camera.settings.triggers = Trigger(
-                enable='True',
-                line=0,
-                event='AcquisitionStart',
-                kind='Input',
-                edge='Rising')
+            acq_trigger = Trigger(enable='True',
+                                     line=2,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
+            # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
+            self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
 
     def setup_live(self):
@@ -72,21 +78,14 @@ class FrameGrabber:
         for stream_id in range(0, 2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].max_frame_count = 1000000
-            live_trigger_0 = Trigger(enable='True',
+            live_trigger = Trigger(enable='True',
                                      line = 2,
                                      event='FrameStart',
                                      kind='Input',
                                      edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger_0]
-            self.p.video[stream_id].camera.settings.triggers[1].enable = True
-            self.p.video[stream_id].camera.settings.triggers[1].event = TriggerEvent.FrameStart
-            self.p.video[stream_id].camera.settings.triggers[1].kind = SignalIOKind.Input
-            self.p.video[stream_id].camera.settings.triggers[1].edge = TriggerEdge.Rising
-        out = self.runtime.set_configuration(self.p)
-        from pprint import pprint
-        pprint(out.dict())
-
+            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger]
+            self.runtime.set_configuration(self.p)
 
     def get_exposure_time(self):
         exposure_time = [
