@@ -4,7 +4,7 @@ import numpy as np
 from numpy import pi
 import matplotlib.pyplot as plt
 from scipy.signal import sawtooth
-from dispim_config import DispimConfig
+from dispim.dispim_config import DispimConfig
 
 
 # TODO: cfg should be able to lookup config params sensibly (like with a string for a key)

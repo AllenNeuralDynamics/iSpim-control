@@ -49,8 +49,7 @@ class DispimConfig(SpimConfig):
 
     def get_period_time(self):
         """Return the total waveform cycle time for a frame."""
-        line_time = 6.94*1e-6 # change this to read line time, units [sec]
-        return self.exposure_time + self.rest_time + self.slit_width*line_time
+        return self.exposure_time + self.rest_time + self.slit_width*(self.line_time*1e-6)
 
     def get_daq_cycle_time(self):
         """Return the total waveform cycle time for a frame."""
@@ -66,8 +65,7 @@ class DispimConfig(SpimConfig):
 
     def get_exposure_samples(self):
         """Return the exposure samples between the left and right views."""
-        line_time = 6.94*1e-6 # change this to read line time, units [sec]
-        return round(self.daq_update_freq * (self.exposure_time + self.slit_width*line_time))
+        return round(self.daq_update_freq * (self.exposure_time + self.slit_width*(self.line_time*1e-6)))
 
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""
@@ -109,6 +107,16 @@ class DispimConfig(SpimConfig):
     # @scan_direction_left.setter
     # def scan_direction(self, direction: DCAMPROP.READOUT_DIRECTION):
     #     self.dcam_specs['scan_direction'] = direction.name
+
+    @property
+    def line_time(self):
+        """Defines line rate of camera in us"""
+        return self.waveform_specs['line_time_us']
+
+    @line_time.setter
+    def line_time(self, us: float):
+        """Sets line rate of camera in us"""
+        self.waveform_specs['line_time_us'] = us
 
     @property
     def slit_width(self):
