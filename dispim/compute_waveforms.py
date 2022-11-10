@@ -92,6 +92,11 @@ def galvo_waveforms(galvo_x_left_amplitude, galvo_x_left_offset,
                     delay_samples, time_samples, exposure_samples,
                     period_samples, daq_cycle_samples,
                     camera_left_delay_samples, camera_right_delay_samples):
+
+    print(camera_right_delay_samples)
+    print(camera_left_delay_samples)
+    print(delay_samples)
+
     """Generate galvo waveforms."""
     # Create full signal as played by the daq.
     galvo_x_left_t = np.zeros(daq_cycle_samples)
