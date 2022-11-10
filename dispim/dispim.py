@@ -87,17 +87,24 @@ class Dispim(Spim):
         self.not_stream_id = 1
 
     def _setup_camera(self):
-        """Configure general settings"""
+        """Configure general settings and set camera settings to those specified in config"""
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
+
+        # Initializing line interval of both cameras
         self.frame_grabber.set_line_interval((self.cfg.exposure_time*1000000)/
                                              self.cfg.sensor_column_count)
 
+        # Initializing exposure time of both cameras
         # TODO: This is assuming that the line_interval is set the same in
         #  both cameras. Should have some fail safe in case not?
         cpx_line_interval = self.frame_grabber.get_line_interval()
         self.frame_grabber.set_exposure_time(self.cfg.slit_width*
-                                             cpx_line_interval[0])
+                                            cpx_line_interval[0])
+
+        #Setting scanning direction (FORWARD or BACKWARD) for right(0) and left(1) camera
+        self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction_right, False)
+        self.frame_grabber.set_scan_direction(1, self.cfg.scan_direction_left, False)
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
@@ -329,9 +336,9 @@ class Dispim(Spim):
         # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture(filepath_src, tile_count)
+            #self.frame_grabber.setup_stack_capture(filepath_src, tile_count)
             self.log.info(f"Configuring stage scan parameters")
-            self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
+            #self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
 
             self.log.info(f"Starting framegrabber")
             self.frame_grabber.start()
