@@ -49,7 +49,7 @@ class DispimConfig(SpimConfig):
 
     def get_period_time(self):
         """Return the total waveform cycle time for a frame."""
-        return self.exposure_time + self.rest_time + self.slit_width*(self.line_time*1e-6)
+        return self.exposure_time + self.rest_time
 
     def get_daq_cycle_time(self):
         """Return the total waveform cycle time for a frame."""
@@ -65,7 +65,7 @@ class DispimConfig(SpimConfig):
 
     def get_exposure_samples(self):
         """Return the exposure samples between the left and right views."""
-        return round(self.daq_update_freq * (self.exposure_time + self.slit_width*(self.line_time*1e-6)))
+        return round(self.daq_update_freq * self.exposure_time)
 
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""

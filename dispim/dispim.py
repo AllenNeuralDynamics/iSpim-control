@@ -410,8 +410,9 @@ class Dispim(Spim):
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-                sleep(.01)
+                sleep(.005)
                 #TODO: Add sleep statement based on ni freq but why
+                #TODO: do this in napari not through numpy directly
                 if self.stream_id == 0:
                     yield np.flipud(im), self.stream_id
                 else:
