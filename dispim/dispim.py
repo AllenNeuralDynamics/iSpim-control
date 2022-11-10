@@ -365,7 +365,7 @@ class Dispim(Spim):
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
-        if wavelength not in self.cfg.imaging_specs['laser_wavelengths']:
+        if wavelength not in self.cfg.laser_wavelengths:
             self.log.error(f"Aborting. {wavelength}[nm] laser is not a valid "
                            "laser.")
             return
