@@ -68,11 +68,9 @@ class FrameGrabber:
             self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
 
-
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""
 
-        print(self.p.video[0].camera.settings.triggers)
         for stream_id in range(0, 2):
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].max_frame_count = 1000000

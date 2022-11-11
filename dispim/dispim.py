@@ -137,9 +137,9 @@ class Dispim(Spim):
 
     def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
 
-        self.log.info("Configuring waveforms for hardware.")
+        self.log.info("Configuring NIDAQ")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
-        self.log.info("Generating waveforms to hardware.")
+        self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
@@ -149,11 +149,9 @@ class Dispim(Spim):
         #      self.cfg.ni_controlled_tiger_axes}
         # self.tigerbox.pm(**externally_controlled_axes)
 
-        if self.active_laser is not None and self.live_status == True:
-            print('started nidaq in setup_waveform_hardware')
+        #TODO: Why do we care about status of active laser
+        if self.active_laser is not None and live:
             self.ni.start()
-        #TODO: check and see if this works for liveview. Don't need to enter
-        # during acquisition bc we start the daq in collect_stacked_image
 
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
@@ -310,11 +308,8 @@ class Dispim(Spim):
                         self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
                         self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
-                        # TODO: setup other channel specific items (filters, lasers)
                         self.log.info(f"Setting up lasers for active channel: {ch}")
                         self.setup_imaging_for_laser(ch)
-                        self.log.info(f"Setting up NIDAQ for active channel: {ch}")
-                        self._setup_waveform_hardware(ch)
 
                         # Setup capture of next Z stack.
                         filenames = [Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam0.tiff"),
