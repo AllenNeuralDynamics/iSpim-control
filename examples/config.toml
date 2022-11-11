@@ -9,8 +9,8 @@ z_step_size_um = 0.176
 volume_x_um = 600
 volume_y_um = 400
 volume_z_um = 100
-laser_wavelengths = [ 638, 488, 561, 405,]
-possible_wavelengths = [ 488, 638, 405, 561,]
+laser_wavelengths = [ 405, 488, 561, 638,,]
+possible_wavelengths = [ 405, 488, 561, 638,]
 
 [tile_specs]
 x_field_of_view_um = 405.504
