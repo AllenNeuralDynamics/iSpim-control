@@ -43,11 +43,10 @@ class FrameGrabber:
 
         self.runtime.set_configuration(self.p)
 
-    def setup_stack_capture(self, output_path: Path, frame_count: int):
+    def setup_stack_capture(self, output_paths: list[Path], frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
 
-        :param tile_shape: size 2 tuple of (columns, rows) for single tile
-        :param output_path: path where tiff will be saved
+        :param output_paths: size 2 list of paths where each camera tiff will be saved
         :param frame_count: how many tiles to grab from camera
 
         """
@@ -57,8 +56,8 @@ class FrameGrabber:
         for stream_id in range(0, 2):
             self.log.info(f"Configuring camera {stream_id}.")
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
-            self.log.info(str(output_path.absolute()))
-            self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
+            self.log.info(str(output_paths[stream_id].absolute()))
+            self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
             self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                   line=2,
@@ -68,6 +67,7 @@ class FrameGrabber:
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
             self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
+
 
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""

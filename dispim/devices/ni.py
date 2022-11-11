@@ -38,7 +38,7 @@ class WaveformHardware:
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
             physical_name = f"/{self.dev_name}/ao{channel_index}"
-            self.log.info(f"Setting up ao channel {channel_name} "
+            self.log.debug(f"Setting up ao channel {channel_name} "
                            f"on {physical_name}")
             self.ao_task.ao_channels.add_ao_voltage_chan(physical_name)
         self.ao_task.timing.cfg_samp_clk_timing(
@@ -91,8 +91,8 @@ class WaveformHardware:
         """start tasks."""
         # Start ao_task and counter task
         self.ao_task.start()
-        self.counter_task.start()
-
+        if self.live:
+            self.counter_task.stop()
     def playback_finished(self):
         """True if the device is busy playing waveforms. False otherwise."""
         # Check if ao task is finished
@@ -113,8 +113,9 @@ class WaveformHardware:
         #     self.ao_task.write(ao_data)
         #TODO: Why is this not working?
         self.log.debug("Issuing a task stop.")
-        self.counter_task.stop()
-        self.counter_task.wait_until_done(1)
+        if self.live:
+            self.counter_task.stop()
+            self.counter_task.wait_until_done(1)
         # sleep(.5)
         self.ao_task.stop()
 
@@ -126,7 +127,7 @@ class WaveformHardware:
     def close(self):
         """Terminate all started tasks."""
         if self.counter_task is not None:
-            self.log.info("closing tasks!")
+            self.log.debug("closing tasks!")
             self.counter_task.close()
             self.counter_task = None
         if self.ao_task is not None:

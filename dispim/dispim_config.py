@@ -32,6 +32,7 @@ class DispimConfig(SpimConfig):
         super().__init__(toml_filepath, TomlTemplate)
 
         # Note: these are mutable, so reloading the toml doesn't affect them.
+        self.imaging_specs = self.cfg['imaging_specs']
         self.stage_specs = self.cfg['stage_specs']
         self.tiger_specs = self.cfg['tiger_specs']
         self.laser_specs = self.cfg['channel_specs']
@@ -81,7 +82,7 @@ class DispimConfig(SpimConfig):
 
     def get_camera_right_delay_samples(self):
         """Return the delay samples for triggering the right camera."""
-        return round(self.daq_update_freq * self.camera_right_delay)    
+        return round(self.daq_update_freq * self.camera_right_delay)
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
@@ -188,6 +189,14 @@ class DispimConfig(SpimConfig):
     def z_step_size_um(self):
         """z step size in um"""
         return self.cfg['imaging_specs']['z_step_size_um']
+
+    @property
+    def scan_speed_mm_s(self):
+        """Return the volumetric scan speed of the stage."""
+        jitter_time_s = 0.01 # 10 ms jitter time for stage pulses
+        step_size_mm = self.imaging_specs['z_step_size_um']/1000.0
+        scan_speed_mm_s = step_size_mm/(self.get_daq_cycle_time() + jitter_time_s)
+        return scan_speed_mm_s
 
     @z_step_size_um.setter
     def z_step_size_um(self, um: float):

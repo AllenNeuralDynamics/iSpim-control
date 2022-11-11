@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""example main script to launch the mesospim."""
+"""example main script to launch the dispim."""
 
 from dispim.dispim import Dispim
 from coloredlogs import ColoredFormatter
@@ -15,7 +15,7 @@ logging.getLogger().handlers.clear()
 
 class SpimLogFiler(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'mesospim', 'dispim', 'calliphlox'}
+    VALID_LOGGER_BASES = {'mesospim', 'dispim', }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \
@@ -31,9 +31,10 @@ def main():
                         help="Simulate hardware device connections.")
     parser.add_argument("--console_output", default=True,
                         help="whether or not to print to the console.")
-    # Note: colored console output is buggy on Windows.
+    # Note: colored console output might be buggy on Windows through pycharm.
     parser.add_argument("--color_console_output", action="store_true",
-                        default=False if os.name == 'nt' else True)
+                        default=True)
+                        #default=False if os.name == 'nt' else True)
 
     args = parser.parse_args()
     # Check if we didn't supply a config file and populate a safe guess.
@@ -66,7 +67,8 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-
+    #args.config = r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml'
+    # FIXME: on windows, path strings need to be raw strings.
     instrument = Dispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu

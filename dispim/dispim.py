@@ -3,6 +3,8 @@
 # FIXME: this should live in the napari gui side, and the function
 #   we want to launch in a napari thread should exist as a standalone
 #   option here.
+from datetime import timedelta, datetime
+import calendar
 from napari.qt.threading import thread_worker
 import logging
 import numpy as np
@@ -147,8 +149,11 @@ class Dispim(Spim):
         #      self.cfg.ni_controlled_tiger_axes}
         # self.tigerbox.pm(**externally_controlled_axes)
 
-        if self.active_laser is not None and self.live_status == live:
+        if self.active_laser is not None and self.live_status == True:
+            print('started nidaq in setup_waveform_hardware')
             self.ni.start()
+        #TODO: check and see if this works for liveview. Don't need to enter
+        # during acquisition bc we start the daq in collect_stacked_image
 
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
@@ -188,13 +193,13 @@ class Dispim(Spim):
 
         # Calculate number of tiles in XYZ
         # Always round up so that we cover the desired imaging region.
-        xtiles = ceil((volume_x_um - self.cfg.tile_size_x_um)
+        xsteps = ceil((volume_x_um - self.cfg.tile_size_x_um)
                       / x_grid_step_um)
-        ytiles = ceil((volume_y_um - self.cfg.tile_size_y_um)
+        ysteps = ceil((volume_y_um - self.cfg.tile_size_y_um)
                       / y_grid_step_um)
-        ztiles = ceil((volume_z_um - self.cfg.z_step_size_um)
+        zsteps = ceil((volume_z_um - self.cfg.z_step_size_um)
                       / self.cfg.z_step_size_um)
-        xtiles, ytiles, ztiles = (1 + xtiles, 1 + ytiles, 1 + ztiles)
+        xtiles, ytiles, ztiles = (1 + xsteps, 1 + ysteps, 1 + zsteps)
         self.total_tiles = xtiles * ytiles * ztiles * len(channels)
 
         # Check if we will violate storage directory limits with our
@@ -209,24 +214,47 @@ class Dispim(Spim):
         # TODO, test network speeds?
         # TODO, check that networked storage is visible?
 
+        # Log relevant info about this imaging run.
+        self.log.info(f"Total tiles: {self.total_tiles}.")
+        self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
+        run_time_days = self.total_tiles / (self.cfg.tiles_per_second * 3600. * 24.)
+        completion_date = datetime.now() + timedelta(days=run_time_days)
+        date_str = completion_date.strftime("%d %b, %Y at %H:%M %p")
+        weekday = calendar.day_name[completion_date.weekday()]
+        self.log.info(f"Time Esimate: {run_time_days:.2f} days. Imaging run "
+                      f"should finish after {weekday}, {date_str}.")
+        self.log.info(f"Desired dimensions: {volume_x_um:.1f}[um] x "
+                      f"{volume_y_um:.1f}[um] x {volume_z_um:.1f}[um]")
+        actual_vol_x_um = self.cfg.tile_size_x_um + xsteps * x_grid_step_um
+        actual_vol_y_um = self.cfg.tile_size_y_um + ysteps * y_grid_step_um
+        actual_vol_z_um = self.cfg.z_step_size_um * (1 + zsteps)
+        self.log.info(f"Actual dimensions: {actual_vol_x_um:.1f}[um] x "
+                      f"{actual_vol_y_um:.1f}[um] x {actual_vol_z_um:.1f}[um]")
+        self.log.info(f"X grid step: {x_grid_step_um} [um]")
+        self.log.info(f"Y grid step: {y_grid_step_um} [um]")
+        self.log.info(f"Z grid step: {self.cfg.z_step_size_um} [um]")
         # TODO, check if stage homing is necessary?
         # Set the sample starting location as the origin.
-        # self.sample_pose.home_in_place()
+        self.sample_pose.zero_in_place()
 
-        transfer_process = None  # Reference to external tiff transfer process.
-        self.stage_x_pos, self.stage_y_pos = (0, 0)
+        transfer_processes = None  # Reference to external tiff transfer process.
+        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos= (0, 0, 0)
         self.volumetric_imaging.set()  # TODO: do we need this?
         try:
             for j in range(ytiles):
-                # Move X position back to 0
-                # Move to specified Y position
-                self.log.info("Setting speed in Y to 1.0 mm/sec")
-                # TODO: handle this through sample pose class, which remaps axes
-                self.tigerbox.set_speed(Z=1.0)
+
+                # move back to x=0 which maps to z=0
                 self.stage_x_pos = 0
-                self.log.info(f"Moving to y={self.stage_y_pos}.")
+
+                # TODO: handle this through sample pose class, which remaps axes
+                self.log.info("Setting speed in Y to 1.0 mm/sec")
+                self.tigerbox.set_speed(Z=1.0) # Z maps to Y
+
+                # TODO: handle this through sample pose class, which remaps axes
+                self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
                 while self.tigerbox.is_moving():
+                    # below is for halting stage if it gets 'stuck'
                     pos = self.tigerbox.get_position('Z')
                     distance = abs(pos['Z'] - round(self.stage_y_pos))
                     if distance < 1.0:
@@ -238,10 +266,10 @@ class Dispim(Spim):
 
                 for i in range(xtiles):
                     # Move to specified X position
-                    self.log.info("Setting speed in X to 1.0 mm/sec")
                     # TODO: handle this through sample pose class, which remaps axes
-                    self.tigerbox.set_speed(Y=1.0)
-                    self.log.info(f"Moving to x={round(self.stage_x_pos)}.")
+                    self.log.debug("Setting speed in X to 1.0 mm/sec")
+                    self.tigerbox.set_speed(Y=1.0)  # Y maps to X
+                    self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos),
                                                      wait_for_output=True,
                                                      wait_for_reply=True)
@@ -257,17 +285,17 @@ class Dispim(Spim):
 
                     for ch in channels:
 
-                        self.setup_imaging_for_laser(ch)
+                        # TODO: handle this through sample pose class, which remaps axes
                         # Move to specified Z position
                         self.log.info("Setting speed in Z to 1.0 mm/sec")
+                        self.tigerbox.set_speed(X=1.0) # X maps to Z
                         # TODO: handle this through sample pose class, which remaps axes
-                        self.tigerbox.set_speed(X=1.0)
                         self.log.info("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_axes_absolute(x=round(z_backup_pos),
                                                          wait_for_output=True,
                                                          wait_for_reply=True)
-                        self.log.info(f"Moving to z={0}.")
+                        self.log.info(f"Moving to Z = {0}.")
                         self.tigerbox.move_axes_absolute(x=0, wait_for_output=True, wait_for_reply=True)
                         while self.tigerbox.is_moving():
                             pos = self.tigerbox.get_position('X')
@@ -279,42 +307,51 @@ class Dispim(Spim):
                                 self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
                                 sleep(0.1)
 
-                        self.log.info("Setting speed in Z to 0.01 mm/sec")
-                        self.tigerbox.set_speed(X=0.01)
+                        self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
+                        self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
                         # TODO: setup other channel specific items (filters, lasers)
+                        self.log.info(f"Setting up lasers for active channel: {ch}")
+                        self.setup_imaging_for_laser(ch)
                         self.log.info(f"Setting up NIDAQ for active channel: {ch}")
                         self._setup_waveform_hardware(ch)
 
                         # Setup capture of next Z stack.
-                        filename = Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}.tiff")
-                        filepath_src = local_storage_dir/filename
-                        self.log.info(f"Collecting tile stack: {filepath_src}")
+                        filenames = [Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam0.tiff"),
+                                     Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam1.tiff")]
+                        filepath_srcs = [local_storage_dir/f for f in filenames]
+                        self.log.info(f"Collecting tile stack: {filepath_srcs}")
 
                         # TODO: consider making step size a fn parameter instead of
                         #   collected strictly from the config.
-                        tile_position = self.stage_x_pos/UM_TO_STEPS/1000.0  # convert to [mm] units
+                        tile_position = self.stage_y_pos/UM_TO_STEPS/1000.0  # convert to [mm] units -> this is the 'X' position for sample pose
                         self.log.info(f"Tile position [mm]: {tile_position}.")
                         self.log.info(f"Tiles [#]: {ztiles}.")
                         self.log.info(f"Tile spacing [um]: {self.cfg.z_step_size_um}.")
                         self._collect_stacked_tiff(tile_position, ztiles, self.cfg.z_step_size_um,
-                                                   filepath_src)
+                                                   filepath_srcs)
 
                         # Start transferring tiff file to its destination.
                         # Note: Image transfer is faster than image capture, but
                         #   we still wait for prior process to finish.
-                        if transfer_process is not None:
+                        if transfer_processes is not None:
                             self.log.info("Waiting for tiff transfer process "
                                           "to complete.")
-                            transfer_process.join()
+                            for p in transfer_processes:
+                                p.join()
                         if img_storage_dir is not None:
-                            filepath_dest = img_storage_dir/filename
+                            filepath_dests = [img_storage_dir/f for f in filenames]
                             self.log.info("Starting transfer process for "
-                                          f"{filepath_dest}.")
+                                          f"{filepath_dests}.")
                             # TODO, use xcopy transfer for speed
-                            transfer_process = TiffTransfer(filepath_src,
-                                                            filepath_dest)
-                            transfer_process.start()
+
+                            transfer_processes = [TiffTransfer(filepath_srcs[0],
+                                                            filepath_dests[0]),
+                                                  TiffTransfer(filepath_srcs[1],
+                                                               filepath_dests[1]),
+                                                  ]
+                            for p in transfer_processes:
+                                p.start()
 
                         # TODO, set speed of sample Z / tiger X axis to ~1
 
@@ -322,24 +359,31 @@ class Dispim(Spim):
                 self.stage_y_pos += y_grid_step_um * UM_TO_STEPS
 
         finally:
+            # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
             self.log.info(f"Closing camera")
             self.frame_grabber.close()
             self.volumetric_imaging.clear()  # TODO: Do we need this?
-            if transfer_process is not None:
-                self.log.info("Joining file transfer process.")
-                transfer_process.join()
+            if transfer_processes is not None:
+                self.log.info("Joining file transfer processes.")
+                for p in transfer_processes:
+                    p.join()
 
     def _collect_stacked_tiff(self, tile_position, tile_count, tile_spacing_um: float,
-                              filepath_src):
+                              filepath_srcs: list[Path]):
         # TODO: set up slow scan axis to take into account sample pose X location
         try:
             self.log.info(f"Configuring framegrabber")
-            #self.frame_grabber.setup_stack_capture(filepath_src, tile_count)
+            # TODO, needs to be tested
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count) #TODO: Configure seperate names for two cameras
             self.log.info(f"Configuring stage scan parameters")
-            #self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
-
+            # TODO, needs to be tested
+            # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
+            #TODO: Needs to come from sample pose in future
+            self.tigerbox.scanr(scan_start_mm=0, pulse_interval_enc_ticks=32,
+                           num_pixels=tile_count)
+            self.tigerbox.scanv(scan_start_mm=tile_position, scan_stop_mm=tile_position, line_count=1)
             self.log.info(f"Starting framegrabber")
             self.frame_grabber.start()
             self.log.info(f"Starting NIDAQ")
@@ -347,15 +391,19 @@ class Dispim(Spim):
             self.log.info(f"Starting stage")
             self.sample_pose.start_scan()
 
-            frames = 0
-            while frames < tile_count:
-                frames = self.ni.counter_task.read()
-                self.log.info(f"{frames} frames captured")
-                sleep(0.01)
+            # frames = 0
+            # while frames < tile_count:
+            #     frames = self.ni.counter_task.read()
+            #     self.log.info(f"{frames} frames captured")
+            #     sleep(0.01)
 
-            sleep(10)
+            while self.tigerbox.is_moving():
+                pos = self.tigerbox.get_position('X')
+                self.log.debug(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos + tile_count*self.cfg.z_step_size_um}")
+                sleep(0.1)
 
         finally:
+            self.log.info('Scan complete')
             self.log.info(f"Stopping NIDAQ")
             self.ni.stop()
             self.log.info(f"Closing NIDAQ")
