@@ -41,7 +41,9 @@ class FrameGrabber:
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
 
-        self.runtime.set_configuration(self.p)
+        self.p.video[0].camera.settings.readout_direction = Direction.Forward
+        self.p.video[1].camera.settings.readout_direction = Direction.Backward
+
 
     def setup_stack_capture(self, output_path: Path, frame_count: int):
         """Setup capturing for a stack. Including tiff file storage location
@@ -61,10 +63,10 @@ class FrameGrabber:
             self.p.video[stream_id].storage.settings.filename = str(output_path.absolute())
             self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
-                                  line=2,
-                                  event='FrameStart',
-                                  kind='Input',
-                                  edge='Rising')
+                                     line=2,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
             self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
@@ -77,12 +79,12 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].max_frame_count = 1000000
             live_trigger = Trigger(enable='True',
-                                   line=2,
-                                   event='FrameStart',
-                                   kind='Input',
-                                   edge='Rising')
+                                     line = 2,
+                                     event='FrameStart',
+                                     kind='Input',
+                                     edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(), live_trigger]
+            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger]
             self.runtime.set_configuration(self.p)
 
     def get_exposure_time(self):
@@ -96,7 +98,13 @@ class FrameGrabber:
         for stream_id in range(0, 2):
             self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
             print(f'exposure {stream_id} set to: {self.p.video[stream_id].camera.settings.exposure_time_us}')
-        self.update_configuration(live)
+        if live:
+            self.stop()
+            self.runtime.set_configuration(self.p)
+            self.start()
+        else:
+            self.runtime.set_configuration(self.p)
+        print(self.runtime.get_configuration())
 
     def get_line_interval(self):
         line_interval = [
@@ -109,22 +117,20 @@ class FrameGrabber:
         for stream_id in range(0, 2):
             self.p.video[stream_id].camera.settings.line_interval_us = line_int
             print(f'line interval {stream_id} set to: {self.p.video[stream_id].camera.settings.line_interval_us}')
-        self.update_configuration(live)
+        if live:
+            self.stop()
+            self.runtime.set_configuration(self.p)
+            self.start()
+        else:
+            self.runtime.set_configuration(self.p)
+        print(self.runtime.get_configuration())
 
     def get_scan_direction(self, stream_id):
         return self.p.video[stream_id].camera.settings.readout_direction
 
-    def set_scan_direction(self, stream_id, direction: str, live: bool = False):
-
+    def set_scan_direction(self, stream_id, direction:str, live: bool = False):
         direction = Direction.Forward if direction == 'FORWARD' else Direction.Backward
         self.p.video[stream_id].camera.settings.readout_direction = direction
-        self.update_configuration(live)
-
-    def update_configuration(self, live: False):
-        """Update the set configuration and if live, stop and restart runtime"""
-
-        # TODO: Theoretically you don't have to start and stop runtime should test
-
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
