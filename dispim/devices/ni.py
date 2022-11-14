@@ -93,6 +93,7 @@ class WaveformHardware:
         self.ao_task.start()
         if self.live:
             self.counter_task.start()
+
     def playback_finished(self):
         """True if the device is busy playing waveforms. False otherwise."""
         # Check if ao task is finished

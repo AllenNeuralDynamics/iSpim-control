@@ -67,7 +67,7 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    #args.config = r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml'
+    args.config = r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml'
     # FIXME: on windows, path strings need to be raw strings.
     instrument = Dispim(config_filepath=args.config, simulated=args.simulated)
     try:
@@ -78,6 +78,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        print("Closing instrument.")
         instrument.close()
 
 if __name__ == '__main__':

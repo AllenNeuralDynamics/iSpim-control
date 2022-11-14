@@ -7,9 +7,8 @@ tile_overlap_y_percent = 15
 z_step_size_um = 0.176
 volume_x_um = 800
 volume_y_um = 400
-volume_z_um = 5
+volume_z_um = 100
 laser_wavelengths = [ 488,]
-possible_wavelengths = [ 405, 488, 561, 638,]
 external_storage_directory = "C:\\test"
 
 [tile_specs]

@@ -267,7 +267,7 @@ class DispimConfig(SpimConfig):
     def laser_wavelengths(self):
         """Returns set of all configured laser wavelengths.
         Note: this is NOT the subset of wavelengths used for imaging."""
-        return [int(nm) for nm in self.cfg['channel_specs'].keys()]
+        return set([int(nm) for nm in self.cfg['channel_specs'].keys()])
 
     @property
     def daq_used_channels(self):

@@ -285,10 +285,10 @@ class Dispim(Spim):
 
                         # TODO: handle this through sample pose class, which remaps axes
                         # Move to specified Z position
-                        self.log.info("Setting speed in Z to 1.0 mm/sec")
+                        self.log.debug("Setting speed in Z to 1.0 mm/sec")
                         self.tigerbox.set_speed(X=1.0) # X maps to Z
                         # TODO: handle this through sample pose class, which remaps axes
-                        self.log.info("Applying extra move to take out backlash.")
+                        self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_axes_absolute(x=round(z_backup_pos),
                                                          wait_for_output=True,
@@ -315,15 +315,18 @@ class Dispim(Spim):
                         filenames = [Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam0.tiff"),
                                      Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam1.tiff")]
                         filepath_srcs = [local_storage_dir/f for f in filenames]
-                        self.log.info(f"Collecting tile stack: {filepath_srcs}")
+                        self.log.info(f"Collecting tile stacks at "
+                                      f"({self.stage_x_pos/UM_TO_STEPS}, "
+                                      f"{self.stage_y_pos/UM_TO_STEPS}) [um] "
+                                      f"for channel {ch} and saving to: {filepath_srcs}")
 
-                        # TODO: consider making step size a fn parameter instead of
+                        # TODO: consider making z step size a fn parameter instead of
                         #   collected strictly from the config.
-                        tile_position = self.stage_y_pos/UM_TO_STEPS/1000.0  # convert to [mm] units -> this is the 'X' position for sample pose
-                        self.log.info(f"Tile position [mm]: {tile_position}.")
-                        self.log.info(f"Tiles [#]: {ztiles}.")
-                        self.log.info(f"Tile spacing [um]: {self.cfg.z_step_size_um}.")
-                        self._collect_stacked_tiff(tile_position, ztiles, self.cfg.z_step_size_um,
+                        # Convert to [mm] units for tigerbox.
+                        slow_scan_axis_position = self.stage_x_pos/UM_TO_STEPS/1000.0
+                        self._collect_stacked_tiff(slow_scan_axis_position,
+                                                   ztiles,
+                                                   self.cfg.z_step_size_um,
                                                    filepath_srcs)
 
                         # Start transferring tiff file to its destination.
@@ -339,9 +342,8 @@ class Dispim(Spim):
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dests}.")
                             # TODO, use xcopy transfer for speed
-
                             transfer_processes = [TiffTransfer(filepath_srcs[0],
-                                                            filepath_dests[0]),
+                                                               filepath_dests[0]),
                                                   TiffTransfer(filepath_srcs[1],
                                                                filepath_dests[1]),
                                                   ]
@@ -365,46 +367,36 @@ class Dispim(Spim):
                 for p in transfer_processes:
                     p.join()
 
-    def _collect_stacked_tiff(self, tile_position, tile_count, tile_spacing_um: float,
+    def _collect_stacked_tiff(self, slow_scan_axis_position: float,
+                              tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path]):
-        # TODO: set up slow scan axis to take into account sample pose X location
-        try:
-            self.log.info(f"Configuring framegrabber")
-            # TODO, needs to be tested
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count) #TODO: Configure seperate names for two cameras
-            self.log.info(f"Configuring stage scan parameters")
-            # TODO, needs to be tested
-            # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, tile_position)
-            #TODO: Needs to come from sample pose in future
-            self.tigerbox.scanr(scan_start_mm=0, pulse_interval_enc_ticks=32,
-                           num_pixels=tile_count)
-            self.tigerbox.scanv(scan_start_mm=tile_position, scan_stop_mm=tile_position, line_count=1)
-            self.log.info(f"Starting framegrabber")
-            self.frame_grabber.start()
-            self.log.info(f"Starting NIDAQ")
-            self.ni.start()
-            self.log.info(f"Starting stage")
-            self.sample_pose.start_scan()
+        self.log.debug(f"Configuring framegrabber")
+        self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+        self.log.info(f"Configuring stage scan parameters")
+        # TODO: Needs to come from sample pose in future
+        # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, slow_scan_axis_position)
+        self.tigerbox.scanr(scan_start_mm=0, pulse_interval_enc_ticks=32,
+                            num_pixels=tile_count)
+        # Tigerbox is configured to scan along a fast and slow axis.
+        # Tigerbox defaults to fast axis = Tiger x, slow axis = Tiger y.
+        # We pass in current sample x (tiger y) location to neutralize
+        # any slow axis movement.
+        self.tigerbox.scanv(scan_start_mm=slow_scan_axis_position,
+                            scan_stop_mm=slow_scan_axis_position, line_count=1)
+        self.frame_grabber.start()
+        self.ni.start()
+        self.log.debug(f"Starting scan.")
+        self.sample_pose.start_scan()
 
-            # frames = 0
-            # while frames < tile_count:
-            #     frames = self.ni.counter_task.read()
-            #     self.log.info(f"{frames} frames captured")
-            #     sleep(0.01)
+        while self.tigerbox.is_moving():
+            pos = self.tigerbox.get_position('X')
+            self.log.debug(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos + tile_count*self.cfg.z_step_size_um}")
+            sleep(0.1)
 
-            while self.tigerbox.is_moving():
-                pos = self.tigerbox.get_position('X')
-                self.log.debug(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos + tile_count*self.cfg.z_step_size_um}")
-                sleep(0.1)
-
-        finally:
-            self.log.info('Scan complete')
-            self.log.info(f"Stopping NIDAQ")
-            self.ni.stop()
-            self.log.info(f"Closing NIDAQ")
-            self.ni.close()
-            self.log.info(f"Stopping framegrabber")
-            self.frame_grabber.stop()
+        self.log.debug('Scan complete')
+        self.ni.stop()
+        #self.ni.close() #TODO: Do we need this?
+        self.frame_grabber.stop()
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -499,8 +491,6 @@ class Dispim(Spim):
 
     def close(self):
         """Safely close all open hardware connections."""
-        # stuff here.
-        super().close()
         self.tigerbox.ser.close()
         self.frame_grabber.close()
         self.ni.close()
@@ -508,3 +498,4 @@ class Dispim(Spim):
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
         self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
+        super().close()
