@@ -238,9 +238,9 @@ class Dispim(Spim):
 
         # Move sample to preset starting position
         if self.start_pos is not None:
-            self.sample_pose.move_relative(x=self.start_pos[0],
-                                           y=self.start_pos[1],
-                                           z=self.start_pos[2],
+            self.sample_pose.move_absolute(x=self.start_pos['X'],
+                                           y=self.start_pos['Y'],
+                                           z=self.start_pos['Z'],
                                            wait=True)
             print(self.start_pos)
             print(self.sample_pose.get_position())
@@ -503,7 +503,7 @@ class Dispim(Spim):
     def get_sample_position(self):
         return self.sample_pose.get_position()
 
-    def set_scan_start(self, start: tuple[int]):
+    def set_scan_start(self, start: dict):
 
         """Set start position of scan.
         :param start: list of integers in x, y, z coordinates"""
