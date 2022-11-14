@@ -88,6 +88,9 @@ class Dispim(Spim):
         self.stream_id = 0
         self.not_stream_id = 1
 
+        # start position of scan
+        self.start_pos = None
+
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
@@ -232,6 +235,17 @@ class Dispim(Spim):
         self.log.info(f"Y grid step: {y_grid_step_um} [um]")
         self.log.info(f"Z grid step: {self.cfg.z_step_size_um} [um]")
         # TODO, check if stage homing is necessary?
+
+        # Move sample to preset starting position
+        if self.start_pos is not None:
+            self.sample_pose.move_relative(x=self.start_pos[0],
+                                           y=self.start_pos[1],
+                                           z=self.start_pos[2],
+                                           wait=True)
+            print(self.start_pos)
+            print(self.sample_pose.get_position())
+            # Reset start_pos to zero
+            self.start_pos = None
         # Set the sample starting location as the origin.
         self.sample_pose.zero_in_place()
 
@@ -488,6 +502,13 @@ class Dispim(Spim):
 
     def get_sample_position(self):
         return self.sample_pose.get_position()
+
+    def set_scan_start(self, start: tuple[int]):
+
+        """Set start position of scan.
+        :param start: list of integers in x, y, z coordinates"""
+
+        self.start_pos = start
 
     def close(self):
         """Safely close all open hardware connections."""
