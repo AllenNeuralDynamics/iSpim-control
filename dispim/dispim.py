@@ -238,14 +238,16 @@ class Dispim(Spim):
 
         # Move sample to preset starting position
         if self.start_pos is not None:
+            self.log.info(f'Moving to starting position at {self.start_pos}')
+            # Should x and y be negative?
             self.sample_pose.move_absolute(x=self.start_pos['X'],
                                            y=self.start_pos['Y'],
                                            z=self.start_pos['Z'],
                                            wait=True)
-            print(self.start_pos)
-            print(self.sample_pose.get_position())
+            self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
             # Reset start_pos to zero
             self.start_pos = None
+
         # Set the sample starting location as the origin.
         self.sample_pose.zero_in_place()
 
