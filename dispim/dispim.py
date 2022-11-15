@@ -239,7 +239,7 @@ class Dispim(Spim):
         # Move sample to preset starting position
         if self.start_pos is not None:
             self.log.info(f'Moving to starting position at {self.start_pos}')
-            # Should x and y be negative?
+            # TODO: Should x and y be negative? Sample moves to -x, -y, z
             self.sample_pose.move_absolute(x=self.start_pos['X'],
                                            y=self.start_pos['Y'],
                                            z=self.start_pos['Z'],
@@ -508,9 +508,10 @@ class Dispim(Spim):
     def set_scan_start(self, start: dict):
 
         """Set start position of scan.
-        :param start: list of integers in x, y, z coordinates"""
+        :param start: dict of integers in x, y, z coordinates"""
 
         self.start_pos = start
+        self.log.info(f"Scan start position set to {self.start_pos}")
 
     def close(self):
         """Safely close all open hardware connections."""
