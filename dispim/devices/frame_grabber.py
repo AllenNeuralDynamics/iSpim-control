@@ -17,7 +17,6 @@ class FrameGrabber:
         self.runtime = calliphlox.Runtime()
         self.dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
-        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         self.cameras = [
             d.name

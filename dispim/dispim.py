@@ -9,7 +9,7 @@ from napari.qt.threading import thread_worker
 import logging
 import numpy as np
 from pathlib import Path
-from time import perf_counter, sleep
+from time import perf_counter, sleep, time
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
 from collections import deque
@@ -52,9 +52,7 @@ class Dispim(Spim):
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
-        self.sample_pose = SamplePose(self.tigerbox,)
-                                      #**self.cfg.sample_pose_kwds)
-        #TODO: Comment back in. Check if sample_pose_kwds is in dispim
+        self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
 
@@ -76,13 +74,6 @@ class Dispim(Spim):
 
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
-        self.image_in_hw_buffer = Event()
-        self.volumetric_imaging = Event()
-        self.img_deque = deque(maxlen=2)  # circular buffer
-
-        # derived constants.
-        self.IMG_MIN = 0
-        self.IMG_MAX = (1 << (8 * self.cfg.image_dtype.itemsize)) - 1
 
         # camera id number
         self.stream_id = 0
@@ -113,8 +104,9 @@ class Dispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-
+        self.log.debug(f"Attempting to connect to lasers")
         self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
+        self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
             self.lasers[int(wl)] = LaserHub(specs['prefix'], self.ser) if not self.simulated \
@@ -137,6 +129,7 @@ class Dispim(Spim):
         # set card 31 (XY stage), 'X" (input), TTL to value of 1
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
+        # self.tigerbox.pm(a=1, b=1, c=1, d=1, v=1, w=1)
 
     def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
 
@@ -146,6 +139,7 @@ class Dispim(Spim):
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
+
         # TODO: Put all corresponding tigerbox components in external control mode.
         # externally_controlled_axes = \
         #     {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
@@ -159,6 +153,18 @@ class Dispim(Spim):
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
         self.log.warning("Checking disk space not implemented.")
+
+    def wait_to_stop(self, tiger: str, sample : int):
+        """Wait for stage to stop moving"""
+        while self.tigerbox.is_moving():
+            pos = self.tigerbox.get_position(tiger)
+            distance = abs(pos[tiger] - sample)
+            if distance < 1.0:
+                self.tigerbox.halt()
+                break
+            else:
+                # self.log.warning(f"Stage is still moving! X = {pos['X']} -> {self.start_pos['X']}")
+                sleep(0.1)
 
     def run_from_config(self):
 
@@ -194,13 +200,13 @@ class Dispim(Spim):
 
         # Calculate number of tiles in XYZ
         # Always round up so that we cover the desired imaging region.
-        xsteps = ceil((volume_x_um - self.cfg.tile_size_x_um)
-                      / x_grid_step_um)
-        ysteps = ceil((volume_y_um - self.cfg.tile_size_y_um)
-                      / y_grid_step_um)
-        zsteps = ceil((volume_z_um - self.cfg.z_step_size_um)
-                      / self.cfg.z_step_size_um)
+        xsteps = round(volume_x_um / x_grid_step_um)
+        ysteps = round(volume_y_um / y_grid_step_um)
+        zsteps = round(volume_z_um / self.cfg.z_step_size_um)
         xtiles, ytiles, ztiles = (1 + xsteps, 1 + ysteps, 1 + zsteps)
+        print('x', xtiles)
+        print('y', ytiles)
+        print('z', ztiles)
         self.total_tiles = xtiles * ytiles * ztiles * len(channels)
 
         # Check if we will violate storage directory limits with our
@@ -238,27 +244,32 @@ class Dispim(Spim):
 
         # Move sample to preset starting position
         if self.start_pos is not None:
-            self.log.info(f'Moving to starting position at {self.start_pos}')
-            # TODO: Should x and y be negative? Sample moves to -x, -y, z
-            self.sample_pose.move_absolute(x=self.start_pos['X'],
-                                           y=self.start_pos['Y'],
-                                           z=self.start_pos['Z'],
-                                           wait=True)
-            self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
-            # Reset start_pos to zero
-            self.start_pos = None
+            self.log.info(f'Moving to starting position at {self.start_pos["X"]}, '
+                                                         f'{self.start_pos["Y"]}, '
+                                                         f'{self.start_pos["Z"]}')
+            self.tigerbox.move_axes_absolute(x=self.start_pos['X'])
+            self.wait_to_stop('X', self.start_pos['X'])
+            self.tigerbox.move_axes_absolute(y=self.start_pos['Y'])
+            self.wait_to_stop('Y', self.start_pos['Y'])
+            self.tigerbox.move_axes_absolute(z=self.start_pos['Z'])
+            self.wait_to_stop('Z', self.start_pos['Z'])
+            self.log.info(f'Stage moved to {self.tigerbox.get_position()}')
+            #TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
+        else:
+            self.set_scan_start(self.tigerbox.get_position())
 
         # Set the sample starting location as the origin.
-        self.sample_pose.zero_in_place()
+        #self.sample_pose.zero_in_place()
 
         transfer_processes = None  # Reference to external tiff transfer process.
-        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos= (0, 0, 0)
-        self.volumetric_imaging.set()  # TODO: do we need this?
+        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos= (self.start_pos['Y'],
+                                                               self.start_pos['Z'],
+                                                               self.start_pos['X'])
         try:
             for j in range(ytiles):
 
                 # move back to x=0 which maps to z=0
-                self.stage_x_pos = 0
+                self.stage_x_pos = self.start_pos['Y']
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
@@ -266,7 +277,9 @@ class Dispim(Spim):
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos), wait_for_output=True, wait_for_reply=True)
+                self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos),
+                                                 wait_for_output=True,
+                                                 wait_for_reply=True)
                 while self.tigerbox.is_moving():
                     # below is for halting stage if it gets 'stuck'
                     pos = self.tigerbox.get_position('Z')
@@ -275,7 +288,7 @@ class Dispim(Spim):
                         self.tigerbox.halt()
                         break
                     else:
-                        self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
+                        # self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
                         sleep(0.1)
 
                 for i in range(xtiles):
@@ -294,7 +307,7 @@ class Dispim(Spim):
                             self.tigerbox.halt()
                             break
                         else:
-                            self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
+                            # self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
                             sleep(0.1)
 
                     for ch in channels:
@@ -309,16 +322,18 @@ class Dispim(Spim):
                         self.tigerbox.move_axes_absolute(x=round(z_backup_pos),
                                                          wait_for_output=True,
                                                          wait_for_reply=True)
-                        self.log.info(f"Moving to Z = {0}.")
-                        self.tigerbox.move_axes_absolute(x=0, wait_for_output=True, wait_for_reply=True)
+                        self.log.info(f"Moving to Z = {self.stage_z_pos}.")
+                        self.tigerbox.move_axes_absolute(x=self.stage_z_pos,
+                                                         wait_for_output=True,
+                                                         wait_for_reply=True)
                         while self.tigerbox.is_moving():
                             pos = self.tigerbox.get_position('X')
-                            distance = abs(pos['X'] - round(0))
+                            distance = abs(pos['X'] - round(self.stage_z_pos))
                             if distance < 1.0:
                                 self.tigerbox.halt()
                                 break
                             else:
-                                self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
+                                # self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
                                 sleep(0.1)
 
                         self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
@@ -375,9 +390,8 @@ class Dispim(Spim):
             # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
-            self.log.info(f"Closing camera")
-            self.frame_grabber.close()
-            self.volumetric_imaging.clear()  # TODO: Do we need this?
+            # self.log.info(f"Closing camera")
+            #self.frame_grabber.close() #TODO: DO we want to close camera?
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
@@ -391,7 +405,8 @@ class Dispim(Spim):
         self.log.info(f"Configuring stage scan parameters")
         # TODO: Needs to come from sample pose in future
         # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, slow_scan_axis_position)
-        self.tigerbox.scanr(scan_start_mm=0, pulse_interval_enc_ticks=32,
+        self.log.info(f"Starting scan at Z = {self.stage_z_pos/10/1000} mm")
+        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos/10/1000, pulse_interval_enc_ticks=32,
                             num_pixels=tile_count)
         # Tigerbox is configured to scan along a fast and slow axis.
         # Tigerbox defaults to fast axis = Tiger x, slow axis = Tiger y.
@@ -401,18 +416,45 @@ class Dispim(Spim):
                             scan_stop_mm=slow_scan_axis_position, line_count=1)
         self.frame_grabber.start()
         self.ni.start()
-        self.log.debug(f"Starting scan.")
+        self.log.info(f"Starting scan.")
         self.sample_pose.start_scan()
 
-        while self.tigerbox.is_moving():
-            pos = self.tigerbox.get_position('X')
-            self.log.debug(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos + tile_count*self.cfg.z_step_size_um}")
+        nframes_0 = 0
+        nframes_1 = 0
+        while nframes_0 < self.frame_grabber.p.video[0].max_frame_count and \
+              nframes_1 < self.frame_grabber.p.video[1].max_frame_count and\
+              self.ni.counter_task.read() < tile_count:
+
+            nframes_0 = self.framedata(0, nframes_0)
+            nframes_1 = self.framedata(1, nframes_1)
+
             sleep(0.1)
 
-        self.log.debug('Scan complete')
+        # while self.tigerbox.is_moving():
+        #     pos = self.tigerbox.get_position('X')
+        #     # self.log.info(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos/10 + tile_count*self.cfg.z_step_size_um}")
+        #     sleep(0.1)
+
+        self.log.info('Scan complete')
         self.ni.stop()
         #self.ni.close() #TODO: Do we need this?
         self.frame_grabber.stop()
+
+    def framedata(self, stream, nframes):
+
+        if a := self.frame_grabber.runtime.get_available_data(stream):
+            packet = a.get_frame_count()
+            for f in a.frames():
+                logging.debug(
+                    f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
+                )
+            f = None  # <-- fails to get the last frames if this is held?
+            a = None  # <-- fails to get the last frames if this is held?
+            nframes += packet
+            logging.info(
+                f"frame count: {nframes} - frames in packet: {packet}"
+            )
+        return nframes
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -503,7 +545,7 @@ class Dispim(Spim):
         self.sample_pose.move_relative(x=x, y=y, z=z, wait=True)
 
     def get_sample_position(self):
-        return self.sample_pose.get_position()
+        return self.tigerbox.get_position() #TODO: change back to sample pose
 
     def set_scan_start(self, start: dict):
 
@@ -511,7 +553,9 @@ class Dispim(Spim):
         :param start: dict of integers in x, y, z coordinates"""
 
         self.start_pos = start
-        self.log.info(f"Scan start position set to {self.start_pos}")
+        self.log.info(f'Scan start position set to {self.start_pos["X"]}, '
+                                                 f'{self.start_pos["Y"]}, '
+                                                 f'{self.start_pos["Z"]}')
 
     def close(self):
         """Safely close all open hardware connections."""

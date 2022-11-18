@@ -97,7 +97,7 @@ class DispimConfig(SpimConfig):
 
     @property
     def scan_direction_left(self):
-        # Lightsheet scan direction: forward or backward.
+        """Lightsheet scan direction: forward or backward."""
         return self.camera_specs['camera_left']['scan_direction']
 
     @scan_direction_left.setter
@@ -112,7 +112,7 @@ class DispimConfig(SpimConfig):
 
     @scan_direction_right.setter
     def scan_direction_right(self, dir: str):
-        # Lightsheet scan direction: forward or backward.
+        """Lightsheet scan direction: forward or backward."""
         self.camera_specs['camera_right']['scan_direction'] = dir
 
     # @scan_direction_left.setter
@@ -131,7 +131,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def slit_width(self):
-        """Returns the slit width in pixels."""
+        """Returns the slit width in pixels.
+        :unit px"""
         return self.design_specs['slit_width_pixels']
 
     @slit_width.setter
@@ -166,7 +167,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def daq_update_freq(self):
-        """Frequency DAQ updates"""
+        """Frequency DAQ updates
+        :unit hz"""
         return self.daq_obj_kwds['update_frequency_hz']
 
     @daq_update_freq.setter
@@ -178,7 +180,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def imaging_wavelengths(self):
-        """laser wavelengths used in imaging"""
+        """laser wavelengths used in imaging
+        :unit nm"""
         return self.cfg['imaging_specs']['laser_wavelengths']
 
     @imaging_wavelengths.setter
@@ -187,25 +190,27 @@ class DispimConfig(SpimConfig):
 
     @property
     def z_step_size_um(self):
-        """z step size in um"""
+        """z step size in um
+        :unit um"""
         return self.cfg['imaging_specs']['z_step_size_um']
-
-    @property
-    def scan_speed_mm_s(self):
-        """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.01 # 10 ms jitter time for stage pulses
-        step_size_mm = self.imaging_specs['z_step_size_um']/1000.0
-        scan_speed_mm_s = step_size_mm/(self.get_daq_cycle_time() + jitter_time_s)
-        return scan_speed_mm_s
 
     @z_step_size_um.setter
     def z_step_size_um(self, um: float):
         self.cfg['imaging_specs']['z_step_size_um'] = um
 
+    @property
+    def scan_speed_mm_s(self):
+        """Return the volumetric scan speed of the stage."""
+        jitter_time_s = 0.01  # 10 ms jitter time for stage pulses
+        step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
+        scan_speed_mm_s = step_size_mm / (self.get_daq_cycle_time() + jitter_time_s)
+        return scan_speed_mm_s
+
     # TODO: consider putting this in the parent class.
     @property
     def stage_backlash_reset_dist_um(self):
-        """stage backlash reset distance um"""
+        """stage backlash reset distance um
+        :unit um"""
         return self.stage_specs['backlash_reset_distance_um']
 
     @stage_backlash_reset_dist_um.setter
@@ -220,7 +225,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def delay_time(self):
-        """Return the delay time between the left and right views."""
+        """Return the delay time between the left and right views.
+        :unit s"""
         return self.waveform_specs['delay_time']
 
     @delay_time.setter
@@ -229,7 +235,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def rest_time(self):
-        """Return the delay time between the left and right views."""
+        """Return the delay time between the left and right views.
+        :unit s"""
         return self.waveform_specs['rest_time']
 
     @rest_time.setter
@@ -238,7 +245,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def exposure_time(self):
-        """Return the total exposure time for a frame."""
+        """Return the total exposure time for a frame.
+        :unit s"""
         return self.waveform_specs['exposure_time']
 
     @exposure_time.setter
@@ -247,7 +255,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def camera_left_delay(self):
-        """Offset time of left camera"""
+        """Offset time of left camera
+        :unit s"""
         return self.camera_specs['camera_left']['delay']
 
     @camera_left_delay.setter
@@ -256,7 +265,8 @@ class DispimConfig(SpimConfig):
 
     @property
     def camera_right_delay(self):
-        """Offset time of right camera"""
+        """Offset time of right camera
+        :unit s"""
         return self.camera_specs['camera_right']['delay']
 
     @camera_right_delay.setter
