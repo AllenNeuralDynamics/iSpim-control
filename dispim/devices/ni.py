@@ -69,10 +69,10 @@ class WaveformHardware:
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
                 trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
                 trigger_edge=Slope.RISING)
-            self.counter_task = nidaqmx.Task("counter")
+            self.counter_task = nidaqmx.Task("counter_task")
             self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan('/Dev2/ctr0',
                                                                                       edge=nidaqmx.constants.Edge.RISING)
-            self.counter_loop.ci_count_edges_term = '/Dev2/PFI0' #TODO: configure or change this. Also do I have to terminate this counter_loop?
+            self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
         # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.
@@ -96,8 +96,7 @@ class WaveformHardware:
         """start tasks."""
         # Start ao_task and counter task
         self.ao_task.start()
-        if self.live:
-            self.counter_task.start()
+        self.counter_task.start()
 
     def playback_finished(self):
         """True if the device is busy playing waveforms. False otherwise."""
@@ -119,9 +118,11 @@ class WaveformHardware:
         #     self.ao_task.write(ao_data)
         #TODO: Why is this not working?
         self.log.debug("Issuing a task stop.")
-        if self.live:
-            self.counter_task.stop()
-            self.counter_task.wait_until_done(1)
+
+        self.counter_task.stop()
+        print('stopped counter task ')
+        self.counter_task.wait_until_done(1)
+        print('waited till counter task done')
         # sleep(.5)
         self.ao_task.stop()
 

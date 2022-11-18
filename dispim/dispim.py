@@ -64,7 +64,7 @@ class Dispim(Spim):
 
         # Setup hardware according to the config.
         self._setup_camera()
-        self._setup_lasers()
+        #self._setup_lasers()
         self._setup_motion_stage()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
@@ -400,7 +400,7 @@ class Dispim(Spim):
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path]):
-        self.log.debug(f"Configuring framegrabber")
+        self.log.info(f"Configuring framegrabber")
         self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
         self.log.info(f"Configuring stage scan parameters")
         # TODO: Needs to come from sample pose in future
@@ -419,15 +419,12 @@ class Dispim(Spim):
         self.log.info(f"Starting scan.")
         self.sample_pose.start_scan()
 
-        nframes_0 = 0
-        nframes_1 = 0
-        while nframes_0 < self.frame_grabber.p.video[0].max_frame_count and \
-              nframes_1 < self.frame_grabber.p.video[1].max_frame_count and\
-              self.ni.counter_task.read() < tile_count:
+        while self.ni.counter_task.read() < tile_count:
 
-            nframes_0 = self.framedata(0, nframes_0)
-            nframes_1 = self.framedata(1, nframes_1)
-
+            self.framedata(0)
+            self.framedata(1)
+            logging.info(f'Total frames: {tile_count} '
+                         f'-> Frames collected: {self.ni.counter_task.read()}')
             sleep(0.1)
 
         # while self.tigerbox.is_moving():
@@ -440,7 +437,7 @@ class Dispim(Spim):
         #self.ni.close() #TODO: Do we need this?
         self.frame_grabber.stop()
 
-    def framedata(self, stream, nframes):
+    def framedata(self, stream):
 
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
@@ -450,11 +447,10 @@ class Dispim(Spim):
                 )
             f = None  # <-- fails to get the last frames if this is held?
             a = None  # <-- fails to get the last frames if this is held?
-            nframes += packet
-            logging.info(
-                f"frame count: {nframes} - frames in packet: {packet}"
+            logging.debug(
+                f"Frames in packet: {packet}"
             )
-        return nframes
+
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -529,12 +525,12 @@ class Dispim(Spim):
         self.live_status = live
         live_status_msg = " in live mode" if live else ""
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
-        if self.active_laser is not None:
-            self.lasers[self.active_laser].disable()
+        #if self.active_laser is not None:
+            #self.lasers[self.active_laser].disable()
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
         self.active_laser = wavelength
-        self.lasers[self.active_laser].enable()
+        #self.lasers[self.active_laser].enable()
 
     def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
          """Convenience function for moving the sample from a UI."""
