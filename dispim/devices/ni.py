@@ -120,9 +120,7 @@ class WaveformHardware:
         self.log.debug("Issuing a task stop.")
 
         self.counter_task.stop()
-        print('stopped counter task ')
         self.counter_task.wait_until_done(1)
-        print('waited till counter task done')
         # sleep(.5)
         self.ao_task.stop()
 

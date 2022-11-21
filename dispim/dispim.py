@@ -64,7 +64,7 @@ class Dispim(Spim):
 
         # Setup hardware according to the config.
         self._setup_camera()
-        #self._setup_lasers()
+        self._setup_lasers()
         self._setup_motion_stage()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
@@ -525,12 +525,12 @@ class Dispim(Spim):
         self.live_status = live
         live_status_msg = " in live mode" if live else ""
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
-        #if self.active_laser is not None:
-            #self.lasers[self.active_laser].disable()
+        if self.active_laser is not None:
+            self.lasers[self.active_laser].disable()
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
         self.active_laser = wavelength
-        #self.lasers[self.active_laser].enable()
+        self.lasers[self.active_laser].enable()
 
     def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
          """Convenience function for moving the sample from a UI."""
