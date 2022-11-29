@@ -8,9 +8,9 @@ import copy
 class DispimConfig(SpimConfig):
     """A Dispim Configuration."""
 
-    def __init__(self, toml_filepath: str):
+    def __init__(self, toml_filepath: str, create: bool = False):
         """Read config file. Warn if not found, but create sensible defaults."""
-        super().__init__(toml_filepath, TomlTemplate)
+        super().__init__(toml_filepath, TomlTemplate, create=create)
 
         # Note: these are mutable, so reloading the toml doesn't affect them.
         self.imaging_specs = self.cfg['imaging_specs']
