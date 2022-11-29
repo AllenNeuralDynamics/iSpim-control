@@ -1,27 +1,8 @@
 """Mesospim Config object to flatten item access in the TOML-based config."""
 
 from mesospim.config_base import SpimConfig
+from .config_template import TomlTemplate
 import copy
-
-# A template from which we can generate a blank mesospim config toml file.
-TomlTemplate = \
-    {
-        "imaging_specs":
-            {
-                "local_storage_directory": ".",
-                "external_storage_directory": ".",
-                "subject_id": "brain_00",
-                "tile_prefix": "tile",
-                "tile_overlap_x_percent": 15,
-                "tile_overlap_y_percent": 15,
-                "z_step_size_um": 1,
-                "volume_x_um": 2304,
-                "volume_y_um": 2304,
-                "volume_z_um": 1,
-                "laser_wavelengths": [488, ]
-            }
-        # TODO: populate remaining fields.
-    }
 
 
 class DispimConfig(SpimConfig):
