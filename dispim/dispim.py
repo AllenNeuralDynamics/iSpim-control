@@ -81,6 +81,7 @@ class Dispim(Spim):
 
         # start position of scan
         self.start_pos = None
+        self.im = None
 
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
@@ -94,7 +95,7 @@ class Dispim(Spim):
         # Initializing exposure time of both cameras
         # TODO: This is assuming that the line_interval is set the same in
         #  both cameras. Should have some fail safe in case not?
-        cpx_line_interval = self.frame_grabber.get_line_interval()
+        cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15,15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width*
                                             cpx_line_interval[0])
 
@@ -441,6 +442,8 @@ class Dispim(Spim):
 
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
+            f = next(a.frames())
+            self.im = f.data().squeeze().copy()
             for f in a.frames():
                 logging.debug(
                     f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
@@ -486,7 +489,6 @@ class Dispim(Spim):
         self.lasers[self.active_laser].disable()
         self.active_laser = None
 
-    @thread_worker
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
