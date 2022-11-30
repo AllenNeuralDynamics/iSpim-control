@@ -435,7 +435,6 @@ class Dispim(Spim):
 
         self.log.info('Scan complete')
         self.ni.stop()
-        #self.ni.close() #TODO: Do we need this?
         self.frame_grabber.stop()
 
     def framedata(self, stream):

@@ -1,15 +1,15 @@
 [imaging_specs]
-local_storage_directory = "C:\\test"
-subject_id = "test"
+local_storage_directory = "C:\\LC-1F"
+subject_id = "LC-1F"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.176
-volume_x_um = 400.0
-volume_y_um = 205.0
-volume_z_um = 66.5
-laser_wavelengths = [ 405, 488, 561, 638,]
-external_storage_directory = "C:\\test"
+volume_x_um = 1305.2
+volume_y_um = 77.2
+volume_z_um = 1734.0
+laser_wavelengths = [ 405, 561, 638,]
+external_storage_directory = "Y:\\LC-1F"
 
 [tile_specs]
 x_field_of_view_um = 405.504
@@ -129,14 +129,14 @@ right_offset = 1.7
 right_amplitude = 0
 
 [channel_specs.405.galvo]
-x_left_offset = 2.455
-x_left_amplitude = -0.02
-x_right_offset = 2.6
-x_right_amplitude = -0.015
+x_left_offset = 2.445
+x_left_amplitude = -0.015
+x_right_offset = 2.58
+x_right_amplitude = -0.01
 y_left_offset = 2.35
 y_left_amplitude = 1.3
-y_right_offset = 2.6
-y_right_amplitude = 1.4
+y_right_offset = 2.5
+y_right_amplitude = 1.3
 
 [channel_specs.405.kwds]
 port = "COMxx"
@@ -163,13 +163,13 @@ port = "COMxx"
 [channel_specs.561.etl]
 left_offset = 1.5
 left_amplitude = 0
-right_offset = 1.7
+right_offset = 1.9
 right_amplitude = 0
 
 [channel_specs.561.galvo]
-x_left_offset = 2.445
-x_left_amplitude = -0.013
-x_right_offset = 2.595
+x_left_offset = 2.45
+x_left_amplitude = -0.015
+x_right_offset = 2.58
 x_right_amplitude = -0.015
 y_left_offset = 2.35
 y_left_amplitude = 1.3
@@ -180,15 +180,15 @@ y_right_amplitude = 1.4
 port = "COMxx"
 
 [channel_specs.638.etl]
-left_offset = 1.5
+left_offset = 1.7
 left_amplitude = 0
-right_offset = 1.9
+right_offset = 2.2
 right_amplitude = 0
 
 [channel_specs.638.galvo]
 x_left_offset = 2.445
-x_left_amplitude = -0.013
-x_right_offset = 2.594
+x_left_amplitude = -0.02
+x_right_offset = 2.586
 x_right_amplitude = -0.015
 y_left_offset = 2.35
 y_left_amplitude = 1.3
