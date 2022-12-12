@@ -17,7 +17,7 @@ from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
-from dispim.devices.oxxius_components import LaserHub
+from dispim.devices.oxxius_components import LaserHub, OXXIUS_COM_SETUP
 from serial import Serial, EIGHTBITS, STOPBITS_ONE, PARITY_NONE
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
@@ -27,15 +27,6 @@ from mesospim.devices.tiger_components import SamplePose
 from math import ceil
 from mesospim.tiff_transfer import TiffTransfer
 
-OXXIUS_COM_SETUP = \
-            {
-                "baudrate": 9600,
-                "bytesize": EIGHTBITS,
-                "parity": PARITY_NONE,
-                "stopbits": STOPBITS_ONE,
-                "xonxoff": False,
-                "timeout": 1
-            }
 
 class Dispim(Spim):
 

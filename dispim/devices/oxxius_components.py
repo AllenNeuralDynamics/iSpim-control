@@ -1,5 +1,7 @@
-from oxxius_laser import OxxiusLaser
+from oxxius_laser import OxxiusLaser, OXXIUS_COM_SETUP
 from serial import Serial
+
+OXXIUS_COM_SETUP = OXXIUS_COM_SETUP
 
 class LaserHub(OxxiusLaser):
     def __init__(self, prefix: str, serial: Serial):
