@@ -544,15 +544,13 @@ class Dispim(Spim):
     def get_sample_position(self):
         return self.tigerbox.get_position() #TODO: change back to sample pose
 
-    def set_scan_start(self, start: dict):
+    def set_scan_start(self, start):
 
         """Set start position of scan.
-        :param start: dict of integers in x, y, z coordinates"""
+        :param start: start position of scan"""
 
         self.start_pos = start
-        self.log.info(f'Scan start position set to {self.start_pos["X"]}, '
-                                                 f'{self.start_pos["Y"]}, '
-                                                 f'{self.start_pos["Z"]}')
+        self.log.info(f'Scan start position set to {self.start_pos}')
 
     def close(self):
         """Safely close all open hardware connections."""
