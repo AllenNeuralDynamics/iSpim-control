@@ -80,24 +80,24 @@ class Dispim(Spim):
                                           self.cfg.sensor_row_count))
 
         # Initializing line interval of both cameras
-        self.frame_grabber.set_line_interval((self.cfg.exposure_time*1000000)/
+        self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
                                              self.cfg.sensor_column_count)
 
         # Initializing exposure time of both cameras
         # TODO: This is assuming that the line_interval is set the same in
         #  both cameras. Should have some fail safe in case not?
-        cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15,15]
-        self.frame_grabber.set_exposure_time(self.cfg.slit_width*
-                                            cpx_line_interval[0])
+        cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
+        self.frame_grabber.set_exposure_time(self.cfg.slit_width *
+                                             cpx_line_interval[0])
 
-        #Setting scanning direction (FORWARD or BACKWARD) for right(0) and left(1) camera
+        # Setting scanning direction (FORWARD or BACKWARD) for right(0) and left(1) camera
         self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction_right, False)
         self.frame_grabber.set_scan_direction(1, self.cfg.scan_direction_left, False)
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
         self.log.debug(f"Attempting to connect to lasers")
-        self.ser = Serial(port = 'COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
+        self.ser = Serial(port='COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
         self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
@@ -138,7 +138,7 @@ class Dispim(Spim):
         #      self.cfg.ni_controlled_tiger_axes}
         # self.tigerbox.pm(**externally_controlled_axes)
 
-        #TODO: Why do we care about status of active laser
+        # TODO: Why do we care about status of active laser
         if self.active_laser is not None and live:
             self.ni.start()
 
@@ -146,7 +146,7 @@ class Dispim(Spim):
     def check_ext_disk_space(self, dataset_size):
         self.log.warning("Checking disk space not implemented.")
 
-    def wait_to_stop(self, tiger: str, sample : int):
+    def wait_to_stop(self, tiger: str, sample: int):
         """Wait for stage to stop moving"""
         while self.tigerbox.is_moving():
             pos = self.tigerbox.get_position(tiger)
@@ -237,8 +237,8 @@ class Dispim(Spim):
         # Move sample to preset starting position
         if self.start_pos is not None:
             self.log.info(f'Moving to starting position at {self.start_pos["X"]}, '
-                                                         f'{self.start_pos["Y"]}, '
-                                                         f'{self.start_pos["Z"]}')
+                          f'{self.start_pos["Y"]}, '
+                          f'{self.start_pos["Z"]}')
             self.tigerbox.move_axes_absolute(x=self.start_pos['X'])
             self.wait_to_stop('X', self.start_pos['X'])
             self.tigerbox.move_axes_absolute(y=self.start_pos['Y'])
@@ -246,17 +246,17 @@ class Dispim(Spim):
             self.tigerbox.move_axes_absolute(z=self.start_pos['Z'])
             self.wait_to_stop('Z', self.start_pos['Z'])
             self.log.info(f'Stage moved to {self.tigerbox.get_position()}')
-            #TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
+            # TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
         else:
             self.set_scan_start(self.tigerbox.get_position())
 
         # Set the sample starting location as the origin.
-        #self.sample_pose.zero_in_place()
+        # self.sample_pose.zero_in_place()
 
         transfer_processes = None  # Reference to external tiff transfer process.
-        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos= (self.start_pos['Y'],
-                                                               self.start_pos['Z'],
-                                                               self.start_pos['X'])
+        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos = (self.start_pos['Y'],
+                                                                self.start_pos['Z'],
+                                                                self.start_pos['X'])
         try:
             for j in range(ytiles):
 
@@ -265,7 +265,7 @@ class Dispim(Spim):
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
-                self.tigerbox.set_speed(Z=1.0) # Z maps to Y
+                self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
@@ -307,7 +307,7 @@ class Dispim(Spim):
                         # TODO: handle this through sample pose class, which remaps axes
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.tigerbox.set_speed(X=1.0) # X maps to Z
+                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
                         # TODO: handle this through sample pose class, which remaps axes
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
@@ -337,16 +337,16 @@ class Dispim(Spim):
                         # Setup capture of next Z stack.
                         filenames = [Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam0.tiff"),
                                      Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam1.tiff")]
-                        filepath_srcs = [local_storage_dir/f for f in filenames]
+                        filepath_srcs = [local_storage_dir / f for f in filenames]
                         self.log.info(f"Collecting tile stacks at "
-                                      f"({self.stage_x_pos/UM_TO_STEPS}, "
-                                      f"{self.stage_y_pos/UM_TO_STEPS}) [um] "
+                                      f"({self.stage_x_pos / UM_TO_STEPS}, "
+                                      f"{self.stage_y_pos / UM_TO_STEPS}) [um] "
                                       f"for channel {ch} and saving to: {filepath_srcs}")
 
                         # TODO: consider making z step size a fn parameter instead of
                         #   collected strictly from the config.
                         # Convert to [mm] units for tigerbox.
-                        slow_scan_axis_position = self.stage_x_pos/UM_TO_STEPS/1000.0
+                        slow_scan_axis_position = self.stage_x_pos / UM_TO_STEPS / 1000.0
                         self._collect_stacked_tiff(slow_scan_axis_position,
                                                    ztiles,
                                                    self.cfg.z_step_size_um,
@@ -361,10 +361,10 @@ class Dispim(Spim):
                             for p in transfer_processes:
                                 p.join()
                         if img_storage_dir is not None:
-                            filepath_dests = [img_storage_dir/f for f in filenames]
+                            filepath_dests = [img_storage_dir / f for f in filenames]
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dests}.")
-                            # TODO, use xcopy transfer for speed
+                            # ↓TODO, use xcopy transfer for speed
                             transfer_processes = [TiffTransfer(filepath_srcs[0],
                                                                filepath_dests[0]),
                                                   TiffTransfer(filepath_srcs[1],
@@ -383,22 +383,25 @@ class Dispim(Spim):
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
             # self.log.info(f"Closing camera")
-            #self.frame_grabber.close() #TODO: DO we want to close camera?
+            # self.frame_grabber.close() #TODO: DO we want to close camera?
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
                     p.join()
+            self.ni.close()
+            for wl, specs in self.cfg.laser_specs.items():
+                self.lasers[int(wl)].disable()
+
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path]):
-        self.log.info(f"Configuring framegrabber")
-        self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+
         self.log.info(f"Configuring stage scan parameters")
         # TODO: Needs to come from sample pose in future
         # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, slow_scan_axis_position)
-        self.log.info(f"Starting scan at Z = {self.stage_z_pos/10/1000} mm")
-        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos/10/1000, pulse_interval_enc_ticks=32,
+        self.log.info(f"Starting scan at Z = {self.stage_z_pos / 10 / 1000} mm")
+        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / 10 / 1000, pulse_interval_enc_ticks=32,
                             num_pixels=tile_count)
         # Tigerbox is configured to scan along a fast and slow axis.
         # Tigerbox defaults to fast axis = Tiger x, slow axis = Tiger y.
@@ -406,13 +409,23 @@ class Dispim(Spim):
         # any slow axis movement.
         self.tigerbox.scanv(scan_start_mm=slow_scan_axis_position,
                             scan_stop_mm=slow_scan_axis_position, line_count=1)
-        self.frame_grabber.start()
+
+        try:
+            self.log.info(f"Configuring framegrabber")
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+            self.frame_grabber.start()
+        except:
+            self.log.error(f"Camera failed. Reinitializing")
+            self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
+                                              self.cfg.sensor_row_count))
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+            self.frame_grabber.start()
+
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.sample_pose.start_scan()
 
         while self.ni.counter_task.read() < tile_count:
-
             self.framedata(0)
             self.framedata(1)
             logging.info(f'Total frames: {tile_count} '
@@ -443,7 +456,6 @@ class Dispim(Spim):
             logging.debug(
                 f"Frames in packet: {packet}"
             )
-
 
     def start_livestream(self, wavelength: int):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -499,13 +511,12 @@ class Dispim(Spim):
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
                 sleep(.005)
-                #TODO: Add sleep statement based on ni freq but why
-                #TODO: do this in napari not through numpy directly
+                # TODO: Add sleep statement based on ni freq but why
+                # TODO: do this in napari not through numpy directly
                 if self.stream_id == 0:
                     yield np.flipud(im), self.stream_id
                 else:
                     yield im, self.stream_id
-
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
         """Configure system to image with the desired laser wavelength.
@@ -525,15 +536,15 @@ class Dispim(Spim):
         self.lasers[self.active_laser].enable()
 
     def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
-         """Convenience function for moving the sample from a UI."""
-         self.sample_pose.move_absolute(x=x, y=y, z=z, wait=True)
+        """Convenience function for moving the sample from a UI."""
+        self.sample_pose.move_absolute(x=x, y=y, z=z, wait=True)
 
     def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
         """Convenience func for moving the sample from a UI (units: steps)."""
         self.sample_pose.move_relative(x=x, y=y, z=z, wait=True)
 
     def get_sample_position(self):
-        return self.tigerbox.get_position() #TODO: change back to sample pose
+        return self.tigerbox.get_position()  # TODO: change back to sample pose
 
     def set_scan_start(self, start):
 

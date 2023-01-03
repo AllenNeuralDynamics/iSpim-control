@@ -1,15 +1,15 @@
 [imaging_specs]
-local_storage_directory = "C:\\647459-Sert-488-Pdyn-546-Nr2f2-647"
-subject_id = "647459-Sert-488-Pdyn-546-Nr2f2-647"
+local_storage_directory = "C:\\647459-Kit-488-Rorb-546-Fev-647"
+subject_id = "647459-Kit-488-Rorb-546-Fev-647"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.176
-volume_x_um = 4500.0
-volume_y_um = 102.2
-volume_z_um = 2500.0
+volume_x_um = 4100.0
+volume_y_um = 100.0
+volume_z_um = 3200.0
 laser_wavelengths = [ 405, 488, 561, 638,]
-external_storage_directory = "Y:\\647459-Sert-488-Pdyn-546-Nr2f2-647"
+external_storage_directory = "Y:\\647459-Kit-488-Rorb-546-Fev-647"
 
 [tile_specs]
 x_field_of_view_um = 405.504
@@ -123,76 +123,76 @@ y = "z"
 z = "x"
 
 [channel_specs.405.etl]
-left_offset = 1.7
+right_offset = 1.75
 left_amplitude = 0
-right_offset = 1.7
+left_offset = 0.0
 right_amplitude = 0
 
 [channel_specs.405.galvo]
-x_left_offset = 2.445
-x_left_amplitude = -0.015
-x_right_offset = 2.59
+x_left_offset = 0.0
+x_left_amplitude = 0.0
+x_right_offset = 2.565
 x_right_amplitude = -0.01
-y_left_offset = 2.445
-y_left_amplitude = 1.3
-y_right_offset = 2.5
-y_right_amplitude = 1.3
+y_left_offset = 0.0
+y_left_amplitude = 0.0
+y_right_offset = 2.4
+y_right_amplitude = 1.4
 
 [channel_specs.405.kwds]
 port = "COMxx"
 
 [channel_specs.488.etl]
-left_offset = 1.45
+right_offset = 1.75
 left_amplitude = 0
-right_offset = 1.55
+left_offset = 0.0
 right_amplitude = 0
 
 [channel_specs.488.galvo]
-x_left_offset = 2.448
-x_left_amplitude = -0.013
-x_right_offset = 2.582
-x_right_amplitude = -0.018
-y_left_offset = 2.35
-y_left_amplitude = 1.3
-y_right_offset = 2.5
+x_left_offset = 0.0
+x_left_amplitude = 0.0
+x_right_offset = 2.565
+x_right_amplitude = -0.01
+y_left_offset = 0.0
+y_left_amplitude = 0.0
+y_right_offset = 2.4
 y_right_amplitude = 1.4
 
 [channel_specs.488.kwds]
 port = "COMxx"
 
 [channel_specs.561.etl]
-left_offset = 1.5
+right_offset = 1.75
 left_amplitude = 0
-right_offset = 1.9
+left_offset = 0.0
 right_amplitude = 0
 
 [channel_specs.561.galvo]
-x_left_offset = 2.45
-x_left_amplitude = -0.015
-x_right_offset = 2.582
-x_right_amplitude = -0.015
-y_left_offset = 2.44
-y_left_amplitude = 1.3
-y_right_offset = 2.5
+x_left_offset = 0.0
+x_left_amplitude = 0.0
+x_right_offset = 2.565
+x_right_amplitude = -0.01
+y_left_offset = 0.0
+y_left_amplitude = 0.0
+y_right_offset = 2.4
 y_right_amplitude = 1.4
 
 [channel_specs.561.kwds]
 port = "COMxx"
 
 [channel_specs.638.etl]
-left_offset = 1.7
+right_offset = 1.75
 left_amplitude = 0
-right_offset = 2.2
+left_offset = 0.0
 right_amplitude = 0
 
 [channel_specs.638.galvo]
-x_left_offset = 2.445
-x_left_amplitude = -0.02
-x_right_offset = 2.588
-x_right_amplitude = -0.015
-y_left_offset = 2.485
-y_left_amplitude = 1.3
-y_right_offset = 2.5
+x_left_offset = 0.0
+x_left_amplitude = 0.0
+x_right_offset = 2.57
+x_right_amplitude = -0.01
+y_left_offset = 0.0
+y_left_amplitude = 0.0
+y_right_offset = 2.4
 y_right_amplitude = 1.4
 
 [channel_specs.638.kwds]
