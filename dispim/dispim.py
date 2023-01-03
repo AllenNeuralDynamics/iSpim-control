@@ -106,6 +106,9 @@ class Dispim(Spim):
 
             self.log.debug(f"Setting up {specs['color']} laser.")
 
+        self.lasers['main'] = LaserHub('', self.ser) if not self.simulated \
+            else Mock(LaserHub)             # Set up main right and left laser with empty prefix
+
     def _setup_motion_stage(self):
         """Configure the sample stage for the dispim according to the config."""
         self.log.info("Setting backlash in Z to 0")
