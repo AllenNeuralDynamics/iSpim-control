@@ -510,7 +510,7 @@ class Dispim(Spim):
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-                sleep(.005)
+                sleep((1/self.cfg.daq_obj_kwds.livestream_frequency_hz)*.1)   # TODO: Not sure if we need *.1 need to test
                 # TODO: Add sleep statement based on ni freq but why
                 # TODO: do this in napari not through numpy directly
                 if self.stream_id == 0:
@@ -534,17 +534,6 @@ class Dispim(Spim):
         self._setup_waveform_hardware(wavelength, live)
         self.active_laser = wavelength
         self.lasers[self.active_laser].enable()
-
-    def move_sample_absolute(self, x: int = None, y: int = None, z: int = None):
-        """Convenience function for moving the sample from a UI."""
-        self.sample_pose.move_absolute(x=x, y=y, z=z, wait=True)
-
-    def move_sample_relative(self, x: int = None, y: int = None, z: int = None):
-        """Convenience func for moving the sample from a UI (units: steps)."""
-        self.sample_pose.move_relative(x=x, y=y, z=z, wait=True)
-
-    def get_sample_position(self):
-        return self.tigerbox.get_position()  # TODO: change back to sample pose
 
     def set_scan_start(self, start):
 

@@ -43,7 +43,10 @@ camera_right = 6
 [daq_driver_kwds]
 dev_name = "Dev2"
 input_trigger_name = "PFI0"
+count_trigger_name = "PFI3"
+ao_counter_trigger_name = "PFI2"
 update_frequency_hz = 400000.0
+livestream_frequency_hz = 20
 
 [tiger_controller_driver_kwds]
 com_port = "COM3"

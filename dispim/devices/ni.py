@@ -13,11 +13,15 @@ from time import sleep
 
 
 class WaveformHardware:
-    def __init__(self, dev_name, input_trigger_name, update_frequency_hz):
+    def __init__(self, dev_name, input_trigger_name, count_trigger_name,
+                 ao_counter_trigger_name, update_frequency_hz, livestream_frequency_hz):
 
         self.dev_name = dev_name  # NI card address, i.e. Dev2
         self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
+        self.counter_trigger_name = count_trigger_name.lstrip('/')  # PFI counter task port
+        self.ao_counter_trigger_name = ao_counter_trigger_name.lstrip('/')  # PFI port that triggers ao lines (connected to PFI counter task port)
         self.update_freq = update_frequency_hz  # in [Hz]
+        self.livestream_frequency_hz = livestream_frequency_hz
         self.ao_task = None
         self.counter_task = None
         self.log = logging.getLogger(__name__)
@@ -54,14 +58,14 @@ class WaveformHardware:
 
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
-            self.counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
+            self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
                                                             units=FrequencyUnits.HZ,
                                                             idle_state=Level.LOW, initial_delay=0.0,
-                                                            freq=20,  # change 15 - 30 Hz, change to config value
+                                                            freq= self.livestream_frequency_hz,  # change 15 - 30 Hz, change to config value
                                                             duty_cycle=0.5)
-            self.counter_task.ci_count_edges_term = '/Dev2/PFI3'
+            self.counter_task.ci_count_edges_term = f"/{self.dev_name}/{self.counter_trigger_name}"
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
-            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI2",
+            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/{self.ao_counter_trigger_name}",
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
         else:
