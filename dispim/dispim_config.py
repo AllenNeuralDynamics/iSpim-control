@@ -22,6 +22,7 @@ class DispimConfig(SpimConfig):
         self.waveform_specs = self.cfg['waveform_specs']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
+        self.ni_controlled_tiger_axes = self.cfg['ni_controlled_tiger_axes']
         # TODO: dispim has 2 filterwheels. We must set the location of both
         #   programmatically.
         # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']

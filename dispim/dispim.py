@@ -18,8 +18,9 @@ from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
 from dispim.devices.oxxius_components import LaserHub, OXXIUS_COM_SETUP
-from serial import Serial, EIGHTBITS, STOPBITS_ONE, PARITY_NONE
+from serial import Serial
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
+from tigerasi.device_codes import ControlMode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from mesospim.spim_base import Spim
@@ -101,12 +102,12 @@ class Dispim(Spim):
         self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
-            self.lasers[int(wl)] = LaserHub(specs['prefix'], self.ser) if not self.simulated \
+            self.lasers[int(wl)] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
                 else Mock(LaserHub)
 
             self.log.debug(f"Setting up {specs['color']} laser.")
 
-        self.lasers['main'] = LaserHub('', self.ser) if not self.simulated \
+        self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
             else Mock(LaserHub)             # Set up main right and left laser with empty prefix
 
     def _setup_motion_stage(self):
@@ -124,7 +125,11 @@ class Dispim(Spim):
         # set card 31 (XY stage), 'X" (input), TTL to value of 1
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
-        # self.tigerbox.pm(a=1, b=1, c=1, d=1, v=1, w=1)
+
+        externally_controlled_axes = \
+            {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
+             self.cfg.ni_controlled_tiger_axes}
+        self.tigerbox.pm(**externally_controlled_axes)
 
     def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
 
@@ -134,12 +139,6 @@ class Dispim(Spim):
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
-
-        # TODO: Put all corresponding tigerbox components in external control mode.
-        # externally_controlled_axes = \
-        #     {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
-        #      self.cfg.ni_controlled_tiger_axes}
-        # self.tigerbox.pm(**externally_controlled_axes)
 
         # TODO: Why do we care about status of active laser
         if self.active_laser is not None and live:
