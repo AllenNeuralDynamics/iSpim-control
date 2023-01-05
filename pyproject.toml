@@ -20,7 +20,7 @@ classifiers=[
 requires-python = ">=3.8,<3.11"
 dependencies = [
     "tigerasi @ git+ssh://git@github.com/AllenNeuralDynamics/TigerASI.git@main#egg=TigerASI",
-    "mesospim @ git+ssh://git@github.com/AllenNeuralDynamics/mesospim-prime.git@develop#egg=mesospim",
+    "spim_core @ git+ssh://git@github.com/AllenNeuralDynamics/spim-core.git@main#egg=spim_core",
     "scipy >= 1.8.1",
     "numpy >= 1.22.3",
     "matplotlib >= 3.5.2",

@@ -13,9 +13,9 @@ import sys
 logging.getLogger().handlers.clear()
 
 
-class SpimLogFiler(logging.Filter):
+class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'mesospim', 'dispim', }#'calliphlox'}
+    VALID_LOGGER_BASES = {'spim_core', 'dispim', }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \
@@ -58,7 +58,7 @@ def main():
         else logging.Formatter(fmt=fmt, datefmt=datefmt)
     if args.console_output:
         log_handler = logging.StreamHandler(sys.stdout)
-        log_handler.addFilter(SpimLogFiler())
+        log_handler.addFilter(SpimLogFilter())
         log_handler.setLevel(args.log_level)
         log_handler.setFormatter(log_formatter)
         logger.addHandler(log_handler)

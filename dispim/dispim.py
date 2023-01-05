@@ -23,10 +23,10 @@ from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.device_codes import ControlMode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
-from mesospim.spim_base import Spim
-from mesospim.devices.tiger_components import SamplePose
+from spim_core.spim_base import Spim
+from spim_core.devices.tiger_components import SamplePose
 from math import ceil
-from mesospim.tiff_transfer import TiffTransfer
+from spim_core.tiff_transfer import TiffTransfer
 
 
 class Dispim(Spim):
