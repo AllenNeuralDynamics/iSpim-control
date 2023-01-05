@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""example main script to launch the mesospim."""
+"""Waveform Generator to output to pdf."""
 
-from mesospim.mesospim_config import MesospimConfig
-from mesospim.compute_waveforms import generate_waveforms, plot_waveforms_to_pdf
+from dispim.dispim_config import DispimConfig
+from dispim.compute_waveforms import generate_waveforms, plot_waveforms_to_pdf
 import argparse
 
 if __name__ == '__main__':
@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument("--config_path", type=str, default="./config.toml")
 
     args = parser.parse_args()
-    config = MesospimConfig(toml_filepath=args.config_path)
+    config = DispimConfig(toml_filepath=args.config_path)
     for wavelen in config.laser_wavelengths:
         print(f"Plotting {wavelen}[nm] waveforms")
         t, voltages_t = generate_waveforms(config, wavelen)

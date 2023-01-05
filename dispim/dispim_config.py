@@ -1,6 +1,6 @@
 """Mesospim Config object to flatten item access in the TOML-based config."""
 
-from mesospim.config_base import SpimConfig
+from spim_core.config_base import SpimConfig
 from .config_template import TomlTemplate
 import copy
 

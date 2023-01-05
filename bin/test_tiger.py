@@ -2,9 +2,7 @@ from argparse import ArgumentParser
 from dispim.dispim_config import DispimConfig
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
-# TODO: consolidate these later.
-from mesospim.spim_base import Spim
-from mesospim.devices.tiger_components import SamplePose
+from spim_core.devices.tiger_components import SamplePose
 
 if __name__ == "__main__":
     # Argparse for a config file.
