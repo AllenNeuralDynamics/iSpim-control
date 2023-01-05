@@ -72,11 +72,6 @@ class DispimConfig(SpimConfig):
     def sample_pose_kwds(self):
         return self.cfg['sample_pose_kwds']
 
-    # @property
-    # def row_interval(self):
-    #     # Time between moving the slit by one row. (AKA: "line interval")
-    #     return self.camera_specs['row_interval']
-
     @property
     def scan_direction_left(self):
         """Lightsheet scan direction: forward or backward."""
@@ -96,10 +91,6 @@ class DispimConfig(SpimConfig):
     def scan_direction_right(self, dir: str):
         """Lightsheet scan direction: forward or backward."""
         self.camera_specs['camera_right']['scan_direction'] = dir
-
-    # @scan_direction_left.setter
-    # def scan_direction(self, direction: DCAMPROP.READOUT_DIRECTION):
-    #     self.dcam_specs['scan_direction'] = direction.name
 
     @property
     def line_time(self):
@@ -130,22 +121,6 @@ class DispimConfig(SpimConfig):
     def sensor_column_count(self):
         """Pixels in column?"""
         return self.tile_specs['column_count_pixels']
-
-    # @property
-    # def start_of_frame_delay(self):
-    #     return self.cfg['waveform_specs']['start_of_frame_delay']
-
-    # @start_of_frame_delay.setter
-    # def start_of_frame_delay(self, seconds: float):
-    #     self.cfg['waveform_specs']['start_of_frame_delay'] = seconds
-
-    # @property
-    # def trim_galvo_setpoint(self):
-    #     return self.cfg['waveform_specs']['trim_galvo']['voltage_setpoint']
-
-    # @trim_galvo_setpoint.setter
-    # def trim_galvo_setpoint(self, volts: float):
-    #     self.cfg['waveform_specs']['trim_galvo']['voltage_setpoint'] = volts
 
     @property
     def daq_update_freq(self):
@@ -300,45 +275,3 @@ class DispimConfig(SpimConfig):
     def tiles_per_second(self):
         return float(self.cfg['estimates']['tiles_per_second'])
 
-    # DO WE NEED THIS?
-    # def sanity_check(self):
-    #     """Check if the current (live) configuration passes all pre-checks.
-    #     It's worth calling this right before conducting an imaging run.
-    #     """
-    #     # Run through all checks first; raise an assertion error at the end.
-    #     # Do the Base Class Sanity Checks first and cascade them.
-    #     error_msgs = []
-    #     try:
-    #         super().sanity_check()
-    #     except AssertionError as e:
-    #         error_msgs.append(str(e))
-
-    #     # TODO: a bunch of DISPIM-specific sanity checks.
-    #     # TODO: put this in the base class.
-    #     assert self.local_storage_dir.exists(), \
-    #         f"Error: local storage directory '{self.local_storage_dir}' " \
-    #         "does not exist."
-    #     # Check if external storage path exists only if it was specified.
-    #     if self.ext_storage_dir is not None:
-    #         assert self.ext_storage_dir.exists(), \
-    #             "Error: external storage directory " \
-    #             f"'{self.ext_storage_dir}' does not exist."
-
-    #     # Create a big error message at the end.
-    #     if len(error_msgs):
-    #         all_msgs = "\n".join(error_msgs)
-    #         raise AssertionError(all_msgs)
-
-    def print_summary_stats(self):
-        # Print some stats:
-        print("--Config Stats--")  # TO DO ADD DISPIM VALUES HERE
-        print("Volume Capture Stat:")
-        print(f"  percent overlap x: {self.tile_overlap_x_percent:.1f}%")
-        print(f"  percent overlap y: {self.tile_overlap_x_percent:.1f}%")
-        print("  Desired dimensions: "
-              f"{self.volume_x_um:.1f}[um] x "
-              f"{self.volume_y_um:.1f}[um] x "
-              f"{self.volume_z_um:.1f}[um].")
-        print()
-        print("GUI settings for debugging:")  # TO DO ADD DISPIM VALUES HERE
-        print()

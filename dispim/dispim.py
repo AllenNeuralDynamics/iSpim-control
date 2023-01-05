@@ -20,7 +20,7 @@ from dispim.compute_waveforms import generate_waveforms
 from dispim.devices.oxxius_components import LaserHub, OXXIUS_COM_SETUP
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
-from tigerasi.device_codes import ControlMode
+from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
 from spim_core.spim_base import Spim
@@ -127,9 +127,11 @@ class Dispim(Spim):
         # TODO, how to store card # mappings, in config?
 
         externally_controlled_axes = \
-            {a: ControlMode.EXTERNAL_CLOSED_LOOP for a in
+            {a: PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.ni_controlled_tiger_axes}
-        self.tigerbox.pm(**externally_controlled_axes)
+        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+        self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
+                                        card_address=31)
 
     def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
 
@@ -512,7 +514,7 @@ class Dispim(Spim):
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-                sleep((1/self.cfg.daq_obj_kwds.livestream_frequency_hz)*.1)   # TODO: Not sure if we need *.1 need to test
+                sleep((1/self.cfg.daq_obj_kwds['livestream_frequency_hz'])*.1)   # TODO: Not sure if we need *.1 need to test
                 # TODO: Add sleep statement based on ni freq but why
                 # TODO: do this in napari not through numpy directly
                 if self.stream_id == 0:
