@@ -32,16 +32,16 @@ class FrameGrabber:
 
         :param tile_shape: size 2 tuple of (columns, rows) for single tile"""
 
-        for stream_id in range(0, 2):
-            self.p.video[stream_id].camera.identifier = self.dm.select(DeviceKind.Camera, self.cameras[stream_id])
-            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            self.p.video[stream_id].camera.settings.binning = 1
-            self.p.video[stream_id].camera.settings.shape = (tile_shape[1], tile_shape[0])
-            self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
-            self.p.video[stream_id].frame_average_count = 0  # disables
+        for video, camera in zip(self.p.video, self.cameras):
+            video.camera.identifier = self.dm.select(DeviceKind.Camera, camera)
+            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
+            video.camera.settings.binning = 1
+            video.camera.settings.shape = (tile_shape[1], tile_shape[0])
+            video.camera.settings.pixel_type = SampleType.U16
+            video.frame_average_count = 0  # disables
 
-        self.p.video[0].camera.settings.readout_direction = Direction.Forward
-        self.p.video[1].camera.settings.readout_direction = Direction.Backward
+        # self.p.video[0].camera.settings.readout_direction = Direction.Forward
+        # self.p.video[1].camera.settings.readout_direction = Direction.Backward
 
 
     def setup_stack_capture(self, output_paths: list[Path], frame_count: int):
@@ -54,34 +54,35 @@ class FrameGrabber:
         # TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
 
-        for stream_id in range(0, 2):
-            self.log.info(f"Configuring camera {stream_id}.")
-            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
-            self.log.info(str(output_paths[stream_id].absolute()))
-            self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
-            self.p.video[stream_id].max_frame_count = frame_count
+        for video, path in zip(self.p.video, output_paths):
+            self.log.info(f"Configuring camera.")
+            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
+            self.log.info(str(path.absolute()))
+            video.storage.settings.filename = str(path.absolute())
+            video.max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                      line=2,
                                      event='FrameStart',
                                      kind='Input',
                                      edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
+            video.camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
 
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""
 
-        for stream_id in range(0, 2):
-            self.p.video[stream_id].storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            self.p.video[stream_id].max_frame_count = 1000000
+        stream_id = 0
+        for video in self.p.video:
+            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
+            video.max_frame_count = 1000000
             live_trigger = Trigger(enable='True',
                                      line = 2,
                                      event='FrameStart',
                                      kind='Input',
                                      edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger]
+            video.camera.settings.triggers = [Trigger(),live_trigger]
             self.runtime.set_configuration(self.p)
 
     def get_exposure_time(self):
@@ -92,9 +93,9 @@ class FrameGrabber:
         return exposure_time
 
     def set_exposure_time(self, exp_time: float, live: bool = False):
-        for stream_id in range(0, 2):
-            self.p.video[stream_id].camera.settings.exposure_time_us = exp_time
-            print(f'exposure {stream_id} set to: {self.p.video[stream_id].camera.settings.exposure_time_us}')
+        for video in self.p.video:
+            video.camera.settings.exposure_time_us = exp_time
+            print(f'exposure set to: {video.camera.settings.exposure_time_us}')
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
@@ -111,9 +112,9 @@ class FrameGrabber:
         return line_interval
 
     def set_line_interval(self, line_int: float, live: bool = False):
-        for stream_id in range(0, 2):
-            self.p.video[stream_id].camera.settings.line_interval_us = line_int
-            print(f'line interval {stream_id} set to: {self.p.video[stream_id].camera.settings.line_interval_us}')
+        for video in self.p.video:
+            video.camera.settings.line_interval_us = line_int
+            print(f'line interval set to: {video.camera.settings.line_interval_us}')
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)

@@ -9,6 +9,7 @@ volume_x_um = 5000.0
 volume_y_um = 1000.0
 volume_z_um = 4000.0
 laser_wavelengths = [ 638,]
+camera_streams = [ 0,]
 external_storage_directory = "Y:\\647459-Kit-488-Rorb-546-Fev-647"
 
 [tile_specs]

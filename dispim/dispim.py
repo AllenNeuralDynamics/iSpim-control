@@ -17,7 +17,7 @@ from dispim.dispim_config import DispimConfig
 from dispim.devices.frame_grabber import FrameGrabber
 from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
-from dispim.devices.oxxius_components import LaserHub, OXXIUS_COM_SETUP
+from dispim.devices.oxxius_components import LaserHub
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
@@ -27,7 +27,7 @@ from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from math import ceil
 from spim_core.tiff_transfer import TiffTransfer
-
+from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 
 class Dispim(Spim):
 
@@ -67,10 +67,9 @@ class Dispim(Spim):
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
 
-        # camera id number
-        self.stream_id = 0
-        self.not_stream_id = 1
-
+        # camera streams filled in with framegrabber.cameras
+        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
+        
         # start position of scan
         self.start_pos = None
         self.im = None
@@ -92,8 +91,8 @@ class Dispim(Spim):
                                              cpx_line_interval[0])
 
         # Setting scanning direction (FORWARD or BACKWARD) for right(0) and left(1) camera
-        self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction_right, False)
-        self.frame_grabber.set_scan_direction(1, self.cfg.scan_direction_left, False)
+        #self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction_right, False)
+        #self.frame_grabber.set_scan_direction(1, self.cfg.scan_direction_left, False)
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
@@ -104,8 +103,12 @@ class Dispim(Spim):
         for wl, specs in self.cfg.laser_specs.items():
             self.lasers[int(wl)] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
                 else Mock(LaserHub)
-
-            self.log.debug(f"Setting up {specs['color']} laser.")
+            # TODO: Needs to not be hardcoded and find out what commands work for 561
+            if int(wl) != 561:
+                self.lasers[int(wl)].set(Cmd.LaserDriverControlMode, 1)     # Set constant current mode
+                self.log.debug(f"Setting up {specs['color']} laser.")
+                self.lasers[int(wl)].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
+                self.lasers[int(wl)].set(Cmd.DigitalModulation, 1)   # Enables digital modulation
 
         self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
             else Mock(LaserHub)             # Set up main right and left laser with empty prefix
@@ -430,8 +433,8 @@ class Dispim(Spim):
         self.sample_pose.start_scan()
 
         while self.ni.counter_task.read() < tile_count:
-            self.framedata(0)
-            self.framedata(1)
+            for streams in self.stream_ids:
+                self.framedata(streams)
             logging.info(f'Total frames: {tile_count} '
                          f'-> Frames collected: {self.ni.counter_task.read()}')
             sleep(0.1)
@@ -501,15 +504,16 @@ class Dispim(Spim):
         self.frame_grabber.start()  # ?
         while self.livestream_enabled.is_set():
             # switching between cameras each time data is pulled
-            self.stream_id, self.not_stream_id = self.not_stream_id, self.stream_id
+            self.stream_ids = self.stream_ids[1:len(self.stream_ids)] + [self.stream_ids[0]]
+
             if self.simulated:
                 sleep(1 / 16)
                 blank = np.zeros((self.cfg.sensor_row_count,
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank, self.stream_id
-            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_id):
+                yield noise + blank,  self.stream_ids[0]
+            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None  # <-- will fail to get the last frames if this is held?
@@ -517,10 +521,10 @@ class Dispim(Spim):
                 sleep((1/self.cfg.daq_obj_kwds['livestream_frequency_hz'])*.1)   # TODO: Not sure if we need *.1 need to test
                 # TODO: Add sleep statement based on ni freq but why
                 # TODO: do this in napari not through numpy directly
-                if self.stream_id == 0:
-                    yield np.flipud(im), self.stream_id
+                if self.stream_ids[0] == 0:
+                    yield np.flipud(im), self.stream_ids[0]
                 else:
-                    yield im, self.stream_id
+                    yield im, self.stream_ids[0]
 
     def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
         """Configure system to image with the desired laser wavelength.
