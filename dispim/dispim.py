@@ -19,7 +19,7 @@ from dispim.devices.ni import WaveformHardware
 from dispim.compute_waveforms import generate_waveforms
 from dispim.devices.oxxius_components import LaserHub, OXXIUS_COM_SETUP
 from serial import Serial
-from tigerasi.tiger_controller import TigerController, UM_TO_STEPS
+from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import TigerController as SimTiger
 # TODO: consolidate these later.
@@ -310,7 +310,7 @@ class Dispim(Spim):
                         self.tigerbox.set_speed(X=1.0)  # X maps to Z
                         # TODO: handle this through sample pose class, which remaps axes
                         self.log.debug("Applying extra move to take out backlash.")
-                        z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
+                        z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
                         self.tigerbox.move_absolute(x=self.stage_z_pos)
@@ -335,14 +335,14 @@ class Dispim(Spim):
                                      Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam1.tiff")]
                         filepath_srcs = [local_storage_dir / f for f in filenames]
                         self.log.info(f"Collecting tile stacks at "
-                                      f"({self.stage_x_pos / UM_TO_STEPS}, "
-                                      f"{self.stage_y_pos / UM_TO_STEPS}) [um] "
+                                      f"({self.stage_x_pos / STEPS_PER_UM}, "
+                                      f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
                                       f"for channel {ch} and saving to: {filepath_srcs}")
 
                         # TODO: consider making z step size a fn parameter instead of
                         #   collected strictly from the config.
                         # Convert to [mm] units for tigerbox.
-                        slow_scan_axis_position = self.stage_x_pos / UM_TO_STEPS / 1000.0
+                        slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
                         self._collect_stacked_tiff(slow_scan_axis_position,
                                                    ztiles,
                                                    self.cfg.z_step_size_um,
@@ -371,8 +371,8 @@ class Dispim(Spim):
 
                         # TODO, set speed of sample Z / tiger X axis to ~1
 
-                    self.stage_x_pos += x_grid_step_um * UM_TO_STEPS
-                self.stage_y_pos += y_grid_step_um * UM_TO_STEPS
+                    self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
+                self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
 
         finally:
             # TODO, implement sample pose so below can be uncommented
