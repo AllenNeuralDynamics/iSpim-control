@@ -150,11 +150,11 @@ class Dispim(Spim):
     def check_ext_disk_space(self, dataset_size):
         self.log.warning("Checking disk space not implemented.")
 
-    def wait_to_stop(self, tiger: str, sample: int):
+    def wait_to_stop(self, axis: str, sample: int):
         """Wait for stage to stop moving"""
         while self.tigerbox.is_moving():
-            pos = self.tigerbox.get_position(tiger)
-            distance = abs(pos[tiger] - sample)
+            pos = self.tigerbox.get_position(axis)
+            distance = abs(pos[axis] - sample)
             if distance < 1.0:
                 self.tigerbox.halt()
                 break
@@ -243,11 +243,11 @@ class Dispim(Spim):
             self.log.info(f'Moving to starting position at {self.start_pos["X"]}, '
                           f'{self.start_pos["Y"]}, '
                           f'{self.start_pos["Z"]}')
-            self.tigerbox.move_axes_absolute(x=self.start_pos['X'])
+            self.tigerbox.move_absolute(x=self.start_pos['X'])
             self.wait_to_stop('X', self.start_pos['X'])
-            self.tigerbox.move_axes_absolute(y=self.start_pos['Y'])
+            self.tigerbox.move_absolute(y=self.start_pos['Y'])
             self.wait_to_stop('Y', self.start_pos['Y'])
-            self.tigerbox.move_axes_absolute(z=self.start_pos['Z'])
+            self.tigerbox.move_absolute(z=self.start_pos['Z'])
             self.wait_to_stop('Z', self.start_pos['Z'])
             self.log.info(f'Stage moved to {self.tigerbox.get_position()}')
             # TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
@@ -273,9 +273,7 @@ class Dispim(Spim):
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_axes_absolute(z=round(self.stage_y_pos),
-                                                 wait_for_output=True,
-                                                 wait_for_reply=True)
+                self.tigerbox.move_absolute(z=round(self.stage_y_pos))
                 while self.tigerbox.is_moving():
                     # below is for halting stage if it gets 'stuck'
                     pos = self.tigerbox.get_position('Z')
@@ -293,9 +291,7 @@ class Dispim(Spim):
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_axes_absolute(y=round(self.stage_x_pos),
-                                                     wait_for_output=True,
-                                                     wait_for_reply=True)
+                    self.tigerbox.move_absolute(y=round(self.stage_x_pos))
                     while self.tigerbox.is_moving():
                         pos = self.tigerbox.get_position('Y')
                         distance = abs(pos['Y'] - round(self.stage_x_pos))
@@ -315,13 +311,9 @@ class Dispim(Spim):
                         # TODO: handle this through sample pose class, which remaps axes
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -UM_TO_STEPS * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_axes_absolute(x=round(z_backup_pos),
-                                                         wait_for_output=True,
-                                                         wait_for_reply=True)
+                        self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_axes_absolute(x=self.stage_z_pos,
-                                                         wait_for_output=True,
-                                                         wait_for_reply=True)
+                        self.tigerbox.move_absolute(x=self.stage_z_pos)
                         while self.tigerbox.is_moving():
                             pos = self.tigerbox.get_position('X')
                             distance = abs(pos['X'] - round(self.stage_z_pos))
