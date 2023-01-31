@@ -69,7 +69,7 @@ class Dispim(Spim):
 
         # camera streams filled in with framegrabber.cameras
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
-        
+
         # start position of scan
         self.start_pos = None
         self.im = None
@@ -131,7 +131,7 @@ class Dispim(Spim):
 
         externally_controlled_axes = \
             {a: PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.ni_controlled_tiger_axes}
+             self.cfg.ni_controlled_tiger_axes} # change to tiger_specs.axes
         self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
@@ -430,7 +430,7 @@ class Dispim(Spim):
 
         self.ni.start()
         self.log.info(f"Starting scan.")
-        self.sample_pose.start_scan()
+        self.tigerbox.start_scan()
 
         while self.ni.counter_task.read() < tile_count:
             for streams in self.stream_ids:

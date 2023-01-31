@@ -56,7 +56,7 @@ class FrameGrabber:
 
         for video, path in zip(self.p.video, output_paths):
             self.log.info(f"Configuring camera.")
-            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Tiff")
+            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Zarr") #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.log.info(str(path.absolute()))
             video.storage.settings.filename = str(path.absolute())
             video.max_frame_count = frame_count

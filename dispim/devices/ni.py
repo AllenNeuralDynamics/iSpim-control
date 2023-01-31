@@ -43,7 +43,7 @@ class WaveformHardware:
         for channel_name, channel_index in ao_names_to_channels.items():
             physical_name = f"/{self.dev_name}/ao{channel_index}"
             self.log.debug(f"Setting up ao channel {channel_name} "
-                           f"on {physical_name}")
+                            f"on {physical_name}")
             self.ao_task.ao_channels.add_ao_voltage_chan(physical_name)
         self.ao_task.timing.cfg_samp_clk_timing(
             rate=self.update_freq,
