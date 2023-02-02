@@ -75,7 +75,7 @@ class AcquireTest():
         print(self.p.video[0].camera.settings.exposure_time_us)
         self.p.video[0].camera.identifier = dm.select(DeviceKind.Camera, self.cameras[0])
         self.p.video[0].storage.identifier = dm.select(DeviceKind.Storage, "Zarr")
-        self.p.video[0].storage.settings.filename = r"Y:\Acquire Test"
+        self.p.video[0].storage.settings.filename = r"Y:\Acquire Test.zarr"
         self.p.video[0].camera.settings.binning = 1
         self.p.video[0].camera.settings.shape = (2304, 2304)
         self.p.video[0].frame_average_count = 0  # disables
