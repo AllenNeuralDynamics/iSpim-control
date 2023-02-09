@@ -6,7 +6,7 @@ if __name__ == "__main__":
     # Argparse for a config file.
     parser = ArgumentParser()
     parser.add_argument("--config_path", type=str, default="config.toml")
-    parser.add_argument("--active_wavelength", type=int, default=488)
+    parser.add_argument("--active_wavelength", type=int, default=[488, 561])
     # grab a config filepath.
     args = parser.parse_args()
     config = DispimConfig(args.config_path)

@@ -58,16 +58,18 @@ class WaveformHardware:
 
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
-            self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
+            co_channel = self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
                                                             units=FrequencyUnits.HZ,
                                                             idle_state=Level.LOW, initial_delay=0.0,
                                                             freq= self.livestream_frequency_hz,  # change 15 - 30 Hz, change to config value
                                                             duty_cycle=0.5)
-            self.counter_task.ci_count_edges_term = f"/{self.dev_name}/{self.counter_trigger_name}"
+            co_channel.co_pulse_term = f"/{self.dev_name}/{self.counter_trigger_name}"
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
+
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/{self.ao_counter_trigger_name}",
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
+
         else:
 
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(

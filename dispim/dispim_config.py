@@ -103,13 +103,13 @@ class DispimConfig(SpimConfig):
         self.waveform_specs['line_time_us'] = us
 
     @property
-    def slit_width(self):
+    def slit_width_pix(self):
         """Returns the slit width in pixels.
         :unit px"""
         return self.design_specs['slit_width_pixels']
 
-    @slit_width.setter
-    def slit_width(self, width: int):
+    @slit_width_pix.setter
+    def slit_width_pix(self, width: int):
         """Sets the slit width in pixels."""
         self.design_specs['slit_width_pixels'] = width
 

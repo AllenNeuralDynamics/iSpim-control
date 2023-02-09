@@ -1,91 +1,181 @@
-import logging
-logging.getLogger().setLevel(logging.DEBUG)
-logging.basicConfig(filename=r"C:\Acquire Test\imaging_logging.log", encoding='utf-8',level=logging.DEBUG)
-
-import calliphlox
-from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
-from pathlib import Path
-from datetime import date
-import shutil
+import nidaqmx
+import numpy as np
+from nidaqmx.constants import AcquisitionType
+from nidaqmx.constants import TaskMode, FrequencyUnits, Level
+from nidaqmx.constants import Edge, Slope
 from time import sleep
-import sys
+from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
+import calliphlox
+import logging
+import os
 from datetime import datetime
 
-runtime = calliphlox.Runtime()
+class NI:
 
-class AcquireTest():
+    def configure_tasks(self, frequency):
 
-    def __init__(self):
+        # Setting up counter task to trigger ao task
+        self.co_task = nidaqmx.Task("co_task")
+        co_channel = self.co_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',units=FrequencyUnits.HZ,
+                                                                    idle_state=Level.LOW, initial_delay=0.0,
+                                                                    freq= frequency,  # change 15 - 30 Hz, change to config value
+                                                                    duty_cycle=0.5)
 
-        global runtime
-        #logFile = open(r"C:\Acquire Test\imaging_logging_1_20_22.log", 'a')
+        co_channel.co_pulse_term = '/Dev2/PFI3'
+        self.co_task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
 
-        self.initialize_camera()
-        self.setup_camera()
+        # Setting up counter task to count pulses
 
-        run_number = 0
-        for i in range(0, 1):
+        self.ci_task = nidaqmx.Task("ci_task")
+        ci_channel = self.ci_task.ci_channels.add_ci_count_edges_chan('/Dev2/ctr1', edge = nidaqmx.constants.Edge.RISING)
+        ci_channel.ci_count_edges_term = '/Dev2/PFI3'
 
-            logging.info("Starting cameras.")
-            print('Starting Cameras')
-            runtime.start()
+        # Setting up ao task to trigger camera
+        sample_count = round(400000.0 * (0.006+0.004+0.025))    # Update frequency plus delay, exposure, and rest time
+        self.ao_task = nidaqmx.Task("analog_output_task")
+        self.ao_task.ao_channels.add_ao_voltage_chan('/Dev2/ao6')
+        self.ao_task.timing.cfg_samp_clk_timing(
+            rate=400000.0,
+            active_edge=Edge.RISING,
+            sample_mode=AcquisitionType.FINITE,
+            samps_per_chan=sample_count)
+        self.ao_task.triggers.start_trigger.retriggerable = True
+        self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
+            trigger_source='/Dev2/PFI2',
+            trigger_edge=Slope.RISING)
 
-            total_frames = 1000
-            frames_collected = 0
-            while total_frames > frames_collected:
-                print(runtime.get_available_data(0))
-                if a := runtime.get_available_data(0):
-                    packet = a.get_frame_count()
-                    f = next(a.frames())
-                    im = f.data().squeeze().copy()
 
-                    f = None  # <-- fails to get the last frames if this is held?
-                    a = None  # <-- fails to get the last frames if this is held?
+    def write_waveforms(self):
 
-                    frames_collected += packet
-                    print(f'frames collected: {frames_collected}')
-            print('Total frames collected')
-            logging.info('Total frames collected')
+        voltages_t = np.zeros(round(400000.0 * (0.006+0.004+0.025)))
+        voltages_t[round(400000.0 * 0.006) + round(400000.0 * 0.001):
+                   round(400000.0 * 0.006) + round(400000.0 * 0.001) + round(400000.0 * 0.025)] = 5.0
 
-            runtime.abort()
-            print('Camera stop')
-            logging.info('Camera stop')
+        self.ao_task.write(voltages_t, auto_start=False)
 
-            print(f'Completed run {run_number} at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")} ')
-            logging.info(f'Completed run {run_number} at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")} ')
-            run_number += 1
+    def start(self):
 
-    def initialize_camera(self):
+        self.co_task.start()
+        self.ci_task.start()
+        self.ao_task.start()
 
-        print('Initializing Camera')
-        logging.info('Initializing Camera')
+    def stop(self):
+
+        self.co_task.stop()
+        self.ci_task.stop()
+        self.ao_task.stop()
+
+    def close(self):
+        self.co_task.close()
+        self.ci_task.close()
+        self.ao_task.close()
+
+class FrameGrabber:
+
+    def initialize_camera(self, runtime):
         dm = runtime.device_manager()
-        self.p = runtime.get_configuration()
-        print(dm.devices())
-        self.cameras = [
+        p = runtime.get_configuration()
+
+        cameras = [
             d.name
             for d in dm.devices()
             if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
         ]
-        print(self.cameras)
-    def setup_camera(self):
 
+        return p, cameras
+
+    def setup_camera(self, runtime, p, cameras):
         dm = runtime.device_manager()
-        self.p.video[0].camera.settings.exposure_time_us = 1000
-        print(self.p.video[0].camera.settings.exposure_time_us)
-        self.p.video[0].camera.identifier = dm.select(DeviceKind.Camera, self.cameras[0])
-        self.p.video[0].storage.identifier = dm.select(DeviceKind.Storage, "Zarr")
-        self.p.video[0].storage.settings.filename = r"Y:\Acquire Test.zarr"
-        self.p.video[0].camera.settings.binning = 1
-        self.p.video[0].camera.settings.shape = (2304, 2304)
-        self.p.video[0].frame_average_count = 0  # disables
-        #self.p.video[0].max_frame_count = 75
-        print(self.p.video[0].max_frame_count)
-        print('Setting Configuration')
-        logging.info('Setting Configuration')
-        runtime.set_configuration(self.p)
+        p.video[0].camera.identifier = dm.select(DeviceKind.Camera, cameras[0])
+        p.video[0].camera.settings.exposure_time_us = 4340.28
+        p.video[0].camera.settings.line_interval_us = 10.85
+        p.video[0].storage.identifier = dm.select(DeviceKind.Storage, 'Trash')
+        p.video[0].camera.settings.binning = 1
+        p.video[0].camera.settings.shape = (2304, 2304)
+        p.video[0].frame_average_count = 0  # disables
+        # p.video[0].max_frame_count = 75
+        live_trigger = Trigger(enable='True',
+                               line=2,
+                               event='FrameStart',
+                               kind='Input',
+                               edge='Rising')
+        # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
+        p.video[0].camera.settings.triggers = [Trigger(), live_trigger]
+
+        runtime.set_configuration(p)
+        return runtime, p, dm
+
+if __name__ == "__main__":
+
+    # Initializing NI Class
+    ni = NI()
+    ni.configure_tasks(40)
+    ni.write_waveforms()
+
+    # ni.configure_tasks(30)
+    # ni.write_waveforms()
+    # ni.start()
+    # counts = 0
+    # while counts < 1000:
+    #     counts = ni.ci_task.read()
+    #     print(counts)
+    #     sleep(0.01)
+    # ni.stop()
+    # ni.close()
+
+    #Initializing framegrabber
+    framegrabber = FrameGrabber()
+    runtime = calliphlox.Runtime()
+
+    logging.info('Initializing Camera')
+    p, cameras = framegrabber.initialize_camera(runtime)
+    runtime, p, dm = framegrabber.setup_camera(runtime, p, cameras)
+
+    # Initializing logging
+    FILEPATH = r"C:\Acquire Test\single_camera_test_02_09_23.log"
+    logging.getLogger().setLevel(logging.DEBUG)
+    # Create a file handler.
+    log_handler = logging.FileHandler(FILEPATH, 'w')
+    log_handler.setLevel(logging.DEBUG)
+    logging.getLogger().addHandler(log_handler)
 
 
-if __name__ == "__main__" :
+    while True:
 
-    Test = AcquireTest()
+        runtime.start()
+
+        frames_collected = 0
+        logging.info("Starting NI card")
+        ni.start()
+        counts = 0
+        while counts < 20000:
+            counts = ni.ci_task.read()
+            if a := runtime.get_available_data(0):
+                packet = a.get_frame_count()
+                f = next(a.frames())
+                im = f.data().squeeze().copy()
+
+                f = None  # <-- fails to get the last frames if this is held?
+                a = None  # <-- fails to get the last frames if this is held?
+
+                frames_collected += packet
+                print(f'frames collected: {frames_collected}')
+
+        logging.info(f'Run ended. \033[1m{frames_collected}\033[0m out of 20000')
+
+        logging.info("Stopping NI card")
+        ni.stop()
+
+        runtime.abort()
+        logging.info('Camera stop')
+
+        logging.info(
+            f'Completed run at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")} ')
+
+    ni.close()
+
+    runtime.abort()
+    ni.close()
+    print('Finished')
+
+

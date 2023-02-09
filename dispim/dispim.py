@@ -54,6 +54,10 @@ class Dispim(Spim):
         self.stage_x_pos = None
         self.stage_y_pos = None
 
+        # camera streams filled in with framegrabber.cameras
+        self.camera_id = ['camera_right', 'camera_left']
+        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
+
         # Setup hardware according to the config.
         self._setup_camera()
         self._setup_lasers()
@@ -67,9 +71,6 @@ class Dispim(Spim):
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
 
-        # camera streams filled in with framegrabber.cameras
-        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
-
         # start position of scan
         self.start_pos = None
         self.im = None
@@ -79,20 +80,21 @@ class Dispim(Spim):
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
 
+        # Initializing readout direction of camera(s)
+        for stream_id in self.stream_ids:
+            self.frame_grabber.set_scan_direction(stream_id,
+                                            self.cfg.camera_specs[self.camera_id[stream_id]]['scan_direction'])
+
         # Initializing line interval of both cameras
         self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
-                                             self.cfg.sensor_column_count)
+                                             self.cfg.sensor_row_count)
 
         # Initializing exposure time of both cameras
         # TODO: This is assuming that the line_interval is set the same in
         #  both cameras. Should have some fail safe in case not?
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
-        self.frame_grabber.set_exposure_time(self.cfg.slit_width *
+        self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
                                              cpx_line_interval[0])
-
-        # Setting scanning direction (FORWARD or BACKWARD) for right(0) and left(1) camera
-        #self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction_right, False)
-        #self.frame_grabber.set_scan_direction(1, self.cfg.scan_direction_left, False)
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
@@ -400,7 +402,8 @@ class Dispim(Spim):
         # TODO: Needs to come from sample pose in future
         # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, slow_scan_axis_position)
         self.log.info(f"Starting scan at Z = {self.stage_z_pos / 10 / 1000} mm")
-        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / 10 / 1000, pulse_interval_enc_ticks=32,
+        # tile_spacing_um = 0.0055 um (property of stage) x ticks
+        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / 10 / 1000, pulse_interval_enc_ticks=38,
                             num_pixels=tile_count)
         # Tigerbox is configured to scan along a fast and slow axis.
         # Tigerbox defaults to fast axis = Tiger x, slow axis = Tiger y.
@@ -476,6 +479,7 @@ class Dispim(Spim):
 
     def stop_livestream(self, wait: bool = False):
         # Bail early if it's already stopped.
+
         if not self.livestream_enabled.is_set():
             self.log.warning("Not starting. Livestream is already stopped.")
             return

@@ -15,12 +15,12 @@ class FrameGrabber:
     def __init__(self):
 
         self.runtime = calliphlox.Runtime()
-        self.dm = self.runtime.device_manager()
+        dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
 
         self.cameras = [
             d.name
-            for d in self.dm.devices()
+            for d in dm.devices()
             if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
 
         ]
@@ -30,15 +30,15 @@ class FrameGrabber:
     def setup_cameras(self, tile_shape: tuple):
         """General setup for both cameras for both livestream and stack capture
 
-        :param tile_shape: size 2 tuple of (columns, rows) for single tile"""
-
-        for video, camera in zip(self.p.video, self.cameras):
-            video.camera.identifier = self.dm.select(DeviceKind.Camera, camera)
-            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            video.camera.settings.binning = 1
-            video.camera.settings.shape = (tile_shape[1], tile_shape[0])
-            video.camera.settings.pixel_type = SampleType.U16
-            video.frame_average_count = 0  # disables
+        param tile_shape: size 2 tuple of (columns, rows) for single tile"""
+        dm = self.runtime.device_manager()
+        for stream_id, camera in zip(range(0, len(self.cameras)), self.cameras):
+            self.p.video[stream_id].camera.identifier = dm.select(DeviceKind.Camera, camera)
+            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
+            self.p.video[stream_id].camera.settings.binning = 1
+            self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
+            self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
+            self.p.video[stream_id].frame_average_count = 0  # disables
 
         # self.p.video[0].camera.settings.readout_direction = Direction.Forward
         # self.p.video[1].camera.settings.readout_direction = Direction.Backward
@@ -53,75 +53,77 @@ class FrameGrabber:
         """
         # TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
-
-        for video, path in zip(self.p.video, output_paths):
+        dm = self.runtime.device_manager()
+        for stream_id, path in zip(range(0, len(self.cameras)), output_paths):
             self.log.info(f"Configuring camera.")
-            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Zarr") #zarr compression name = ZarrBlosc1ZstdByteShuffle
+            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Tiff") #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.log.info(str(path.absolute()))
-            video.storage.settings.filename = str(path.absolute())
-            video.max_frame_count = frame_count
+            self.p.video[stream_id].storage.settings.filename = str(path.absolute())
+            self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                      line=2,
                                      event='FrameStart',
                                      kind='Input',
                                      edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            video.camera.settings.triggers = [Trigger(), acq_trigger]
+            self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
 
     def setup_live(self):
         """Setup for live view. Images are sent to trash and there is no max frame count"""
 
-        stream_id = 0
-        for video in self.p.video:
-            video.storage.identifier = self.dm.select(DeviceKind.Storage, "Trash")
-            video.max_frame_count = 1000000
+        dm = self.runtime.device_manager()
+        for stream_id in range(0, len(self.cameras)):
+
+            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
+            self.p.video[stream_id].max_frame_count = 1000000
             live_trigger = Trigger(enable='True',
                                      line = 2,
                                      event='FrameStart',
                                      kind='Input',
                                      edge='Rising')
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            video.camera.settings.triggers = [Trigger(),live_trigger]
+            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger]
             self.runtime.set_configuration(self.p)
+
 
     def get_exposure_time(self):
         exposure_time = [
             self.p.video[stream_id].camera.settings.exposure_time_us
-            for stream_id in range(0, 2)
+            for stream_id in range(0, len(self.cameras))
         ]
         return exposure_time
 
     def set_exposure_time(self, exp_time: float, live: bool = False):
         for video in self.p.video:
             video.camera.settings.exposure_time_us = exp_time
-            print(f'exposure set to: {video.camera.settings.exposure_time_us}')
+            self.log.debug(f'exposure set to: {video.camera.settings.exposure_time_us}')
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
             self.start()
         else:
             self.runtime.set_configuration(self.p)
-        print(self.runtime.get_configuration())
+
 
     def get_line_interval(self):
         line_interval = [
             self.p.video[stream_id].camera.settings.line_interval_us
-            for stream_id in range(0, 2)
+            for stream_id in range(0, len(self.cameras))
         ]
         return line_interval
 
     def set_line_interval(self, line_int: float, live: bool = False):
         for video in self.p.video:
             video.camera.settings.line_interval_us = line_int
-            print(f'line interval set to: {video.camera.settings.line_interval_us}')
+            self.log.debug(f'line interval set to: {video.camera.settings.line_interval_us}')
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
             self.start()
         else:
             self.runtime.set_configuration(self.p)
-        print(self.runtime.get_configuration())
+
 
     def get_scan_direction(self, stream_id):
         return self.p.video[stream_id].camera.settings.readout_direction
