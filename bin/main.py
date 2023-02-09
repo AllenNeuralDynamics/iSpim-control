@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""example main script to launch the mesospim."""
+"""example main script to launch the dispim."""
 
 from dispim.dispim import Dispim
 from coloredlogs import ColoredFormatter
@@ -13,9 +13,9 @@ import sys
 logging.getLogger().handlers.clear()
 
 
-class SpimLogFiler(logging.Filter):
+class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'mesospim', 'dispim', 'calliphlox'}
+    VALID_LOGGER_BASES = {'spim_core', 'dispim', }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \
@@ -31,9 +31,10 @@ def main():
                         help="Simulate hardware device connections.")
     parser.add_argument("--console_output", default=True,
                         help="whether or not to print to the console.")
-    # Note: colored console output is buggy on Windows.
+    # Note: colored console output might be buggy on Windows through pycharm.
     parser.add_argument("--color_console_output", action="store_true",
-                        default=False if os.name == 'nt' else True)
+                        default=True)
+                        #default=False if os.name == 'nt' else True)
 
     args = parser.parse_args()
     # Check if we didn't supply a config file and populate a safe guess.
@@ -57,7 +58,7 @@ def main():
         else logging.Formatter(fmt=fmt, datefmt=datefmt)
     if args.console_output:
         log_handler = logging.StreamHandler(sys.stdout)
-        log_handler.addFilter(SpimLogFiler())
+        log_handler.addFilter(SpimLogFilter())
         log_handler.setLevel(args.log_level)
         log_handler.setFormatter(log_formatter)
         logger.addHandler(log_handler)
@@ -66,7 +67,8 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-
+    args.config = r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml'
+    # FIXME: on windows, path strings need to be raw strings.
     instrument = Dispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu
@@ -76,6 +78,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        print("Closing instrument.")
         instrument.close()
 
 if __name__ == '__main__':

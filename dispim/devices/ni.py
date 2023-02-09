@@ -13,11 +13,15 @@ from time import sleep
 
 
 class WaveformHardware:
-    def __init__(self, dev_name, input_trigger_name, update_frequency_hz):
+    def __init__(self, dev_name, input_trigger_name, count_trigger_name,
+                 ao_counter_trigger_name, update_frequency_hz, livestream_frequency_hz):
 
         self.dev_name = dev_name  # NI card address, i.e. Dev2
         self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
+        self.counter_trigger_name = count_trigger_name.lstrip('/')  # PFI counter task port
+        self.ao_counter_trigger_name = ao_counter_trigger_name.lstrip('/')  # PFI port that triggers ao lines (connected to PFI counter task port)
         self.update_freq = update_frequency_hz  # in [Hz]
+        self.livestream_frequency_hz = livestream_frequency_hz
         self.ao_task = None
         self.counter_task = None
         self.log = logging.getLogger(__name__)
@@ -38,8 +42,8 @@ class WaveformHardware:
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
             physical_name = f"/{self.dev_name}/ao{channel_index}"
-            self.log.info(f"Setting up ao channel {channel_name} "
-                           f"on {physical_name}")
+            self.log.debug(f"Setting up ao channel {channel_name} "
+                            f"on {physical_name}")
             self.ao_task.ao_channels.add_ao_voltage_chan(physical_name)
         self.ao_task.timing.cfg_samp_clk_timing(
             rate=self.update_freq,
@@ -50,24 +54,31 @@ class WaveformHardware:
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
             trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
             trigger_edge=Slope.RISING)
+        #TODO: I think we're overwriting this so do we need it?
 
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
-            self.counter_task.co_channels.add_co_pulse_chan_freq('/Dev2/ctr0',
+            co_channel = self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
                                                             units=FrequencyUnits.HZ,
                                                             idle_state=Level.LOW, initial_delay=0.0,
-                                                            freq=20,  # change 15 - 30 Hz, change to config value
+                                                            freq= self.livestream_frequency_hz,  # change 15 - 30 Hz, change to config value
                                                             duty_cycle=0.5)
-            self.counter_task.ci_count_edges_term = '/Dev2/PFI3'
+            co_channel.co_pulse_term = f"/{self.dev_name}/{self.counter_trigger_name}"
             self.counter_task.timing.cfg_implicit_timing(sample_mode=AcqType.CONTINUOUS)
-            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/PFI2",
+
+            self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/{self.ao_counter_trigger_name}",
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
+
         else:
 
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
                 trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
                 trigger_edge=Slope.RISING)
+            self.counter_task = nidaqmx.Task("counter_task")
+            self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan('/Dev2/ctr0',
+                                                                                      edge=nidaqmx.constants.Edge.RISING)
+            self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
         # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.
@@ -113,6 +124,7 @@ class WaveformHardware:
         #     self.ao_task.write(ao_data)
         #TODO: Why is this not working?
         self.log.debug("Issuing a task stop.")
+
         self.counter_task.stop()
         self.counter_task.wait_until_done(1)
         # sleep(.5)
@@ -126,7 +138,7 @@ class WaveformHardware:
     def close(self):
         """Terminate all started tasks."""
         if self.counter_task is not None:
-            self.log.info("closing tasks!")
+            self.log.debug("closing tasks!")
             self.counter_task.close()
             self.counter_task = None
         if self.ao_task is not None:
