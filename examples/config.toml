@@ -76,16 +76,10 @@ galvo_right_y_axis = "D"
 [camera_specs.camera_right]
 scan_direction = "BACKWARD"
 shutter_mode = "LIGHTSHEET"
-delay = 0.0
-camx = 2304
-camy = 2304
 
 [camera_specs.camera_left]
 scan_direction = "BACKWARD"
 shutter_mode = "LIGHTSHEET"
-delay = 0.0
-camx = 2304
-camy = 2304
 
 [channel_specs.405]
 driver = "Oxxius"

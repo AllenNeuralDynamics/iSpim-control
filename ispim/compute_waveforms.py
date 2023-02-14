@@ -8,7 +8,7 @@ from dispim.dispim_config import DispimConfig
 
 
 # TODO: cfg should be able to lookup config params sensibly (like with a string for a key)
-def generate_waveforms(cfg: DispimConfig, active_wavelengths):
+def generate_waveforms(cfg: DispimConfig, active_wavelengths: list):
     """return a np nd array with the correct waveforms.
     The DAQ outputs all waveforms to control: the etls, the galvos,
     the cameras, and the laser(s).

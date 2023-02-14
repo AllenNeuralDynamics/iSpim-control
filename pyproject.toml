@@ -1,6 +1,6 @@
 [project]
-name = "dispim"
-description = "abstraction of the dispim instrument."
+name = "ispim"
+description = "abstraction of the ispim instrument."
 version = "0.1.0"
 authors = [
     {name = "Adam Glaser", email = "adam.glaser@alleninstitute.org"},
@@ -14,9 +14,9 @@ classifiers=[
     'Development Status :: 4 - Beta',
     'Programming Language :: Python'
 ]
-#packages = [
-#    { include = "dispim"},
-#]
+packages = [
+    { include = "ispim"},
+]
 requires-python = ">=3.8,<3.11"
 dependencies = [
     "tigerasi @ git+ssh://git@github.com/AllenNeuralDynamics/TigerASI.git@main#egg=TigerASI",
@@ -41,4 +41,4 @@ build-backend = "flit_core.buildapi"
 
 
 [project.scripts]
-dispim = "bin.main:main"
+ispim = "bin.main:main"

@@ -1,4 +1,4 @@
-"""Abstraction of the DISPIM Instrument."""
+"""Abstraction of the ispim Instrument."""
 
 # FIXME: this should live in the napari gui side, and the function
 #   we want to launch in a napari thread should exist as a standalone
@@ -13,11 +13,11 @@ from time import perf_counter, sleep, time
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
 from collections import deque
-from dispim.dispim_config import DispimConfig
-from dispim.devices.frame_grabber import FrameGrabber
-from dispim.devices.ni import WaveformHardware
-from dispim.compute_waveforms import generate_waveforms
-from dispim.devices.oxxius_components import LaserHub
+from ispim.ispim_config import IspimConfig
+from ispim.devices.frame_grabber import FrameGrabber
+from ispim.devices.ni import WaveformHardware
+from ispim.compute_waveforms import generate_waveforms
+from ispim.devices.oxxius_components import LaserHub
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
@@ -29,14 +29,14 @@ from math import ceil
 from spim_core.tiff_transfer import TiffTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 
-class Dispim(Spim):
+class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
                  simulated: bool = False):
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated=simulated)
-        self.cfg = DispimConfig(config_filepath)
+        self.cfg = IspimConfig(config_filepath)
         # Instantiate hardware devices
         self.frame_grabber = FrameGrabber() if not self.simulated else \
             Mock(FrameGrabber)
@@ -116,7 +116,7 @@ class Dispim(Spim):
             else Mock(LaserHub)             # Set up main right and left laser with empty prefix
 
     def _setup_motion_stage(self):
-        """Configure the sample stage for the dispim according to the config."""
+        """Configure the sample stage for the ispim according to the config."""
         self.log.info("Setting backlash in Z to 0")
         self.sample_pose.set_axis_backlash(Z=0.0)
         self.log.info("Setting speeds to 1.0 mm/sec")
@@ -125,7 +125,7 @@ class Dispim(Spim):
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
         # TODO, think about where to store this mapping in config
-        # TODO, merge dispim commands in tigerasi
+        # TODO, merge ispim commands in tigerasi
         # TODO, how to call this? via tigerbox?
         # set card 31 (XY stage), 'X" (input), TTL to value of 1
         # TODO, this needs to be buried somewhere else
@@ -138,7 +138,7 @@ class Dispim(Spim):
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
 
-    def _setup_waveform_hardware(self, active_wavelength: int, live: bool = False):
+    def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
         self.log.info("Configuring NIDAQ")
         self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
@@ -470,11 +470,11 @@ class Dispim(Spim):
             self.log.warning("Not starting. Livestream is already running.")
             return
         self.log.debug("Starting livestream.")
+        self.livestream_enabled.set()
         self.log.warning(f"Turning on the {wavelength}[nm] laser.")
-        self.setup_imaging_for_laser(wavelength, live=True)
+        self.setup_imaging_for_laser([wavelength], live=True)
         self.frame_grabber.setup_live()
         self.ni.start()
-        self.livestream_enabled.set()
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
@@ -490,7 +490,6 @@ class Dispim(Spim):
 
         self.ni.stop()
         self.ni.close()
-        self.live_status = False  # TODO: can we get rid of this if we're always stopping the livestream?
         self.lasers[self.active_laser].disable()
         self.active_laser = None
 
@@ -522,15 +521,14 @@ class Dispim(Spim):
                 else:
                     yield im, self.stream_ids[0]
 
-    def setup_imaging_for_laser(self, wavelength: int, live: bool = False):
+    def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
         """
         # Bail early if this laser is already setup in the previously set mode.
-        if self.active_laser == wavelength and self.live_status == live:
+        if self.active_laser == wavelength and self.livestream_enabled.is_set():
             self.log.debug("Skipping daq setup. Laser already provisioned.")
             return
-        self.live_status = live
-        live_status_msg = " in live mode" if live else ""
+        live_status_msg = " in live mode" if self.livestream_enabled.is_set() else ""
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
         if self.active_laser is not None:
             self.lasers[self.active_laser].disable()

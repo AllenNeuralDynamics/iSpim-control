@@ -5,7 +5,7 @@ from .config_template import TomlTemplate
 import copy
 
 
-class DispimConfig(SpimConfig):
+class IspimConfig(SpimConfig):
     """A Dispim Configuration."""
 
     def __init__(self, toml_filepath: str, create: bool = False):
@@ -209,26 +209,6 @@ class DispimConfig(SpimConfig):
     @exposure_time.setter
     def exposure_time(self, exposure_time: float):
         self.waveform_specs['exposure_time'] = exposure_time
-
-    @property
-    def camera_left_delay(self):
-        """Offset time of left camera
-        :unit s"""
-        return self.camera_specs['camera_left']['delay']
-
-    @camera_left_delay.setter
-    def camera_left_delay(self, left_delay: float):
-        self.camera_specs['camera_left']['delay'] = left_delay
-
-    @property
-    def camera_right_delay(self):
-        """Offset time of right camera
-        :unit s"""
-        return self.camera_specs['camera_right']['delay']
-
-    @camera_right_delay.setter
-    def camera_right_delay(self, right_delay: float):
-        self.camera_specs['camera_right']['delay'] = right_delay
 
     @property
     def laser_wavelengths(self):
