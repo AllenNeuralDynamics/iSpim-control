@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """example main script to launch the dispim."""
 
-from dispim.dispim import Dispim
+from ispim.ispim import Ispim
 from coloredlogs import ColoredFormatter
 import ctypes
 import logging
@@ -15,7 +15,7 @@ logging.getLogger().handlers.clear()
 
 class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'spim_core', 'dispim', }#'calliphlox'}
+    VALID_LOGGER_BASES = {'spim_core', 'dispim','ispim' }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \

@@ -1,7 +1,7 @@
 """Mesospim Config object to flatten item access in the TOML-based config."""
 
 from spim_core.config_base import SpimConfig
-from .config_template import TomlTemplate
+from ispim.config_template import TomlTemplate
 import copy
 
 
@@ -57,14 +57,6 @@ class IspimConfig(SpimConfig):
     def get_daq_cycle_samples(self):
         """Return the total waveform cycle time for a frame."""
         return round(self.daq_update_freq * self.get_daq_cycle_time())
-
-    def get_camera_left_delay_samples(self):
-        """Return the delay samples for triggering the left camera."""
-        return round(self.daq_update_freq * self.camera_left_delay)
-
-    def get_camera_right_delay_samples(self):
-        """Return the delay samples for triggering the right camera."""
-        return round(self.daq_update_freq * self.camera_right_delay)
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.

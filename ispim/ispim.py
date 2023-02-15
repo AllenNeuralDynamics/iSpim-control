@@ -29,6 +29,7 @@ from math import ceil
 from spim_core.tiff_transfer import TiffTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 
+
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -65,7 +66,7 @@ class Ispim(Spim):
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
         # Internal state attributes.
-        self.active_laser = None  # Bookkeep which laser is configured.
+        self.active_lasers = None  # Bookkeep which laser is configured.
         self.live_status = None  # Bookkeep if we are running in live mode.
 
         self.livestream_worker = None  # captures images during livestream
@@ -83,7 +84,7 @@ class Ispim(Spim):
         # Initializing readout direction of camera(s)
         for stream_id in self.stream_ids:
             self.frame_grabber.set_scan_direction(stream_id,
-                                            self.cfg.camera_specs[self.camera_id[stream_id]]['scan_direction'])
+                                                  self.cfg.camera_specs[self.camera_id[stream_id]]['scan_direction'])
 
         # Initializing line interval of both cameras
         self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
@@ -107,13 +108,13 @@ class Ispim(Spim):
                 else Mock(LaserHub)
             # TODO: Needs to not be hardcoded and find out what commands work for 561
             if int(wl) != 561:
-                self.lasers[int(wl)].set(Cmd.LaserDriverControlMode, 1)     # Set constant current mode
+                self.lasers[int(wl)].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
                 self.log.debug(f"Setting up {specs['color']} laser.")
                 self.lasers[int(wl)].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
-                self.lasers[int(wl)].set(Cmd.DigitalModulation, 1)   # Enables digital modulation
+                self.lasers[int(wl)].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
 
         self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
-            else Mock(LaserHub)             # Set up main right and left laser with empty prefix
+            else Mock(LaserHub)  # Set up main right and left laser with empty prefix
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -133,7 +134,7 @@ class Ispim(Spim):
 
         externally_controlled_axes = \
             {a: PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.ni_controlled_tiger_axes} # change to tiger_specs.axes
+             self.cfg.ni_controlled_tiger_axes}  # change to tiger_specs.axes
         self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
@@ -148,7 +149,9 @@ class Ispim(Spim):
         self.ni.assign_waveforms(voltages_t)
 
         # TODO: Why do we care about status of active laser
-        if self.active_laser is not None and live:
+        # Need to restart ni task if in live mode because assigning waveforms stops
+        # tasks and we reassign waveforms during livestreaming
+        if self.active_lasers is not None and live:
             self.ni.start()
 
     # TODO: this should be a base class thing.s
@@ -393,7 +396,6 @@ class Ispim(Spim):
             for wl, specs in self.cfg.laser_specs.items():
                 self.lasers[int(wl)].disable()
 
-
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path]):
@@ -474,7 +476,7 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] laser.")
         self.setup_imaging_for_laser([wavelength], live=True)
         self.frame_grabber.setup_live()
-        self.ni.start()
+        self.ni.start()  # TODO: Do we need this if we're statign ni in setup_imaging_laser -> _setup_waveform_hardware
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
@@ -490,8 +492,8 @@ class Ispim(Spim):
 
         self.ni.stop()
         self.ni.close()
-        self.lasers[self.active_laser].disable()
-        self.active_laser = None
+        self.lasers[self.active_lasers].disable()
+        self.active_lasers = None
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
@@ -507,13 +509,14 @@ class Ispim(Spim):
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank,  self.stream_ids[0]
+                yield noise + blank, self.stream_ids[0]
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
-                sleep((1/self.cfg.daq_obj_kwds['livestream_frequency_hz'])*.1)   # TODO: Not sure if we need *.1 need to test
+                sleep((1 / self.cfg.daq_obj_kwds[
+                    'livestream_frequency_hz']) * .1)  # TODO: Not sure if we need *.1 need to test
                 # TODO: Add sleep statement based on ni freq but why
                 # TODO: do this in napari not through numpy directly
                 if self.stream_ids[0] == 0:
@@ -525,17 +528,19 @@ class Ispim(Spim):
         """Configure system to image with the desired laser wavelength.
         """
         # Bail early if this laser is already setup in the previously set mode.
-        if self.active_laser == wavelength and self.livestream_enabled.is_set():
+        if self.active_lasers == wavelength:
             self.log.debug("Skipping daq setup. Laser already provisioned.")
             return
         live_status_msg = " in live mode" if self.livestream_enabled.is_set() else ""
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
-        if self.active_laser is not None:
-            self.lasers[self.active_laser].disable()
+
+        if self.active_lasers is not None:
+            for laser in self.active_lasers: self.lasers[laser].disable()
+
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
-        self.active_laser = wavelength
-        self.lasers[self.active_laser].enable()
+        self.active_lasers = wavelength
+        for laser in self.active_lasers: self.lasers[laser].enable()
 
     def set_scan_start(self, start):
 

@@ -8,7 +8,7 @@ z_step_size_um = 0.209
 volume_x_um = 100.0
 volume_y_um = 10.0
 volume_z_um = 100.0
-laser_wavelengths = [ 488,]
+laser_wavelengths = [ 488, 561,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\test"
 

@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.urls]
-source = "https://github.com/AllenNeuralDynamics/dispim-control"
+source = "https://github.com/AllenNeuralDynamics/ispim-control"
 
 [build-system]
 requires = ["flit_core >=3.7.1,<4"]
