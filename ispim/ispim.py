@@ -492,7 +492,8 @@ class Ispim(Spim):
 
         self.ni.stop()
         self.ni.close()
-        self.lasers[self.active_lasers].disable()
+
+        for laser in self.active_lasers: self.lasers[laser].disable()
         self.active_lasers = None
 
     def _livestream_worker(self):
