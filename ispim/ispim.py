@@ -133,8 +133,8 @@ class Ispim(Spim):
         # TODO, how to store card # mappings, in config?
 
         externally_controlled_axes = \
-            {a: PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.ni_controlled_tiger_axes}  # change to tiger_specs.axes
+            {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
+             self.cfg.tiger_specs['axes'].values()}
         self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
@@ -208,9 +208,6 @@ class Ispim(Spim):
         ysteps = round(volume_y_um / y_grid_step_um)
         zsteps = round(volume_z_um / self.cfg.z_step_size_um)
         xtiles, ytiles, ztiles = (1 + xsteps, 1 + ysteps, 1 + zsteps)
-        print('x', xtiles)
-        print('y', ytiles)
-        print('z', ztiles)
         self.total_tiles = xtiles * ytiles * ztiles * len(channels)
 
         # Check if we will violate storage directory limits with our

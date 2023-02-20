@@ -146,7 +146,8 @@ class FrameGrabber:
     def stop(self):
         """Stop frame acquisition and file writing."""
         self.log.debug("Stopping cameras.")
-        self.runtime.stop()
+        #self.runtime.stop()
+        self.runtime.abort()
 
     def close(self):
         self.runtime = None

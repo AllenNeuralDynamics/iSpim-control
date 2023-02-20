@@ -5,10 +5,10 @@ tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 100.0
-volume_y_um = 10.0
-volume_z_um = 100.0
-laser_wavelengths = [ 488,]
+volume_x_um = 686.592
+volume_y_um = 6860.0
+volume_z_um = 686.592
+laser_wavelengths = [ 405, 488, 561, 638,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\test"
 
@@ -32,10 +32,10 @@ exposure_time = 0.025
 line_time_us = 10.850694444444445
 
 [daq_ao_names_to_channels]
-galvo_y_right = 0
-galvo_x_right = 2
-etl_right = 5
-camera_left = 6
+galvo_y = 0
+galvo_x = 2
+etl = 5
+camera = 6
 
 [daq_driver_kwds]
 dev_name = "Dev2"
