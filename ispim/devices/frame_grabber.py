@@ -44,7 +44,7 @@ class FrameGrabber:
         # self.p.video[1].camera.settings.readout_direction = Direction.Backward
 
 
-    def setup_stack_capture(self, output_paths: list[Path], frame_count: int):
+    def setup_stack_capture(self, output_paths: list[Path], frame_count: int, filetype: str):
         """Setup capturing for a stack. Including tiff file storage location
 
         :param output_paths: size 2 list of paths where each camera tiff will be saved
@@ -56,7 +56,7 @@ class FrameGrabber:
         dm = self.runtime.device_manager()
         for stream_id, path in zip(range(0, len(self.cameras)), output_paths):
             self.log.info(f"Configuring camera.")
-            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Tiff") #zarr compression name = ZarrBlosc1ZstdByteShuffle
+            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.log.info(str(path.absolute()))
             self.p.video[stream_id].storage.settings.filename = str(path.absolute())
             self.p.video[stream_id].max_frame_count = frame_count

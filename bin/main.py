@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""example main script to launch the dispim."""
+"""example main script to launch the ispim."""
 
 from ispim.ispim import Ispim
 from coloredlogs import ColoredFormatter
@@ -15,7 +15,7 @@ logging.getLogger().handlers.clear()
 
 class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'spim_core', 'dispim','ispim' }#'calliphlox'}
+    VALID_LOGGER_BASES = {'spim_core', 'ispim','ispim', }#'tigerasi' }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \
@@ -67,9 +67,9 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    args.config = r'C:\Users\Administrator\Projects\dispim-control\examples\config.toml'
+    args.config = r'C:\Users\Administrator\Projects\ispim-control\examples\config.toml'
     # FIXME: on windows, path strings need to be raw strings.
-    instrument = Dispim(config_filepath=args.config, simulated=args.simulated)
+    instrument = Ispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu
         #Inpromptu(instrument).cmdloop()

@@ -28,12 +28,12 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 
         # Create wavelength-dependent constants
         active_laser_specs = cfg.laser_specs[str(ch)]
-        etl_right_offset = active_laser_specs['etl']['right_offset']
-        etl_right_amplitude = active_laser_specs['etl']['right_amplitude']
-        galvo_x_right_offset = active_laser_specs['galvo']['x_right_offset']
-        galvo_y_right_offset = active_laser_specs['galvo']['y_right_offset']
-        galvo_x_right_amplitude = active_laser_specs['galvo']['x_right_amplitude']
-        galvo_y_right_amplitude = active_laser_specs['galvo']['y_right_amplitude']
+        etl_offset = active_laser_specs['etl']['offset']
+        etl_amplitude = active_laser_specs['etl']['amplitude']
+        galvo_x_offset = active_laser_specs['galvo']['x_offset']
+        galvo_y_offset = active_laser_specs['galvo']['y_offset']
+        galvo_x_amplitude = active_laser_specs['galvo']['x_amplitude']
+        galvo_y_amplitude = active_laser_specs['galvo']['y_amplitude']
 
 
         time_samples = np.linspace(0, 2*pi, period_samples)
@@ -42,16 +42,16 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
         previous_peak = [0,0] if active_wavelengths.index(ch) ==0 \
             else voltages_out[:2,(daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples)]
 
-        galvo_y_right, galvo_x_right = \
-                galvo_waveforms(galvo_x_right_amplitude, galvo_x_right_offset,
-                            galvo_y_right_amplitude, galvo_y_right_offset,
+        galvo_y, galvo_x = \
+                galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
+                            galvo_y_amplitude, galvo_y_offset,
                             delay_samples, time_samples, exposure_samples,
                             period_samples, daq_cycle_samples, previous_peak)
 
         previous_etl = [0] if active_wavelengths.index(ch) ==0 \
             else voltages_out[2,(daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples)]
 
-        etl_right = etl_waveforms(etl_right_amplitude, etl_right_offset,
+        etl = etl_waveforms(etl_amplitude, etl_offset,
                                   exposure_samples, daq_cycle_samples, previous_etl)
         camera_left = \
             camera_waveforms(exposure_samples, daq_cycle_samples)
@@ -62,15 +62,15 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
         # organize signals by name.
         waveforms = \
         {
-            'galvo_y': galvo_y_right,
-            'galvo_x': galvo_x_right,
-            'etl': etl_right,
+            'galvo_y': galvo_y,
+            'galvo_x': galvo_x,
+            'etl': etl,
             'camera': camera_left,
         }
         waveforms.update(laser_signals_dict)
 
         # initialize empty output voltage array for single channel
-        voltages_t = np.zeros((cfg.daq_used_channels, etl_right.size))
+        voltages_t = np.zeros((cfg.daq_used_channels, etl.size))
 
         # Populate all waveforms in the order the NI card will create them.
         for index, (name, _) in enumerate(cfg.daq_ao_names_to_channels.items()):
@@ -95,8 +95,8 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     return t, voltages_out
 
 
-def galvo_waveforms(galvo_x_right_amplitude, galvo_x_right_offset,
-                    galvo_y_right_amplitude, galvo_y_right_offset,
+def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
+                    galvo_y_amplitude, galvo_y_offset,
                     delay_samples, time_samples, exposure_samples,
                     period_samples, daq_cycle_samples, previous_peak):
 
@@ -104,37 +104,37 @@ def galvo_waveforms(galvo_x_right_amplitude, galvo_x_right_offset,
     # Generate relevant galvo signal time chunks
     # Sawtooth duty cycle is adjusted to snapback slowly over the specified rest time
     # x-axis galvos correct for MEMs mirror bow artifact. are quadratic with the y-axis galvo with some scaling amplitude and offset.
-    galvo_y_right = galvo_y_right_amplitude*sawtooth(time_samples, width=exposure_samples/period_samples) + galvo_y_right_offset
+    galvo_y = galvo_y_amplitude*sawtooth(time_samples, width=exposure_samples/period_samples) + galvo_y_offset
 
     # galvo x signal depends on its y signal value.
-    galvo_x_right = abs((galvo_y_right - galvo_y_right_offset)**2)*galvo_x_right_amplitude + galvo_x_right_offset
-    galvo_x_right[exposure_samples:daq_cycle_samples] = galvo_x_right[0]  # constant value
+    galvo_x = abs((galvo_y - galvo_y_offset)**2)*galvo_x_amplitude + galvo_x_offset
+    galvo_x[exposure_samples:daq_cycle_samples] = galvo_x[0]  # constant value
 
     # Adding linearly snapback to beginning of waveform for previous waveform
     start_pos = previous_peak[0]
-    end_pos = galvo_y_right_offset - galvo_y_right_amplitude
+    end_pos = galvo_y_offset - galvo_y_amplitude
     snap_back = np.linspace(start_pos, end_pos, daq_cycle_samples - exposure_samples)
-    galvo_y_right = np.concatenate((snap_back, galvo_y_right))
+    galvo_y = np.concatenate((snap_back, galvo_y))
 
     start_pos = previous_peak[1]
-    end_pos = galvo_x_right[0]
+    end_pos = galvo_x[0]
     snap_back = np.linspace(start_pos, end_pos, daq_cycle_samples-exposure_samples)
-    galvo_x_right = np.concatenate((snap_back,galvo_x_right))
+    galvo_x = np.concatenate((snap_back,galvo_x))
 
-    return galvo_y_right, galvo_x_right
+    return galvo_y, galvo_x
 
-def etl_waveforms(etl_right_amplitude, etl_right_offset,
+def etl_waveforms(etl_amplitude, etl_offset,
                   exposure_samples, daq_cycle_samples, previous_etl):
     """Generate etl waveforms."""
     # ETLs are not actually and are held at DC voltage to correct for axial chromatic shifts.
-    etl_right = etl_right_amplitude * np.ones(daq_cycle_samples) \
-                + etl_right_offset
+    etl = etl_amplitude * np.ones(daq_cycle_samples) \
+                + etl_offset
 
     # snap to next etl position as soon as possible
     snapback = np.ones(daq_cycle_samples-exposure_samples)*previous_etl
-    etl_right = np.concatenate((snapback, etl_right))
+    etl = np.concatenate((snapback, etl))
 
-    return etl_right
+    return etl
 
 
 def camera_waveforms(exposure_samples, daq_cycle_samples):

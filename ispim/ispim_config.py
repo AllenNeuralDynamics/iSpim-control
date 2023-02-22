@@ -22,7 +22,6 @@ class IspimConfig(SpimConfig):
         self.waveform_specs = self.cfg['waveform_specs']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
-        self.ni_controlled_tiger_axes = self.cfg['ni_controlled_tiger_axes']
         # TODO: dispim has 2 filterwheels. We must set the location of both
         #   programmatically.
         # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
@@ -65,24 +64,14 @@ class IspimConfig(SpimConfig):
         return self.cfg['sample_pose_kwds']
 
     @property
-    def scan_direction_left(self):
+    def scan_direction(self):
         """Lightsheet scan direction: forward or backward."""
-        return self.camera_specs['camera_left']['scan_direction']
+        return self.camera_specs['scan_direction']
 
-    @scan_direction_left.setter
+    @scan_direction.setter
     def scan_direction_left(self, dir:str):
         # Lightsheet scan direction: forward or backward.
-        self.camera_specs['camera_left']['scan_direction'] = dir
-
-    @property
-    def scan_direction_right(self):
-        # Lightsheet scan direction: forward or backward.
-        return self.camera_specs['camera_right']['scan_direction']
-
-    @scan_direction_right.setter
-    def scan_direction_right(self, dir: str):
-        """Lightsheet scan direction: forward or backward."""
-        self.camera_specs['camera_right']['scan_direction'] = dir
+        self.camera_specs['scan_direction'] = dir
 
     @property
     def line_time(self):

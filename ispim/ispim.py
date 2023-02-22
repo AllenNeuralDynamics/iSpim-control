@@ -28,6 +28,7 @@ from spim_core.devices.tiger_components import SamplePose
 from math import ceil
 from spim_core.tiff_transfer import TiffTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
+import os
 
 
 class Ispim(Spim):
@@ -56,7 +57,6 @@ class Ispim(Spim):
         self.stage_y_pos = None
 
         # camera streams filled in with framegrabber.cameras
-        self.camera_id = ['camera_right', 'camera_left']
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
 
         # Setup hardware according to the config.
@@ -82,9 +82,7 @@ class Ispim(Spim):
                                           self.cfg.sensor_row_count))
 
         # Initializing readout direction of camera(s)
-        for stream_id in self.stream_ids:
-            self.frame_grabber.set_scan_direction(stream_id,
-                                                  self.cfg.camera_specs[self.camera_id[stream_id]]['scan_direction'])
+        self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction)
 
         # Initializing line interval of both cameras
         self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
@@ -128,14 +126,13 @@ class Ispim(Spim):
         # TODO, think about where to store this mapping in config
         # TODO, merge ispim commands in tigerasi
         # TODO, how to call this? via tigerbox?
-        # set card 31 (XY stage), 'X" (input), TTL to value of 1
-        # TODO, this needs to be buried somewhere else
-        # TODO, how to store card # mappings, in config?
-
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
         self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+
+        # TODO, this needs to be buried somewhere else
+        # TODO, how to store card # mappings, in config?
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
 
@@ -307,74 +304,75 @@ class Ispim(Spim):
                             # self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
                             sleep(0.1)
 
-                    for ch in channels:
+                    # TODO: handle this through sample pose class, which remaps axes
+                    # Move to specified Z position
+                    self.log.debug("Setting speed in Z to 1.0 mm/sec")
+                    self.tigerbox.set_speed(X=1.0)  # X maps to Z
+                    # TODO: handle this through sample pose class, which remaps axes
+                    self.log.debug("Applying extra move to take out backlash.")
+                    z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
+                    self.tigerbox.move_absolute(x=round(z_backup_pos))
+                    self.log.info(f"Moving to Z = {self.stage_z_pos}.")
+                    self.tigerbox.move_absolute(x=self.stage_z_pos)
+                    while self.tigerbox.is_moving():
+                        pos = self.tigerbox.get_position('X')
+                        distance = abs(pos['X'] - round(self.stage_z_pos))
+                        if distance < 1.0:
+                            self.tigerbox.halt()
+                            break
+                        else:
+                            # self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
+                            sleep(0.1)
 
-                        # TODO: handle this through sample pose class, which remaps axes
-                        # Move to specified Z position
-                        self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
-                        # TODO: handle this through sample pose class, which remaps axes
-                        self.log.debug("Applying extra move to take out backlash.")
-                        z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_absolute(x=round(z_backup_pos))
-                        self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos)
-                        while self.tigerbox.is_moving():
-                            pos = self.tigerbox.get_position('X')
-                            distance = abs(pos['X'] - round(self.stage_z_pos))
-                            if distance < 1.0:
-                                self.tigerbox.halt()
-                                break
-                            else:
-                                # self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
-                                sleep(0.1)
+                    self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
+                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
-                        self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                        self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
+                    self.log.info(f"Setting up lasers for active channels: {channels}")
+                    self.setup_imaging_for_laser(channels)
 
-                        self.log.info(f"Setting up lasers for active channel: {ch}")
-                        self.setup_imaging_for_laser(ch)
+                    # Setup capture of next Z stack.
+                    # TODO: CPX handels how to save files. How to name files for all channels?
 
-                        # Setup capture of next Z stack.
-                        filenames = [Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam0.tiff"),
-                                     Path(f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{ch:0>4d}_cam1.tiff")]
-                        filepath_srcs = [local_storage_dir / f for f in filenames]
-                        self.log.info(f"Collecting tile stacks at "
-                                      f"({self.stage_x_pos / STEPS_PER_UM}, "
-                                      f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
-                                      f"for channel {ch} and saving to: {filepath_srcs}")
+                    filetype = 'tiff' if self.cfg.imaging_specs['filetype'] == 'Tiff' else 'zarr'
+                    filenames = [
+                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{channels[0]:0>4d}_cam{camera}.{filetype}"
+                        for
+                        camera in self.stream_ids]
 
-                        # TODO: consider making z step size a fn parameter instead of
-                        #   collected strictly from the config.
-                        # Convert to [mm] units for tigerbox.
-                        slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
-                        self._collect_stacked_tiff(slow_scan_axis_position,
-                                                   ztiles,
-                                                   self.cfg.z_step_size_um,
-                                                   filepath_srcs)
+                    os.makedirs(local_storage_dir, exist_ok=True)   # Make local directory if not already created
+                    filepath_srcs = [local_storage_dir / f for f in filenames]
+                    self.log.info(f"Collecting tile stacks at "
+                                  f"({self.stage_x_pos / STEPS_PER_UM}, "
+                                  f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
+                                  f"for channels {channels} and saving to: {filepath_srcs}")
+                    # TODO: consider making z step size a fn parameter instead of
+                    #   collected strictly from the config.
+                    # Convert to [mm] units for tigerbox.
+                    slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
+                    self._collect_stacked_tiff(slow_scan_axis_position,
+                                               ztiles,
+                                               self.cfg.z_step_size_um,
+                                               filepath_srcs)
 
-                        # Start transferring tiff file to its destination.
-                        # Note: Image transfer is faster than image capture, but
-                        #   we still wait for prior process to finish.
-                        if transfer_processes is not None:
-                            self.log.info("Waiting for tiff transfer process "
-                                          "to complete.")
-                            for p in transfer_processes:
-                                p.join()
-                        if img_storage_dir is not None:
-                            filepath_dests = [img_storage_dir / f for f in filenames]
-                            self.log.info("Starting transfer process for "
-                                          f"{filepath_dests}.")
-                            # ↓TODO, use xcopy transfer for speed
-                            transfer_processes = [TiffTransfer(filepath_srcs[0],
-                                                               filepath_dests[0]),
-                                                  TiffTransfer(filepath_srcs[1],
-                                                               filepath_dests[1]),
-                                                  ]
-                            for p in transfer_processes:
-                                p.start()
+                    # Start transferring tiff file to its destination.
+                    # Note: Image transfer is faster than image capture, but
+                    #   we still wait for prior process to finish.
+                    if transfer_processes is not None:
+                        self.log.info("Waiting for tiff transfer process "
+                                      "to complete.")
+                        for p in transfer_processes:
+                            p.join()
+                    if img_storage_dir is not None:
+                        filepath_dests = [img_storage_dir / f for f in filenames]
+                        self.log.info("Starting transfer process for "
+                                      f"{filepath_dests}.")
+                        # ↓TODO, use xcopy transfer for speed
+                        transfer_processes = [TiffTransfer(filepath_srcs[streams],
+                                                           filepath_dests[streams]) for streams in self.stream_ids]
+                        for p in transfer_processes:
+                            p.start()
 
-                        # TODO, set speed of sample Z / tiger X axis to ~1
+                    # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
@@ -396,30 +394,35 @@ class Ispim(Spim):
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path]):
-
         self.log.info(f"Configuring stage scan parameters")
-        # TODO: Needs to come from sample pose in future
-        # self.sample_pose.setup_tile_scan('z', 0, tile_count, tile_spacing_um, slow_scan_axis_position)
-        self.log.info(f"Starting scan at Z = {self.stage_z_pos / 10 / 1000} mm")
+        self.log.info(f"Starting scan at Z = {self.stage_z_pos / STEPS_PER_UM / 1000} mm")
+        self.sample_pose.setup_finite_tile_scan('z', 'x',
+                                                fast_axis_start_position=self.stage_z_pos / STEPS_PER_UM / 1e3,
+                                                slow_axis_start_position=slow_scan_axis_position,
+                                                slow_axis_stop_position=slow_scan_axis_position,
+                                                tile_count=tile_count, tile_interval_um=0.2096, line_count=1)
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
-        self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / 10 / 1000, pulse_interval_enc_ticks=38,
-                            num_pixels=tile_count)
-        # Tigerbox is configured to scan along a fast and slow axis.
-        # Tigerbox defaults to fast axis = Tiger x, slow axis = Tiger y.
-        # We pass in current sample x (tiger y) location to neutralize
-        # any slow axis movement.
-        self.tigerbox.scanv(scan_start_mm=slow_scan_axis_position,
-                            scan_stop_mm=slow_scan_axis_position, line_count=1)
+        # Specify fast axis = Tiger x, slow axis = Tiger y,
+        # (which are on the same card.)
+        # self.tigerbox.setup_scan('x', 'y')
+        # self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / STEPS_PER_UM / 1000,
+        #                     pulse_interval_um=0.20926,  # FIXME: no magic numbers :( Formerly: 38 encoder ticks,
+        #                     num_pixels=tile_count)
+        # # Tigerbox is configured to scan along a fast and slow axis.
+        # # We pass in current sample x (tiger y) location to neutralize
+        # # any slow axis movement.
+        # self.tigerbox.scanv(scan_start_mm=slow_scan_axis_position,
+        #                     scan_stop_mm=slow_scan_axis_position, line_count=1)
 
         try:
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count, self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
         except:
             self.log.error(f"Camera failed. Reinitializing")
             self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                               self.cfg.sensor_row_count))
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count)
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count, self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
 
         self.ni.start()
@@ -429,8 +432,8 @@ class Ispim(Spim):
         while self.ni.counter_task.read() < tile_count:
             for streams in self.stream_ids:
                 self.framedata(streams)
-            logging.info(f'Total frames: {tile_count} '
-                         f'-> Frames collected: {self.ni.counter_task.read()}')
+            self.log.info(f'Total frames: {tile_count} '
+                          f'-> Frames collected: {self.ni.counter_task.read()}')
             sleep(0.1)
 
         # while self.tigerbox.is_moving():
@@ -449,7 +452,7 @@ class Ispim(Spim):
             f = next(a.frames())
             self.im = f.data().squeeze().copy()
             for f in a.frames():
-                logging.debug(
+                self.log.debug(
                     f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
                 )
             f = None  # <-- fails to get the last frames if this is held?
@@ -514,8 +517,7 @@ class Ispim(Spim):
                 f = None  # <-- will fail to get the last frames if this is held?
                 packet = None  # <-- will fail to get the last frames if this is held?
                 sleep((1 / self.cfg.daq_obj_kwds[
-                    'livestream_frequency_hz']) * .1)  # TODO: Not sure if we need *.1 need to test
-                # TODO: Add sleep statement based on ni freq but why
+                    'livestream_frequency_hz']) * .1)
                 # TODO: do this in napari not through numpy directly
                 if self.stream_ids[0] == 0:
                     yield np.flipud(im), self.stream_ids[0]
