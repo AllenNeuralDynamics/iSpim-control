@@ -138,6 +138,17 @@ class FrameGrabber:
         else:
             self.runtime.set_configuration(self.p)
 
+    def get_offset(self):
+        return [
+            self.p.video[stream_id].camera.settings.offset
+            for stream_id in range(0, len(self.cameras))
+        ]
+
+    def set_offset(self, offset:[int, int]):
+
+        for stream_id in range(0, len(self.cameras)):
+            self.p.video[stream_id].camera.settings.offset = offset
+
     def start(self):
         """start the setup frame acquisition."""
         self.log.debug("Starting cameras.")

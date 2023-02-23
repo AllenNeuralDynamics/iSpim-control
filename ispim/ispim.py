@@ -78,6 +78,9 @@ class Ispim(Spim):
 
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
+
+        #TODO: Intialize offset for shape
+
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
 
@@ -335,7 +338,7 @@ class Ispim(Spim):
 
                     filetype = 'tiff' if self.cfg.imaging_specs['filetype'] == 'Tiff' else 'zarr'
                     filenames = [
-                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{channels[0]:0>4d}_cam{camera}.{filetype}"
+                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_cam{camera}.{filetype}"
                         for
                         camera in self.stream_ids]
 
@@ -461,22 +464,19 @@ class Ispim(Spim):
                 f"Frames in packet: {packet}"
             )
 
-    def start_livestream(self, wavelength: int):
+    def start_livestream(self, wavelength: list):
         """Repeatedly play the daq waveforms and buffer incoming images."""
-        if wavelength not in self.cfg.laser_wavelengths:
-            self.log.error(f"Aborting. {wavelength}[nm] laser is not a valid "
-                           "laser.")
-            return
+
         # Bail early if it's started.
         if self.livestream_enabled.is_set():
             self.log.warning("Not starting. Livestream is already running.")
             return
         self.log.debug("Starting livestream.")
         self.livestream_enabled.set()
-        self.log.warning(f"Turning on the {wavelength}[nm] laser.")
-        self.setup_imaging_for_laser([wavelength], live=True)
+        self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
+        self.setup_imaging_for_laser(wavelength, live=True)
         self.frame_grabber.setup_live()
-        self.ni.start()  # TODO: Do we need this if we're statign ni in setup_imaging_laser -> _setup_waveform_hardware
+        self.ni.start()  # TODO: Do we need this if we're stating ni in setup_imaging_laser -> _setup_waveform_hardware
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
@@ -510,19 +510,22 @@ class Ispim(Spim):
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank, self.stream_ids[0]
+                yield noise + blank, self.stream_ids[0], 1
+
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
+                metadata = f.metadata()
+                layer_num = metadata.frame_id % len(self.active_lasers)
                 im = f.data().squeeze().copy()  # TODO: copy?
-                f = None  # <-- will fail to get the last frames if this is held?
-                packet = None  # <-- will fail to get the last frames if this is held?
+                f = None
+                packet = None
                 sleep((1 / self.cfg.daq_obj_kwds[
                     'livestream_frequency_hz']) * .1)
                 # TODO: do this in napari not through numpy directly
                 if self.stream_ids[0] == 0:
-                    yield np.flipud(im), self.stream_ids[0]
+                    yield np.flipud(im), self.stream_ids[0],self.active_lasers[layer_num]
                 else:
-                    yield im, self.stream_ids[0]
+                    yield im, self.stream_ids[0], self.active_lasers[layer_num]
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.

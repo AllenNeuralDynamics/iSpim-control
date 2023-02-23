@@ -128,7 +128,7 @@ amplitude = 0
 [channel_specs.488.galvo]
 x_offset = 2.565
 x_amplitude = -0.01
-y_offset = 2.45
+y_offset = 2.4
 y_amplitude = 1.15
 
 [channel_specs.488.kwds]
@@ -141,7 +141,7 @@ amplitude = 0
 [channel_specs.561.galvo]
 x_offset = 2.56
 x_amplitude = -0.02
-y_offset = 2.4
+y_offset = 3.0
 y_amplitude = 1.4
 
 [channel_specs.561.kwds]
@@ -154,7 +154,7 @@ amplitude = 0
 [channel_specs.638.galvo]
 x_offset = 2.57
 x_amplitude = -0.01
-y_offset = 2.4
+y_offset = 2.8
 y_amplitude = 1.4
 
 [channel_specs.638.kwds]
