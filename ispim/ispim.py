@@ -158,16 +158,16 @@ class Ispim(Spim):
     def check_ext_disk_space(self, dataset_size):
         self.log.warning("Checking disk space not implemented.")
 
-    def wait_to_stop(self, axis: str, sample: int):
-        """Wait for stage to stop moving"""
-        while self.tigerbox.is_moving():
-            pos = self.tigerbox.get_position(axis)
-            distance = abs(pos[axis] - sample)
+    def wait_to_stop(self, axis: str, desired_position: int):
+        """Wait for stage to stop moving. IN SAMPLE POSE"""
+        while self.sample_pose.is_moving():
+            pos = self.sample_pose.get_position()
+            distance = abs(pos[axis.lower()] - desired_position)
             if distance < 1.0:
                 self.tigerbox.halt()
                 break
             else:
-                # self.log.warning(f"Stage is still moving! X = {pos['X']} -> {self.start_pos['X']}")
+                self.log.debug(f"Stage is still moving! X = {pos['X']} -> {self.start_pos['X']}")
                 sleep(0.1)
 
     def run_from_config(self):
@@ -245,16 +245,17 @@ class Ispim(Spim):
 
         # Move sample to preset starting position
         if self.start_pos is not None:
-            self.log.info(f'Moving to starting position at {self.start_pos["X"]}, '
-                          f'{self.start_pos["Y"]}, '
-                          f'{self.start_pos["Z"]}')
-            self.tigerbox.move_absolute(x=self.start_pos['X'])
-            self.wait_to_stop('X', self.start_pos['X'])
-            self.tigerbox.move_absolute(y=self.start_pos['Y'])
-            self.wait_to_stop('Y', self.start_pos['Y'])
-            self.tigerbox.move_absolute(z=self.start_pos['Z'])
-            self.wait_to_stop('Z', self.start_pos['Z'])
-            self.log.info(f'Stage moved to {self.tigerbox.get_position()}')
+            # Start position is in SAMPLE POSE
+            self.log.info(f'Moving to starting position at {self.start_pos["x"]}, '
+                          f'{self.start_pos["y"]}, '
+                          f'{self.start_pos["z"]}')
+            self.sample_pose.move_absolute(x=self.start_pos['x'])
+            self.wait_to_stop('x', self.start_pos['x'])         # wait_to_stop uses SAMPLE POSE
+            self.sample_pose.move_absolute(y=self.start_pos['y'])
+            self.wait_to_stop('y', self.start_pos['y'])
+            self.sample_pose.move_absolute(z=self.start_pos['z'])
+            self.wait_to_stop('z', self.start_pos['z'])
+            self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
             # TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
         else:
             self.set_scan_start(self.tigerbox.get_position())
@@ -263,14 +264,15 @@ class Ispim(Spim):
         # self.sample_pose.zero_in_place()
 
         transfer_processes = None  # Reference to external tiff transfer process.
-        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos = (self.start_pos['Y'],
-                                                                self.start_pos['Z'],
-                                                                self.start_pos['X'])
+        # Stage positions in SAMPLE POSE
+        self.stage_x_pos, self.stage_y_pos, self.stage_z_pos = (self.start_pos['x'],
+                                                                self.start_pos['y'],
+                                                                self.start_pos['z'])
         try:
             for j in range(ytiles):
 
                 # move back to x=0 which maps to z=0
-                self.stage_x_pos = self.start_pos['Y']
+                self.stage_x_pos = self.start_pos['x']     # Both in SAMPLE POSE
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
@@ -279,16 +281,7 @@ class Ispim(Spim):
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_absolute(z=round(self.stage_y_pos))
-                while self.tigerbox.is_moving():
-                    # below is for halting stage if it gets 'stuck'
-                    pos = self.tigerbox.get_position('Z')
-                    distance = abs(pos['Z'] - round(self.stage_y_pos))
-                    if distance < 1.0:
-                        self.tigerbox.halt()
-                        break
-                    else:
-                        # self.log.warning(f"Stage is moving! ! Y = {pos['Z']} -> {round(self.stage_y_pos)}")
-                        sleep(0.1)
+                self.wait_to_stop('y', self.stage_y_pos)
 
                 for i in range(xtiles):
                     # Move to specified X position
@@ -297,35 +290,19 @@ class Ispim(Spim):
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos))
-                    while self.tigerbox.is_moving():
-                        pos = self.tigerbox.get_position('Y')
-                        distance = abs(pos['Y'] - round(self.stage_x_pos))
-                        if distance < 1.0:
-                            self.tigerbox.halt()
-                            break
-                        else:
-                            # self.log.warning(f"Stage is still moving! X = {pos['Y']} -> {round(self.stage_x_pos)}")
-                            sleep(0.1)
+                    self.wait_to_stop('x', self.stage_x_pos)
+
 
                     # TODO: handle this through sample pose class, which remaps axes
                     # Move to specified Z position
                     self.log.debug("Setting speed in Z to 1.0 mm/sec")
                     self.tigerbox.set_speed(X=1.0)  # X maps to Z
-                    # TODO: handle this through sample pose class, which remaps axes
                     self.log.debug("Applying extra move to take out backlash.")
                     z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
                     self.tigerbox.move_absolute(x=round(z_backup_pos))
                     self.log.info(f"Moving to Z = {self.stage_z_pos}.")
                     self.tigerbox.move_absolute(x=self.stage_z_pos)
-                    while self.tigerbox.is_moving():
-                        pos = self.tigerbox.get_position('X')
-                        distance = abs(pos['X'] - round(self.stage_z_pos))
-                        if distance < 1.0:
-                            self.tigerbox.halt()
-                            break
-                        else:
-                            # self.log.warning(f"Stage is moving! Z =  {pos['X']} -> {0}")
-                            sleep(0.1)
+                    self.wait_to_stop('z', self.stage_z_pos)
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
                     self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
@@ -403,19 +380,11 @@ class Ispim(Spim):
                                                 fast_axis_start_position=self.stage_z_pos / STEPS_PER_UM / 1e3,
                                                 slow_axis_start_position=slow_scan_axis_position,
                                                 slow_axis_stop_position=slow_scan_axis_position,
-                                                tile_count=tile_count, tile_interval_um=0.2096, line_count=1)
+                                                tile_count=tile_count, tile_interval_um=0.2096, # FIXME: no magic numbers :( Formerly: 38 encoder ticks
+                                                line_count=1)
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
-        # (which are on the same card.)
-        # self.tigerbox.setup_scan('x', 'y')
-        # self.tigerbox.scanr(scan_start_mm=self.stage_z_pos / STEPS_PER_UM / 1000,
-        #                     pulse_interval_um=0.20926,  # FIXME: no magic numbers :( Formerly: 38 encoder ticks,
-        #                     num_pixels=tile_count)
-        # # Tigerbox is configured to scan along a fast and slow axis.
-        # # We pass in current sample x (tiger y) location to neutralize
-        # # any slow axis movement.
-        # self.tigerbox.scanv(scan_start_mm=slow_scan_axis_position,
-        #                     scan_stop_mm=slow_scan_axis_position, line_count=1)
+
 
         try:
             self.log.info(f"Configuring framegrabber")
@@ -438,11 +407,6 @@ class Ispim(Spim):
             self.log.info(f'Total frames: {tile_count} '
                           f'-> Frames collected: {self.ni.counter_task.read()}')
             sleep(0.1)
-
-        # while self.tigerbox.is_moving():
-        #     pos = self.tigerbox.get_position('X')
-        #     # self.log.info(f"Stage is scanning... Z =  {pos['X']/10} -> {self.stage_z_pos/10 + tile_count*self.cfg.z_step_size_um}")
-        #     sleep(0.1)
 
         self.log.info('Scan complete')
         self.ni.stop()
@@ -497,13 +461,14 @@ class Ispim(Spim):
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
-        image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
+
         self.frame_grabber.start()
         self.ni.start()
         self.active_lasers.sort()
+        stream_id = 0
         while self.livestream_enabled.is_set():
             # switching between cameras each time data is pulled
-            self.stream_ids = self.stream_ids[1:len(self.stream_ids)] + [self.stream_ids[0]]
+            stream_id = stream_id % len(self.stream_ids)
 
             if self.simulated:
                 sleep(1 / 16)
@@ -511,20 +476,21 @@ class Ispim(Spim):
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank, self.stream_ids[0], 1
+                yield noise + blank, stream_id, 1
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
                 metadata = f.metadata()
+
                 #TODO: Why does this work?
                 layer_num = metadata.frame_id % (len(self.active_lasers))-1 if len(self.active_lasers) >1 else -1
-                im = f.data().squeeze().copy()  # TODO: copy?
+                im = f.data().squeeze().copy()
                 f = None
                 packet = None
                 sleep((1 / self.cfg.daq_obj_kwds[
                     'livestream_frequency_hz']) * .1)
 
-                yield im, self.stream_ids[0], self.active_lasers[layer_num+1]
+                yield im, stream_id, self.active_lasers[layer_num+1]
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
@@ -546,7 +512,7 @@ class Ispim(Spim):
 
     def set_scan_start(self, start):
 
-        """Set start position of scan.
+        """Set start position of scan in sample pose.
         :param start: start position of scan"""
 
         self.start_pos = start
