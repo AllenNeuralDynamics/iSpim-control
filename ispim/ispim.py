@@ -452,8 +452,8 @@ class Ispim(Spim):
 
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
-            f = next(a.frames())
-            self.im = f.data().squeeze().copy()
+            self.f = next(a.frames())
+            im = self.f.data().squeeze().copy()
             for f in a.frames():
                 self.log.debug(
                     f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
@@ -476,7 +476,6 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.setup_imaging_for_laser(wavelength, live=True)
         self.frame_grabber.setup_live()
-        self.ni.start()  # TODO: Do we need this if we're stating ni in setup_imaging_laser -> _setup_waveform_hardware
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
@@ -499,7 +498,9 @@ class Ispim(Spim):
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
         image_wait_time = round(5 * self.cfg.get_daq_cycle_time() * 1e3)
-        self.frame_grabber.start()  # ?
+        self.frame_grabber.start()
+        self.ni.start()
+        self.active_lasers.sort()
         while self.livestream_enabled.is_set():
             # switching between cameras each time data is pulled
             self.stream_ids = self.stream_ids[1:len(self.stream_ids)] + [self.stream_ids[0]]
@@ -515,17 +516,15 @@ class Ispim(Spim):
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
                 metadata = f.metadata()
-                layer_num = metadata.frame_id % len(self.active_lasers)
+                #TODO: Why does this work?
+                layer_num = metadata.frame_id % (len(self.active_lasers))-1 if len(self.active_lasers) >1 else -1
                 im = f.data().squeeze().copy()  # TODO: copy?
                 f = None
                 packet = None
                 sleep((1 / self.cfg.daq_obj_kwds[
                     'livestream_frequency_hz']) * .1)
-                # TODO: do this in napari not through numpy directly
-                if self.stream_ids[0] == 0:
-                    yield np.flipud(im), self.stream_ids[0],self.active_lasers[layer_num]
-                else:
-                    yield im, self.stream_ids[0], self.active_lasers[layer_num]
+
+                yield im, self.stream_ids[0], self.active_lasers[layer_num+1]
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.

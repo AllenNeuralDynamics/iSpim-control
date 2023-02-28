@@ -23,9 +23,9 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     exposure_samples = cfg.get_exposure_samples()
     period_samples = cfg.get_period_samples()
     daq_cycle_samples = cfg.get_daq_cycle_samples()
+    active_wavelengths.sort()
 
     for ch in active_wavelengths:
-
         # Create wavelength-dependent constants
         active_laser_specs = cfg.laser_specs[str(ch)]
         etl_offset = active_laser_specs['etl']['offset']

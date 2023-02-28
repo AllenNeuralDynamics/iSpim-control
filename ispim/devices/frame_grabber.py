@@ -37,6 +37,7 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
+            self.p.video[stream_id].camera.settings.offset = (int((2304 - tile_shape[0])/2), int((2304 - tile_shape[1])/2)) #TODO: Not hard code 2304
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
 
@@ -137,17 +138,6 @@ class FrameGrabber:
             self.start()
         else:
             self.runtime.set_configuration(self.p)
-
-    def get_offset(self):
-        return [
-            self.p.video[stream_id].camera.settings.offset
-            for stream_id in range(0, len(self.cameras))
-        ]
-
-    def set_offset(self, offset:[int, int]):
-
-        for stream_id in range(0, len(self.cameras)):
-            self.p.video[stream_id].camera.settings.offset = offset
 
     def start(self):
         """start the setup frame acquisition."""

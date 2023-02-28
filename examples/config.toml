@@ -1,23 +1,23 @@
 [imaging_specs]
-local_storage_directory = "C:\\test"
+local_storage_directory = "C:\\test_dispim"
 subject_id = "test"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 686.592
-volume_y_um = 686.0
-volume_z_um = 50
+volume_x_um = 3500.0
+volume_y_um = 5500.0
+volume_z_um = 5000
 laser_wavelengths = [ 405, 488, 561, 638,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\test"
+external_storage_directory = "Y:\\test_dispim"
 filetype = "Zarr"
 
 [tile_specs]
 x_field_of_view_um = 686.592
 y_field_of_view_um = 686.592
 row_count_pixels = 2304
-column_count_pixels = 1152
+column_count_pixels = 2304
 data_type = "uint16"
 
 [design_specs]
@@ -154,8 +154,8 @@ amplitude = 0
 [channel_specs.638.galvo]
 x_offset = 2.57
 x_amplitude = -0.01
-y_offset = 2.8
-y_amplitude = 1.4
+y_offset = 2.4
+y_amplitude = 1.15
 
 [channel_specs.638.kwds]
 port = "COMxx"
