@@ -11,7 +11,7 @@ volume_z_um = 10
 laser_wavelengths = [ 405, 488, 561, 638,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\test_dispim"
-filetype = "Tiff"
+filetype = "Zarr"
 
 [tile_specs]
 x_field_of_view_um = 686.592

@@ -26,7 +26,7 @@ from tigerasi.sim_tiger_controller import TigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from math import ceil
-from spim_core.tiff_transfer import TiffTransfer
+from spim_core.file_transfer import TiffTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 
@@ -167,7 +167,7 @@ class Ispim(Spim):
                 self.tigerbox.halt()
                 break
             else:
-                self.log.debug(f"Stage is still moving! X = {pos['X']} -> {self.start_pos['X']}")
+                self.log.debug(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
                 sleep(0.1)
 
     def run_from_config(self):
@@ -258,7 +258,7 @@ class Ispim(Spim):
             self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
             # TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
         else:
-            self.set_scan_start(self.tigerbox.get_position())
+            self.set_scan_start(self.sample_pose.get_position())
 
         # Set the sample starting location as the origin.
         # self.sample_pose.zero_in_place()
@@ -281,7 +281,7 @@ class Ispim(Spim):
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_absolute(z=round(self.stage_y_pos))
-                self.wait_to_stop('y', self.stage_y_pos)
+                self.wait_to_stop('y', self.stage_y_pos)    # wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
@@ -290,7 +290,7 @@ class Ispim(Spim):
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos))
-                    self.wait_to_stop('x', self.stage_x_pos)
+                    self.wait_to_stop('x', self.stage_x_pos)    # wait_to_stop uses SAMPLE POSE
 
 
                     # TODO: handle this through sample pose class, which remaps axes
@@ -302,7 +302,7 @@ class Ispim(Spim):
                     self.tigerbox.move_absolute(x=round(z_backup_pos))
                     self.log.info(f"Moving to Z = {self.stage_z_pos}.")
                     self.tigerbox.move_absolute(x=self.stage_z_pos)
-                    self.wait_to_stop('z', self.stage_z_pos)
+                    self.wait_to_stop('z', self.stage_z_pos)    # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
                     self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
@@ -361,12 +361,13 @@ class Ispim(Spim):
             # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
-            # self.log.info(f"Closing camera")
-            # self.frame_grabber.close() #TODO: DO we want to close camera?
+            self.log.info(f"Closing camera")
+            self.frame_grabber.stop() #TODO: DO we want to close camera?
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
                     p.join()
+            self.log.info(f"Closing NI tasks")
             self.ni.close()
             for wl, specs in self.cfg.laser_specs.items():
                 self.lasers[int(wl)].disable()
@@ -417,7 +418,6 @@ class Ispim(Spim):
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
             self.f = next(a.frames())
-            im = self.f.data().squeeze().copy()
             for f in a.frames():
                 self.log.debug(
                     f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
