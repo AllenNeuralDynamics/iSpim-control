@@ -26,7 +26,7 @@ from tigerasi.sim_tiger_controller import TigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from math import ceil
-from spim_core.file_transfer import TiffTransfer
+from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 
@@ -105,14 +105,14 @@ class Ispim(Spim):
         self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
-            self.lasers[int(wl)] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
+            self.lasers[wl] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
                 else Mock(LaserHub)
             # TODO: Needs to not be hardcoded and find out what commands work for 561
             if int(wl) != 561:
-                self.lasers[int(wl)].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
+                self.lasers[wl].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
                 self.log.debug(f"Setting up {specs['color']} laser.")
-                self.lasers[int(wl)].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
-                self.lasers[int(wl)].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
+                self.lasers[wl].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
+                self.lasers[wl].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
 
         self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
             else Mock(LaserHub)  # Set up main right and left laser with empty prefix
@@ -314,8 +314,9 @@ class Ispim(Spim):
                     # TODO: CPX handels how to save files. How to name files for all channels?
 
                     filetype = 'tiff' if self.cfg.imaging_specs['filetype'] == 'Tiff' else 'zarr'
+                    channels = '_'.join(map(str,self.active_lasers))
                     filenames = [
-                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_cam{camera}.{filetype}"
+                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch{channels}.{filetype}"
                         for
                         camera in self.stream_ids]
 
@@ -338,7 +339,7 @@ class Ispim(Spim):
                     # Note: Image transfer is faster than image capture, but
                     #   we still wait for prior process to finish.
                     if transfer_processes is not None:
-                        self.log.info("Waiting for tiff transfer process "
+                        self.log.info("Waiting for transfer process "
                                       "to complete.")
                         for p in transfer_processes:
                             p.join()
@@ -347,7 +348,7 @@ class Ispim(Spim):
                         self.log.info("Starting transfer process for "
                                       f"{filepath_dests}.")
                         # ↓TODO, use xcopy transfer for speed
-                        transfer_processes = [TiffTransfer(filepath_srcs[streams],
+                        transfer_processes = [DataTransfer(filepath_srcs[streams],
                                                            filepath_dests[streams]) for streams in self.stream_ids]
                         for p in transfer_processes:
                             p.start()
