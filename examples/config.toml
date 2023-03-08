@@ -5,13 +5,18 @@ tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 400.0
+volume_x_um = 350.0
 volume_y_um = 400.0
 volume_z_um = 10
 laser_wavelengths = [ 405, 488, 561, 638,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\test_dispim"
 filetype = "Zarr"
+
+[experiment_specs]
+experimenters_name = "Micah Woodard"
+immersion_medium = "PBS"
+immersion_medium_ri = 1.33
 
 [tile_specs]
 x_field_of_view_um = 686.592
@@ -48,9 +53,6 @@ livestream_frequency_hz = 20
 
 [tiger_controller_driver_kwds]
 com_port = "COM3"
-
-[filter_wheel_left_kwds]
-tiger_axis = 0
 
 [filter_wheel_kwds]
 tiger_axis = 1
@@ -108,6 +110,10 @@ x = "y"
 y = "z"
 z = "x"
 
+[channel_specs.405.coeffecients]
+1 = 3.218
+0 = -57.515
+
 [channel_specs.405.etl]
 offset = 1.75
 amplitude = 0
@@ -120,6 +126,10 @@ y_amplitude = 1.4
 
 [channel_specs.405.kwds]
 port = "COMxx"
+
+[channel_specs.488.coeffecients]
+1 = 2.3125
+0 = -35.09
 
 [channel_specs.488.etl]
 offset = 1.75
@@ -146,6 +156,10 @@ y_amplitude = 1.4
 
 [channel_specs.561.kwds]
 port = "COMxx"
+
+[channel_specs.638.coeffecients]
+1 = 2.237
+0 = -29.349
 
 [channel_specs.638.etl]
 offset = 1.75
