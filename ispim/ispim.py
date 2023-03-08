@@ -222,6 +222,8 @@ class Ispim(Spim):
         # TODO, test network speeds?
         # TODO, check that networked storage is visible?
 
+        self.schema_log.info()
+
         # Log relevant info about this imaging run.
         self.log.info(f"Total tiles: {self.total_tiles}.")
         self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
@@ -328,6 +330,30 @@ class Ispim(Spim):
                                   f"for channels {channels} and saving to: {filepath_srcs}")
                     # TODO: consider making z step size a fn parameter instead of
                     #   collected strictly from the config.
+
+                    # Logging for JSON schema
+                    self.schema_log.info(f'x voxel size: {self.cfg.tile_size_x_um} um')  # size of pixels
+                    self.schema_log.info(f'y voxel size: {self.cfg.tile_size_y_um} um')
+                    self.schema_log.info(f'z voxel size: {self.cfg.z_step_size_um} um')
+                    self.schema_log.info(f'Stage x coordinate: {self.stage_x_pos * 0.0001} mm')
+                    self.schema_log.info(f'Stage y coordinate: {self.stage_y_pos * 0.0001} mm')
+                    self.schema_log.info(f'Stage z coordinate: {self.stage_z_pos * 0.0001} mm')
+                    self.schema_log.info(f'lightsheet angle: 45 degrees')
+
+                    for laser in self.active_lasers:
+                        laser = str(laser)
+                        self.schema_log.info(f'Channel name: {laser}')
+                        self.schema_log.info(f'{laser} wavelength: {laser} nm')
+                        laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} mW' if int(laser) == 561 else \
+                            f'{self.lasers[laser].get(Query.LaserCurrentSetting)} % current'  # convert to mW
+                        self.schema_log.info(f'{laser} power: {laser_power}')
+                        self.schema_log.info(f'{laser} filter number: {self.cfg.laser_specs[laser]["filter_index"]}')
+                        # Every variable in calculate waveforms
+                        for key in self.cfg.laser_specs[laser]['etl']:
+                            self.schema_log.info(f'{laser} etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} V')
+                        for key in self.cfg.laser_specs[laser]['galvo']:
+                            self.schema_log.info(f'{laser} etl {key}: {self.cfg.laser_specs[laser]["galvo"][key]} V')
+
                     # Convert to [mm] units for tigerbox.
                     slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
                     self._collect_stacked_tiff(slow_scan_axis_position,
