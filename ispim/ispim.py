@@ -314,9 +314,9 @@ class Ispim(Spim):
                     # TODO: CPX handels how to save files. How to name files for all channels?
 
                     filetype = 'tiff' if self.cfg.imaging_specs['filetype'] == 'Tiff' else 'zarr'
-                    channels = '_'.join(map(str,self.active_lasers))
+                    channel_string = '_'.join(map(str,self.active_lasers))
                     filenames = [
-                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch{channels}.{filetype}"
+                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch{channel_string}.{filetype}"
                         for
                         camera in self.stream_ids]
 
@@ -371,7 +371,7 @@ class Ispim(Spim):
             self.log.info(f"Closing NI tasks")
             self.ni.close()
             for wl, specs in self.cfg.laser_specs.items():
-                self.lasers[int(wl)].disable()
+                self.lasers[str(wl)].disable()
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
@@ -457,7 +457,7 @@ class Ispim(Spim):
         self.ni.stop()
         self.ni.close()
 
-        for laser in self.active_lasers: self.lasers[laser].disable()
+        for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
 
     def _livestream_worker(self):
@@ -504,12 +504,12 @@ class Ispim(Spim):
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
 
         if self.active_lasers is not None:
-            for laser in self.active_lasers: self.lasers[laser].disable()
+            for laser in self.active_lasers: self.lasers[str(laser)].disable()
 
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
         self.active_lasers = wavelength
-        for laser in self.active_lasers: self.lasers[laser].enable()
+        for laser in self.active_lasers: self.lasers[str(laser)].enable()
 
     def set_scan_start(self, start):
 
