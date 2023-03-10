@@ -79,7 +79,7 @@ class Ispim(Spim):
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
-        #TODO: Intialize offset for shape
+        # TODO: Intialize offset for shape
 
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
@@ -142,7 +142,7 @@ class Ispim(Spim):
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
         self.log.info("Configuring NIDAQ")
-        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, live)
+        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
@@ -196,11 +196,6 @@ class Ispim(Spim):
                                  deriv_storage_dir: Path = None):
         """Collect a tiled volumetric image with specified size/overlap specs.
         """
-        # Calculate tiling offsets in XY (we scan along Z)
-        # x_grid_step_um = \
-        #     (1 - tile_overlap_x_percent / 100.0) * self.cfg.tile_size_x_um
-        # y_grid_step_um = \
-        #     (1 - tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um
 
         x_grid_step_um, y_grid_step_um = self.get_xy_grid_step(tile_overlap_x_percent,
                                                                tile_overlap_y_percent)
@@ -209,16 +204,13 @@ class Ispim(Spim):
         # Always round up so that we cover the desired imaging region.
         xtiles, ytiles, ztiles = self.get_tile_counts(tile_overlap_x_percent,
                                                       tile_overlap_y_percent,
-                                                      self.cfg.z_step_size_um,  # TODO: Put parameter in collect_volumetric_image of z step size
+                                                      self.cfg.z_step_size_um,
+                                                      # TODO: Put parameter in collect_volumetric_image of z step size
                                                       volume_x_um,
                                                       volume_y_um,
                                                       volume_z_um)
 
-        print('xtiles: ', xtiles)
-        print('ytiles: ', ytiles)
-        print('ztiles: ', ztiles)
-
-        ztiles = ztiles * len(channels)
+        #ztiles = ztiles * len(channels)
         self.total_tiles = xtiles * ytiles * ztiles
         # Check if we will violate storage directory limits with our
         #   run. (Check local and external storage.)
@@ -252,9 +244,9 @@ class Ispim(Spim):
                       f"should finish after {weekday}, {date_str}.")
         self.log.info(f"Desired dimensions: {volume_x_um:.1f}[um] x "
                       f"{volume_y_um:.1f}[um] x {volume_z_um:.1f}[um]")
-        actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles-1) * x_grid_step_um
-        actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles-1) * y_grid_step_um
-        actual_vol_z_um = self.cfg.z_step_size_um * ((ztiles/len(channels)-1))
+        actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles - 1) * x_grid_step_um
+        actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles - 1) * y_grid_step_um
+        actual_vol_z_um = self.cfg.z_step_size_um * ((ztiles / len(channels) - 1))
         self.log.info(f"Actual dimensions: {actual_vol_x_um:.1f}[um] x "
                       f"{actual_vol_y_um:.1f}[um] x {actual_vol_z_um:.1f}[um]")
         self.log.info(f"X grid step: {x_grid_step_um} [um]")
@@ -269,7 +261,7 @@ class Ispim(Spim):
                           f'{self.start_pos["y"]}, '
                           f'{self.start_pos["z"]}')
             self.sample_pose.move_absolute(x=self.start_pos['x'])
-            self.wait_to_stop('x', self.start_pos['x'])         # wait_to_stop uses SAMPLE POSE
+            self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
             self.sample_pose.move_absolute(y=self.start_pos['y'])
             self.wait_to_stop('y', self.start_pos['y'])
             self.sample_pose.move_absolute(z=self.start_pos['z'])
@@ -289,9 +281,8 @@ class Ispim(Spim):
                                                                 self.start_pos['z'])
         try:
             for j in range(ytiles):
-                print(j)
                 # move back to x=0 which maps to z=0
-                self.stage_x_pos = self.start_pos['x']     # Both in SAMPLE POSE
+                self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
@@ -300,7 +291,7 @@ class Ispim(Spim):
                 # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_absolute(z=round(self.stage_y_pos))
-                self.wait_to_stop('y', self.stage_y_pos)    # wait_to_stop uses SAMPLE POSE
+                self.wait_to_stop('y', self.stage_y_pos)  # wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
@@ -309,8 +300,7 @@ class Ispim(Spim):
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos))
-                    self.wait_to_stop('x', self.stage_x_pos)    # wait_to_stop uses SAMPLE POSE
-
+                    self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # TODO: handle this through sample pose class, which remaps axes
                     # Move to specified Z position
@@ -321,10 +311,10 @@ class Ispim(Spim):
                     self.tigerbox.move_absolute(x=round(z_backup_pos))
                     self.log.info(f"Moving to Z = {self.stage_z_pos}.")
                     self.tigerbox.move_absolute(x=self.stage_z_pos)
-                    self.wait_to_stop('z', self.stage_z_pos)    # wait_to_stop uses SAMPLE POSE
+                    self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
+                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s/len(channels))   # Divide by len of channels we're imaging to reduce speed
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
                     self.setup_imaging_for_laser(channels)
@@ -333,13 +323,13 @@ class Ispim(Spim):
                     # TODO: CPX handels how to save files. How to name files for all channels?
 
                     filetype = 'tiff' if self.cfg.imaging_specs['filetype'] == 'Tiff' else 'zarr'
-                    channel_string = '_'.join(map(str,self.active_lasers))
+                    channel_string = '_'.join(map(str, self.active_lasers))
                     filenames = [
                         f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{channel_string}.{filetype}"
                         for
                         camera in self.stream_ids]
 
-                    os.makedirs(local_storage_dir, exist_ok=True)   # Make local directory if not already created
+                    os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                     filepath_srcs = [local_storage_dir / f for f in filenames]
                     self.log.info(f"Collecting tile stacks at "
                                   f"({self.stage_x_pos / STEPS_PER_UM}, "
@@ -362,7 +352,8 @@ class Ispim(Spim):
                         laser = str(laser)
                         self.schema_log.info(f'channel_name, {laser}')
                         self.schema_log.info(f'laser_wavelength, {laser} nanometers')
-                        laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(laser) == 561 else \
+                        laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(
+                            laser) == 561 else \
                             f'{self.lasers[laser].get(Query.LaserCurrentSetting)} percent'  # TODO: convert to mW
                         self.schema_log.info(f'laser_power: {laser_power}')
                         self.schema_log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}')
@@ -407,7 +398,7 @@ class Ispim(Spim):
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
             self.log.info(f"Closing camera")
-            self.frame_grabber.stop() #TODO: DO we want to close camera?
+            self.frame_grabber.stop()  # TODO: DO we want to close camera?
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
@@ -428,24 +419,22 @@ class Ispim(Spim):
                                                 fast_axis_start_position=self.stage_z_pos / STEPS_PER_UM / 1e3,
                                                 slow_axis_start_position=slow_scan_axis_position,
                                                 slow_axis_stop_position=slow_scan_axis_position,
-                                                tile_count=tile_count, tile_interval_um=  0.2096/len(self.active_lasers), # FIXME: no magic numbers :( Formerly: 38 encoder ticks
+                                                tile_count=tile_count, tile_interval_um=0.2096,
                                                 line_count=1)
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
 
-        print(tile_count)
         try:
-            print(self.frame_grabber.runtime.get_state())
-            self.frame_grabber.runtime.stop()
-            self.frame_grabber.runtime.abort()
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count+1, self.cfg.imaging_specs['filetype'])
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.laser_wavelengths),
+                                                   self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
         except:
             self.log.error(f"Camera failed. Reinitializing")
             self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                               self.cfg.sensor_row_count))
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count, self.cfg.imaging_specs['filetype'])
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.laser_wavelengths),
+                                                   self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
 
         self.ni.start()
@@ -461,7 +450,7 @@ class Ispim(Spim):
 
         self.log.info('Scan complete')
         self.ni.stop()
-        #self.frame_grabber.stop()
+        self.frame_grabber.stop()
 
     def framedata(self, stream):
 
@@ -532,15 +521,15 @@ class Ispim(Spim):
                 f = next(packet.frames())
                 metadata = f.metadata()
 
-                #TODO: Why does this work?
-                layer_num = metadata.frame_id % (len(self.active_lasers))-1 if len(self.active_lasers) >1 else -1
+                # TODO: Why does this work?
+                layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
                 im = f.data().squeeze().copy()
                 f = None
                 packet = None
                 sleep((1 / self.cfg.daq_obj_kwds[
                     'livestream_frequency_hz']) * .1)
 
-                yield im, stream_id, self.active_lasers[layer_num+1]
+                yield im, stream_id, self.active_lasers[layer_num + 1]
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
