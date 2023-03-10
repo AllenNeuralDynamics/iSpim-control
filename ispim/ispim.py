@@ -26,7 +26,8 @@ from tigerasi.sim_tiger_controller import TigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from math import ceil
-from spim_core.processes.data_transfer import DataTransfer
+#from spim_core.processes.data_transfer import DataTransfer
+from spim_core.tiff_transfer import TiffTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 
@@ -58,6 +59,7 @@ class Ispim(Spim):
 
         # camera streams filled in with framegrabber.cameras
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
+        print(self.stream_ids)
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -252,6 +254,7 @@ class Ispim(Spim):
         self.log.info(f"X grid step: {x_grid_step_um} [um]")
         self.log.info(f"Y grid step: {y_grid_step_um} [um]")
         self.log.info(f"Z grid step: {self.cfg.z_step_size_um} [um]")
+        self.log.info(f'xtiles: {xtiles}, ytiles: {ytiles}, ztiles: {ztiles}')
         # TODO, check if stage homing is necessary?
 
         # Move sample to preset starting position
@@ -278,7 +281,7 @@ class Ispim(Spim):
         # Stage positions in SAMPLE POSE
         self.stage_x_pos, self.stage_y_pos, self.stage_z_pos = (self.start_pos['x'],
                                                                 self.start_pos['y'],
-                                                                self.start_pos['z'])
+                                                               self.start_pos['z'])
         try:
             for j in range(ytiles):
                 # move back to x=0 which maps to z=0
@@ -314,7 +317,7 @@ class Ispim(Spim):
                     self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s/len(channels))   # Divide by len of channels we're imaging to reduce speed
+                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s/len(self.cfg.imaging_wavelengths))   # Divide by len of channels we're imaging to reduce speed
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
                     self.setup_imaging_for_laser(channels)
@@ -326,9 +329,8 @@ class Ispim(Spim):
                     channel_string = '_'.join(map(str, self.active_lasers))
                     filenames = [
                         f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{channel_string}.{filetype}"
-                        for
-                        camera in self.stream_ids]
-
+                        for camera in self.stream_ids]
+                    print(filenames)
                     os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                     filepath_srcs = [local_storage_dir / f for f in filenames]
                     self.log.info(f"Collecting tile stacks at "
@@ -376,18 +378,21 @@ class Ispim(Spim):
                         self.log.info("Waiting for transfer process "
                                       "to complete.")
                         for p in transfer_processes:
-                            p.join()
+                            p.join(10)
                     if img_storage_dir is not None:
 
                         filepath_dests = [img_storage_dir / f for f in filenames]
                         self.log.info("Starting transfer process for "
                                       f"{filepath_dests}.")
                         # ↓TODO, use xcopy transfer for speed
-                        transfer_processes = [DataTransfer(filepath_srcs[streams],
+                        transfer_processes = [TiffTransfer(filepath_srcs[streams],
                                                            filepath_dests[streams]) for streams in self.stream_ids]
+                        print(f'there are {len(transfer_processes)} processes')
                         for p in transfer_processes:
+                            print('about to start process')
                             p.start()
-
+                            print('Finished starting process')
+                    print('got here ')
                     # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
@@ -397,14 +402,14 @@ class Ispim(Spim):
             # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
+            self.log.info(f"Closing NI tasks")
+            self.ni.close()
             self.log.info(f"Closing camera")
             self.frame_grabber.stop()  # TODO: DO we want to close camera?
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
                     p.join()
-            self.log.info(f"Closing NI tasks")
-            self.ni.close()
             for wl, specs in self.cfg.laser_specs.items():
                 self.lasers[str(wl)].disable()
 
@@ -426,14 +431,14 @@ class Ispim(Spim):
 
         try:
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.laser_wavelengths),
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.imaging_wavelengths),
                                                    self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
         except:
             self.log.error(f"Camera failed. Reinitializing")
             self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                               self.cfg.sensor_row_count))
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.laser_wavelengths),
+            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.imaging_wavelengths),
                                                    self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
 
@@ -441,16 +446,21 @@ class Ispim(Spim):
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan()
 
+        prev_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
             for streams in self.stream_ids:
                 self.framedata(streams)
-            self.log.info(f'Total frames: {tile_count} '
-                          f'-> Frames collected: {self.ni.counter_task.read()}')
-            sleep(0.1)
+            curr_frame_count = self.ni.counter_task.read()
+            if curr_frame_count != prev_frame_count:
+                prev_frame_count = curr_frame_count
+                self.log.info(f'Total frames: {tile_count} '
+                              f'-> Frames collected: {curr_frame_count}')
+            sleep(0.05)
 
         self.log.info('Scan complete')
         self.ni.stop()
         self.frame_grabber.stop()
+        print(self.frame_grabber.runtime.get_state())
 
     def framedata(self, stream):
 
@@ -459,7 +469,7 @@ class Ispim(Spim):
             self.f = next(a.frames())
             for f in a.frames():
                 self.log.debug(
-                    f"{f.data().shape} {f.data()[0][0][0][0]} {f.metadata()}"
+                    f" {f.metadata().frame_id}"
                 )
             f = None  # <-- fails to get the last frames if this is held?
             a = None  # <-- fails to get the last frames if this is held?

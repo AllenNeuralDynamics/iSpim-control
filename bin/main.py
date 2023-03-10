@@ -15,7 +15,7 @@ logging.getLogger().handlers.clear()
 
 class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'spim_core', 'ispim','ispim', }#'tigerasi' }#'calliphlox'}
+    VALID_LOGGER_BASES = {'spim_core', 'ispim','ispim', 'calliphlox'}#'tigerasi' }#'calliphlox'}
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \

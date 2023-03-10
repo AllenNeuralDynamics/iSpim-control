@@ -61,7 +61,7 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.log.info(str(path.absolute()))
             self.p.video[stream_id].storage.settings.filename = str(path.absolute())
-            self.p.video[stream_id].max_frame_count = 100000000#frame_count
+            self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                      line=2,
                                      event='FrameStart',
@@ -149,9 +149,10 @@ class FrameGrabber:
     def stop(self):
         """Stop frame acquisition and file writing."""
         self.log.debug("Stopping cameras.")
-        print('stopping runtime')
-        #self.runtime.stop()
+
+        self.runtime.stop()
         self.runtime.abort()
+        print('stopping runtime')
 
     def close(self):
         self.runtime = None

@@ -37,7 +37,7 @@ class WaveformHardware:
             self.stop()
             self.close()
         self.live = live
-        sample_count = round(self.update_freq * period_time)
+        sample_count = round(self.update_freq * period_time)    # sample_count for single channel. All the same sample per channel
         # Create AO task and initialize the required channels
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
@@ -95,8 +95,8 @@ class WaveformHardware:
         # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.
         # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
-        # self.ao_task.out_stream.output_buf_size = np.shape(voltages_t)[1]  # Sets buffer to length of voltages
-        # self.ao_task.control(TaskMode.TASK_COMMIT)
+        self.ao_task.out_stream.output_buf_size = np.shape(voltages_t)[1]  # Sets buffer to length of voltages
+        self.ao_task.control(TaskMode.TASK_COMMIT)
 
         # Write analog voltages.
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats

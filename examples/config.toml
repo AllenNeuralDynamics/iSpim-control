@@ -14,7 +14,7 @@ external_storage_directory = "Y:\\test_dispim"
 filetype = "Tiff"
 
 [experiment_specs]
-experimenters_name = "Micah Woodward"
+experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
 immersion_medium_ri = 1.33
 
