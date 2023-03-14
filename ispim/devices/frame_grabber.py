@@ -37,10 +37,11 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
+            self.runtime.set_configuration(self.p)
             self.p.video[stream_id].camera.settings.offset = (int((2304 - tile_shape[0])/2), int((2304 - tile_shape[1])/2)) #TODO: Not hard code 2304
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
-
+            self.runtime.set_configuration(self.p)
         # self.p.video[0].camera.settings.readout_direction = Direction.Forward
         # self.p.video[1].camera.settings.readout_direction = Direction.Backward
 
@@ -99,6 +100,7 @@ class FrameGrabber:
         for video in self.p.video:
             video.camera.settings.exposure_time_us = exp_time
             self.log.debug(f'exposure set to: {video.camera.settings.exposure_time_us}')
+
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
@@ -147,7 +149,8 @@ class FrameGrabber:
     def stop(self):
         """Stop frame acquisition and file writing."""
         self.log.debug("Stopping cameras.")
-        #self.runtime.stop()
+
+        self.runtime.stop()
         self.runtime.abort()
 
     def close(self):
