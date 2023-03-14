@@ -49,7 +49,8 @@ class WaveformHardware:
             rate=self.update_freq,
             active_edge=Edge.RISING,
             sample_mode=AcqType.FINITE,
-            samps_per_chan=sample_count*channel_num)        # Takes into account the number of channels in ao task
+            samps_per_chan=sample_count*channel_num)
+        # Takes into account the number of channels in ao task
         self.ao_task.triggers.start_trigger.retriggerable = True
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
             trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
@@ -95,9 +96,10 @@ class WaveformHardware:
         # NOT SURE IF WE NEED THIS?
         # "Commit" if we're not looping. Apparently, this has less overhead.
         # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
-        self.ao_task.out_stream.output_buf_size = np.shape(voltages_t)[1]  # Sets buffer to length of voltages
-        self.ao_task.control(TaskMode.TASK_COMMIT)
 
+        self.ao_task.out_stream.output_buf_size = 0
+        self.ao_task.out_stream.output_buf_size = len(voltages_t[1])  # Sets buffer to length of voltages
+        self.ao_task.control(TaskMode.TASK_COMMIT)
         # Write analog voltages.
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
 
@@ -130,7 +132,7 @@ class WaveformHardware:
 
         self.counter_task.stop()
         self.counter_task.wait_until_done(1)
-        # sleep(.5)
+        sleep(1)
         self.ao_task.stop()
 
     def restart(self):

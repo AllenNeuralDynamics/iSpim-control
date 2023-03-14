@@ -152,7 +152,6 @@ class FrameGrabber:
 
         self.runtime.stop()
         self.runtime.abort()
-        print('stopping runtime')
 
     def close(self):
         self.runtime = None

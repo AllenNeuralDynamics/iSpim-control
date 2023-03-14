@@ -26,8 +26,7 @@ from tigerasi.sim_tiger_controller import TigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from math import ceil
-#from spim_core.processes.data_transfer import DataTransfer
-from spim_core.tiff_transfer import TiffTransfer
+from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 
@@ -59,7 +58,6 @@ class Ispim(Spim):
 
         # camera streams filled in with framegrabber.cameras
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
-        print(self.stream_ids)
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -73,6 +71,9 @@ class Ispim(Spim):
 
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
+
+        self.latest_frame = None
+        self.latest_frame_layer = None
 
         # start position of scan
         self.start_pos = None
@@ -317,7 +318,7 @@ class Ispim(Spim):
                     self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s/len(self.cfg.imaging_wavelengths))   # Divide by len of channels we're imaging to reduce speed
+                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
                     self.setup_imaging_for_laser(channels)
@@ -330,7 +331,7 @@ class Ispim(Spim):
                     filenames = [
                         f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_CH_{channel_string}.{filetype}"
                         for camera in self.stream_ids]
-                    print(filenames)
+
                     os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                     filepath_srcs = [local_storage_dir / f for f in filenames]
                     self.log.info(f"Collecting tile stacks at "
@@ -385,14 +386,10 @@ class Ispim(Spim):
                         self.log.info("Starting transfer process for "
                                       f"{filepath_dests}.")
                         # ↓TODO, use xcopy transfer for speed
-                        transfer_processes = [TiffTransfer(filepath_srcs[streams],
+                        transfer_processes = [DataTransfer(filepath_srcs[streams],
                                                            filepath_dests[streams]) for streams in self.stream_ids]
-                        print(f'there are {len(transfer_processes)} processes')
                         for p in transfer_processes:
-                            print('about to start process')
                             p.start()
-                            print('Finished starting process')
-                    print('got here ')
                     # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
@@ -405,7 +402,7 @@ class Ispim(Spim):
             self.log.info(f"Closing NI tasks")
             self.ni.close()
             self.log.info(f"Closing camera")
-            self.frame_grabber.stop()  # TODO: DO we want to close camera?
+            self.frame_grabber.runtime.abort()
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
@@ -431,7 +428,7 @@ class Ispim(Spim):
 
         try:
             self.log.info(f"Configuring framegrabber")
-            self.frame_grabber.setup_stack_capture(filepath_srcs, tile_count * len(self.cfg.imaging_wavelengths),
+            self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths))-100,
                                                    self.cfg.imaging_specs['filetype'])
             self.frame_grabber.start()
         except:
@@ -460,13 +457,22 @@ class Ispim(Spim):
         self.log.info('Scan complete')
         self.ni.stop()
         self.frame_grabber.stop()
-        print(self.frame_grabber.runtime.get_state())
+
+    def _acquisition_livestream_worker(self):
+
+        while True:
+            if self.latest_frame is not None:
+                yield self.latest_frame, self.latest_frame_layer
+
+            sleep(1/17)
 
     def framedata(self, stream):
 
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
-            self.f = next(a.frames())
+            f = next(a.frames())
+            self.latest_frame= f.data().squeeze().copy()
+            self.latest_frame_layer = f.metadata().frame_id
             for f in a.frames():
                 self.log.debug(
                     f" {f.metadata().frame_id}"
@@ -500,7 +506,7 @@ class Ispim(Spim):
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
         self.livestream_enabled.clear()
-        self.frame_grabber.stop()
+        self.frame_grabber.runtime.abort()      # Abort for livestream because total frames are never being met
 
         self.ni.stop()
         self.ni.close()
