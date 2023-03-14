@@ -16,7 +16,7 @@ filetype = "Tiff"
 [experiment_specs]
 experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
-immersion_medium_ri = 1.33
+immersion_medium_refractive_index = 1.33
 
 [tile_specs]
 x_field_of_view_um = 686.592

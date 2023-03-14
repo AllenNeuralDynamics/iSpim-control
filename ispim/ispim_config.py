@@ -81,12 +81,12 @@ class IspimConfig(SpimConfig):
         self.experiment_specs['immersion_medium'] = medium
 
     @property
-    def immersion_medium_ri(self):
-        return self.experiment_specs['immersion_medium_ri']
+    def immersion_medium_refractive_index(self):
+        return self.experiment_specs['immersion_medium_refractive_index']
 
-    @immersion_medium_ri.setter
+    @immersion_medium_refractive_index.setter
     def immersion_medium_ri(self, ri: float):
-        self.experiment_specs['immersion_medium_ri'] = ri
+        self.experiment_specs['immersion_medium_refractive_index'] = ri
 
     @property
     def scan_direction(self):

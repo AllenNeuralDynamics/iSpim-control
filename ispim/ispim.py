@@ -230,11 +230,12 @@ class Ispim(Spim):
         self.schema_log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}')
         self.schema_log.info(f'local_storage_directoru, {local_storage_dir}')
         self.schema_log.info(f'external_storage_directory, {img_storage_dir}')
-        # self.schema_log.info(f'specimen_id,...
-        # self.schema_log.info(f'subject_id,...
-        # self.schema_log.info(f'instrument_id,...
-        # self.schema_log.info(f'chamber_immersion_medium,...
-        # self.schema_log.info(f'chamber_immersion_refractive_index,...
+        self.schema_log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}')
+        self.schema_log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}')
+        self.schema_log.info(f'instrument_id, iSpim 1')
+        self.schema_log.info(f'chamber_immersion_medium, {self.cfg.experiment_specs.immersion_medium}')
+        self.schema_log.info(f'chamber_immersion_refractive_index, '
+                             f'{self.cfg.experiment_specs.immersion_medium_refractive_index}')
 
         # Log relevant info about this imaging run.
         self.log.info(f"Total tiles: {self.total_tiles}.")
