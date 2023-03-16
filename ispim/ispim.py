@@ -337,8 +337,9 @@ class Ispim(Spim):
                     # Setup capture of next Z stack.
                     # TODO: CPX handels how to save files. How to name files for all channels?
                     filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'  # if filetype is trash, it'll be zarr but doesn't matter
+                    channel_string = '_'.join(map(str, self.active_lasers))
                     filenames = [
-                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch.{filetype_suffix}" #add all channel names
+                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}" #add all channel names
                         for
                         camera in self.stream_ids]
 
