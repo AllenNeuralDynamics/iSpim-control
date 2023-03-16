@@ -84,6 +84,7 @@ class Ispim(Spim):
         self.stack = []
         self.image_overview = None
         self.overview_process = None
+        self.overview_set = Event()
 
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
@@ -241,9 +242,9 @@ class Ispim(Spim):
         self.schema_log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}')
         self.schema_log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}')
         self.schema_log.info(f'instrument_id, iSpim 1')
-        self.schema_log.info(f'chamber_immersion_medium, {self.cfg.experiment_specs.immersion_medium}')
+        self.schema_log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}')
         self.schema_log.info(f'chamber_immersion_refractive_index, '
-                             f'{self.cfg.experiment_specs.immersion_medium_refractive_index}')
+                             f'{self.cfg.immersion_medium_refractive_index}')
 
         self.log.info(f"Total tiles: {self.total_tiles}.")
         self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
@@ -257,13 +258,13 @@ class Ispim(Spim):
                       f"{volume_y_um:.1f}[um] x {volume_z_um:.1f}[um]")
         actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles - 1) * x_grid_step_um
         actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles - 1) * y_grid_step_um
-        actual_vol_z_um = self.cfg.z_step_size_um * ((ztiles - 1))
+        actual_vol_z_um = z_step_size_um * ((ztiles - 1))
         self.log.info(f"Actual dimensions: {actual_vol_x_um:.1f}[um] x "
                       f"{actual_vol_y_um:.1f}[um] x {actual_vol_z_um:.1f}[um]")
         self.log.info(f"X grid step: {x_grid_step_um} [um]")
         self.log.info(f"Y grid step: {y_grid_step_um} [um]")
         self.log.info(f"Z grid step: {z_step_size_um} [um]")
-        self.log.info(f"Z grid step: {self.cfg.z_step_size_um} [um]")
+        self.log.info(f"Z grid step: {z_step_size_um} [um]")
         self.log.info(f'xtiles: {xtiles}, ytiles: {ytiles}, ztiles: {ztiles}')
         # TODO, check if stage homing is necessary?
 
@@ -353,7 +354,7 @@ class Ispim(Spim):
                     self.schema_log.info(f'file_name, {filenames}')
                     self.schema_log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers')  # size of pixels
                     self.schema_log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers')
-                    self.schema_log.info(f'z_voxel_size, {self.cfg.z_step_size_um} micrometers')
+                    self.schema_log.info(f'z_voxel_size, {z_step_size_um} micrometers')
                     self.schema_log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters')
                     self.schema_log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters')
                     self.schema_log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters')
@@ -439,36 +440,42 @@ class Ispim(Spim):
 
 
         self.log.info(f"Configuring framegrabber")
-        self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths))-100,
-                                               self.cfg.imaging_specs['filetype'])
+        # self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths))-100,
+        #                                        filetype)
+        self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths)),
+                                                                                       filetype)
+
         self.frame_grabber.start()
 
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan()
 
-        if self.overview_process.is_alive():   # If doing an overview image, wait till previous tile is done
-            self.overview_process.join()
-        self.stack = None                       # Clear stack buffer
-        self.stack = [None]*tile_count          # Create buffer the size of stacked image
+        if self.overview_process is not None:   # If doing an overview image, wait till previous tile is done
+            if self.overview_process.is_alive():
+                self.overview_process.join()
+        self.stack = None  # Clear stack buffer
+        self.stack = [None]*(tile_count)  # Create buffer the size of stacked image
+
 
         prev_frame_count = 0
+        curr_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
             for streams in self.stream_ids:
-                self.framedata(streams)
-            curr_frame_count = self.ni.counter_task.read()
+                frame_count = self.framedata(streams)
+            curr_frame_count += frame_count
             if curr_frame_count != prev_frame_count:
                 prev_frame_count = curr_frame_count
-                self.log.info(f'Total frames: {tile_count} '
+                self.log.info(f'Total frames: {tile_count*len(self.cfg.imaging_wavelengths)} '
                               f'-> Frames collected: {curr_frame_count}')
             sleep(0.05)
 
-        if self.overview_process is not None:
+        if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
             self.overview_process.start()   # If doing an overview image, start down sampling and mips
 
         self.log.info('Stopping camera')
-        self.frame_grabber.stop()
+        self.frame_grabber.runtime.abort()
         self.log.info('Stopping NI Card')
         self.ni.stop()
         self.log.info('Stack complete')
@@ -490,15 +497,18 @@ class Ispim(Spim):
             f = next(a.frames())
             self.latest_frame= f.data().squeeze().copy()
             self.latest_frame_layer = f.metadata().frame_id
-            for f in a.frames():
-                self.log.debug(
-                    f" {f.metadata().frame_id}"
-                )
+
+            if self.overview_set.is_set():
+                for f in a.frames():
+                    self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
+
             f = None  # <-- fails to get the last frames if this is held?
             a = None  # <-- fails to get the last frames if this is held?
             logging.debug(
                 f"Frames in packet: {packet}"
             )
+            return packet
+        return 0
 
     def quick_scan(self, wl:list[int]):
 
@@ -512,26 +522,34 @@ class Ispim(Spim):
                                                       self.cfg.volume_z_um)
 
         self.image_overview = None                                      # Clear previous image overview if any
-        self.image_overview = np.empty(xtiles + ytiles)                 # Create empty array size of tiles
-        self.overview_process = Thread(target = self.create_overview)  # Create overview process
+        self.image_overview = []                 # Create empty array size of tiles
+        self.overview_set.set()
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
-                                      self.cfg.volume_z_um,self.cfg.z_step_size_um * 10, wl,
+                                      self.cfg.volume_z_um,self.cfg.z_step_size_um * 10, self.cfg.imaging_wavelengths,
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
-        self.image_overview = np.reshape(self.image_overview, (xtiles, ytiles))
+        if self.overview_process != None:
+            self.overview_process.join()
 
-        return self.image_overview
+        reshaped = np.zeros(y *(self.image_overview[0])[1])
+        self.image_overview = np.concatenate(np.array(self.image_overview))
+
+        for y in ytiles:
+            for x in xtiles:
+
+        try:
+            self.image_overview = np.reshape(np.array(self.image_overview), (ytiles, xtiles))
+        except:
+            print('cant resize')
+        self.overview_set.clear()
+        return np.concatenate(np.array(self.image_overview))
 
     def create_overview(self):
 
         """Create overview image"""
-        print(self.stack)
-        [self.stack.remove(x) for x in self.stack if x == None]     # Remove any stack that is missing
-                                                                    # TODO: might be slow if a lot of stacks
-        self.stack = np.array(self.stack)
-        print(type(self.stack))
-        downsampled = [x[0::10, 0::10] for x in self.stack]           # Down sample by 10
-        mip_stack = np.max(downsampled, axis=0)                      # Max projection
+        self.stack = np.array(self.stack, dtype=object)
+        downsampled = [x[0::10, 0::10] for x in self.stack[0:-1]]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
+        mip_stack = np.max(downsampled, axis=1)                      # Max projection
         self.image_overview.append(mip_stack)
 
 
@@ -546,7 +564,7 @@ class Ispim(Spim):
         self.livestream_enabled.set()
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.setup_imaging_for_laser(wavelength, live=True)
-        self.frame_grabber.setup_live()
+        self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
