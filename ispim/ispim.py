@@ -37,6 +37,7 @@ class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
                  simulated: bool = False):
+
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated=simulated)
@@ -510,7 +511,7 @@ class Ispim(Spim):
             return packet
         return 0
 
-    def quick_scan(self, wl:list[int]):
+    def quick_scan(self):
 
         """Quick overview scan function """
 
@@ -531,18 +532,18 @@ class Ispim(Spim):
         if self.overview_process != None:
             self.overview_process.join()
 
-        reshaped = np.zeros(y *(self.image_overview[0])[1])
-        self.image_overview = np.concatenate(np.array(self.image_overview))
+        # Create empty array size of overview image
+        rows = self.image_overview[0].shape[0]
+        cols = self.image_overview[0].shape[1]
+        reshaped = np.zeros((ytiles*rows, xtiles*cols))
 
-        for y in ytiles:
-            for x in xtiles:
+        for y in range(0, ytiles):
+            for x in range(0, xtiles):
+                reshaped[y * rows:(y + 1) * rows, x * cols:(x + 1) * cols] = self.image_overview[0]
+                del self.image_overview[0]
 
-        try:
-            self.image_overview = np.reshape(np.array(self.image_overview), (ytiles, xtiles))
-        except:
-            print('cant resize')
         self.overview_set.clear()
-        return np.concatenate(np.array(self.image_overview))
+        return reshaped, xtiles, ytiles
 
     def create_overview(self):
 
