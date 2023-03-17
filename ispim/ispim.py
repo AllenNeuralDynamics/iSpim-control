@@ -21,7 +21,7 @@ from ispim.devices.oxxius_components import LaserHub
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
-from tigerasi.sim_tiger_controller import TigerController as SimTiger
+from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 # TODO: consolidate these later.
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
@@ -38,9 +38,11 @@ class Ispim(Spim):
     def __init__(self, config_filepath: str,
                  simulated: bool = False):
 
+        simulated = True
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated=simulated)
+
         self.cfg = IspimConfig(config_filepath)
         # Instantiate hardware devices
         self.frame_grabber = FrameGrabber() if not self.simulated else \
@@ -60,7 +62,7 @@ class Ispim(Spim):
         self.stage_y_pos = None
 
         # camera streams filled in with framegrabber.cameras
-        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))]
+        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -143,7 +145,7 @@ class Ispim(Spim):
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
-        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+        #self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
