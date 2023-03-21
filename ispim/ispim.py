@@ -38,7 +38,6 @@ class Ispim(Spim):
     def __init__(self, config_filepath: str,
                  simulated: bool = False):
 
-        simulated = True
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         # Log setup is handled in the parent class if we pass in a logger.
         super().__init__(config_filepath, simulated=simulated)
@@ -145,7 +144,7 @@ class Ispim(Spim):
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
-        #self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
@@ -154,8 +153,12 @@ class Ispim(Spim):
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
-        self.log.info("Configuring NIDAQ")
-        self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
+
+        if not self.livestream_enabled.is_set():
+            self.log.info("Configuring NIDAQ")
+            self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
+
+        self.ni.stop()
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
@@ -418,7 +421,7 @@ class Ispim(Spim):
                 for p in transfer_processes:
                     p.join()
             self.log.info(f"Closing NI tasks")
-            self.ni.close()
+            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
@@ -536,24 +539,27 @@ class Ispim(Spim):
             self.overview_process.join()
 
         # Create empty array size of overview image
-        rows = self.image_overview[0].shape[0]
+        rows = np.shape(self.image_overview[0])[0]
         cols = self.image_overview[0].shape[1]
-        reshaped = np.zeros((ytiles*rows, xtiles*cols))
+        reshaped = np.zeros((xtiles*rows, ytiles*cols))
 
-        for y in range(0, ytiles):
-            for x in range(0, xtiles):
-                reshaped[y * rows:(y + 1) * rows, x * cols:(x + 1) * cols] = self.image_overview[0]
+        for x in range(0, xtiles):
+            for y in range(0, ytiles):
+                reshaped[x * rows:(x + 1) * rows, y * cols:(y + 1) * cols] = self.image_overview[0]
                 del self.image_overview[0]
 
         self.overview_set.clear()
+        self.start_pos = None
+
         return reshaped, xtiles, ytiles
+        #return np.concatenate(np.array(self.image_overview)), xtiles, ytiles
 
     def create_overview(self):
 
         """Create overview image"""
         self.stack = np.array(self.stack, dtype=object)
         downsampled = [x[0::10, 0::10] for x in self.stack[0:-1]]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
-        mip_stack = np.max(downsampled, axis=1)                      # Max projection
+        mip_stack = np.max(downsampled, axis=0)                      # Max projection
         self.image_overview.append(mip_stack)
 
 
@@ -565,10 +571,10 @@ class Ispim(Spim):
             self.log.warning("Not starting. Livestream is already running.")
             return
         self.log.debug("Starting livestream.")
-        self.livestream_enabled.set()
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.setup_imaging_for_laser(wavelength, live=True)
         self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
+        self.livestream_enabled.set()
         # Launch thread for picking up camera images.
 
     def stop_livestream(self, wait: bool = False):
