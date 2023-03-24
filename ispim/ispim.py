@@ -25,12 +25,13 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 # TODO: consolidate these later.
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
-from math import ceil
+from math import ceil, floor
 from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 from multiprocessing import Process
 from threading import Thread
+import cv2
 
 
 class Ispim(Spim):
@@ -154,21 +155,14 @@ class Ispim(Spim):
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
 
-        if not self.livestream_enabled.is_set():
+        if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
 
-        self.ni.stop()
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
-
-        # TODO: Why do we care about status of active laser
-        # Need to restart ni task if in live mode because assigning waveforms stops
-        # tasks and we reassign waveforms during livestreaming
-        if self.active_lasers is not None and live:
-            self.ni.start()
 
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
@@ -521,7 +515,7 @@ class Ispim(Spim):
 
         """Quick overview scan function """
 
-        xtiles, ytiles, ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
+        xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                       self.cfg.tile_overlap_y_percent,
                                                       self.cfg.z_step_size_um * 10,
                                                       self.cfg.volume_x_um,
@@ -532,7 +526,8 @@ class Ispim(Spim):
         self.image_overview = []                 # Create empty array size of tiles
         self.overview_set.set()
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
-                                      self.cfg.volume_z_um,self.cfg.z_step_size_um * 10, self.cfg.imaging_wavelengths,
+                                      self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
+                                      self.cfg.imaging_wavelengths,
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
         if self.overview_process != None:
@@ -551,17 +546,28 @@ class Ispim(Spim):
         self.overview_set.clear()
         self.start_pos = None
 
-        return reshaped, xtiles, ytiles
-        #return np.concatenate(np.array(self.image_overview)), xtiles, ytiles
+        return reshaped, xtiles, self.ztiles
 
     def create_overview(self):
 
         """Create overview image"""
+        self.stack = [i for i in self.stack if i is not None]           # Remove dropped tiles
         self.stack = np.array(self.stack, dtype=object)
-        downsampled = [x[0::10, 0::10] for x in self.stack[0:-1]]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
-        mip_stack = np.max(downsampled, axis=0)                      # Max projection
-        self.image_overview.append(mip_stack)
+        half_col = round(self.cfg.sensor_column_count/2)
+        # only use slitwidth pixels
+        slit_width = [x[:,half_col-self.cfg.slit_width_pix:half_col+self.cfg.slit_width_pix] for x in self.stack[0:-1]]
+        #downsampled = [x[0::10, 0::10] for x in slit_width]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
+        mipstack = [np.max(x, axis=1) for x in slit_width]             # Max projection
+        mipstack = np.array(mipstack)
 
+        # Reshape max
+        rows = mipstack[0].shape[0]
+        cols = mipstack.shape[0]
+        reshaped = np.zeros((rows, cols))
+        for y in range(0, cols):
+                reshaped[:, y] = mipstack[y]
+
+        self.image_overview.append(np.rot90(np.array(mipstack)))
 
     def start_livestream(self, wavelength: list):
         """Repeatedly play the daq waveforms and buffer incoming images."""
