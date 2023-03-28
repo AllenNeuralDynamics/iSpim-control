@@ -154,7 +154,6 @@ class Ispim(Spim):
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
-
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
@@ -415,12 +414,12 @@ class Ispim(Spim):
                 for p in transfer_processes:
                     p.join()
             self.log.info(f"Closing NI tasks")
-            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()
+            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()   # TODO: Should we just stop ni card anyways in case we want to image after?
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
                 self.lasers[str(wl)].disable()
-
+            self.active_lasers = None
             self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
@@ -446,18 +445,17 @@ class Ispim(Spim):
         self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths)),
                                                                                        filetype)
 
-        self.frame_grabber.start()
-
-        self.ni.start()
-        self.log.info(f"Starting scan.")
-        self.tigerbox.start_scan()
-
         if self.overview_process is not None:   # If doing an overview image, wait till previous tile is done
             if self.overview_process.is_alive():
                 self.overview_process.join()
         self.stack = None  # Clear stack buffer
         self.stack = [None]*(tile_count)  # Create buffer the size of stacked image
 
+        self.frame_grabber.start()
+
+        self.ni.start()
+        self.log.info(f"Starting scan.")
+        self.tigerbox.start_scan()
 
         prev_frame_count = 0
         curr_frame_count = 0
@@ -486,8 +484,9 @@ class Ispim(Spim):
         """Worker yielding the latest frame and frame id during acquisition"""
 
         while True:
-            if self.latest_frame is not None:
-                yield self.latest_frame, self.latest_frame_layer
+            if self.latest_frame is not None and self.active_lasers is not None:
+                yield self.latest_frame, self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1
+                if len(self.active_lasers) > 1 else -1]
 
             sleep(1/17)
 
@@ -536,21 +535,37 @@ class Ispim(Spim):
         # Create empty array size of overview image
         rows = np.shape(self.image_overview[0])[0]
         cols = self.image_overview[0].shape[1]
-        reshaped = np.zeros((xtiles*rows, ytiles*cols))
+        overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
+        overlap_rows = rows - overlap
+        reshaped = np.zeros(((xtiles*rows)-(overlap*(xtiles-1)), ytiles*cols))
 
         for x in range(0, xtiles):
             for y in range(0, ytiles):
-                reshaped[x * rows:(x + 1) * rows, y * cols:(y + 1) * cols] = self.image_overview[0]
+                if x == xtiles-1:
+                    reshaped[x * overlap_rows::, y * cols:(y + 1) * cols] = self.image_overview[0]
+                else:
+                    reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = self.image_overview[0][0:overlap_rows]
                 del self.image_overview[0]
 
         self.overview_set.clear()
+
+        # Move back to start position
+        self.sample_pose.move_absolute(x=self.start_pos['x'])
+        self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
+        self.sample_pose.move_absolute(y=self.start_pos['y'])
+        self.wait_to_stop('y', self.start_pos['y'])
+        self.sample_pose.move_absolute(z=self.start_pos['z'])
+        self.wait_to_stop('z', self.start_pos['z'])
+        self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
+
         self.start_pos = None
 
-        return reshaped, xtiles, self.ztiles
+        return reshaped, xtiles
 
     def create_overview(self):
 
-        """Create overview image"""
+        """Create overview image from a stack"""
+
         self.stack = [i for i in self.stack if i is not None]           # Remove dropped tiles
         self.stack = np.array(self.stack, dtype=object)
         half_col = round(self.cfg.sensor_column_count/2)
@@ -606,18 +621,15 @@ class Ispim(Spim):
         self.frame_grabber.start()
         self.ni.start()
         self.active_lasers.sort()
-        stream_id = 0
-        while self.livestream_enabled.is_set():
-            # switching between cameras each time data is pulled
-            stream_id = stream_id % len(self.stream_ids)
 
+        while self.livestream_enabled.is_set():
             if self.simulated:
                 sleep(1 / 16)
                 blank = np.zeros((self.cfg.sensor_row_count,
                                   self.cfg.sensor_column_count),
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
-                yield noise + blank, stream_id, 1
+                yield noise + blank, 1
 
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
@@ -631,12 +643,13 @@ class Ispim(Spim):
                 sleep((1 / self.cfg.daq_obj_kwds[
                     'livestream_frequency_hz']) * .1)
 
-                yield im, stream_id, self.active_lasers[layer_num + 1]
+                yield im, self.active_lasers[layer_num + 1]
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
         """
         # Bail early if this laser is already setup in the previously set mode.
+
         if self.active_lasers == wavelength:
             self.log.debug("Skipping daq setup. Laser already provisioned.")
             return
