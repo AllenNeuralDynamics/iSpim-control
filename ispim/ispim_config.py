@@ -260,3 +260,4 @@ class IspimConfig(SpimConfig):
     @property
     def tiles_per_second(self):
         return float(self.cfg['estimates']['tiles_per_second'])
+

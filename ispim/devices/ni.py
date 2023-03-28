@@ -82,6 +82,13 @@ class WaveformHardware:
                                                                                       edge=nidaqmx.constants.Edge.RISING)
             self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
+            # NOT SURE IF WE NEED THIS?
+            # "Commit" if we're not looping. Apparently, this has less overhead.
+            # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
+            print(channel_num)
+            self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
+            self.ao_task.control(TaskMode.TASK_COMMIT)
+
 
     def assign_waveforms(self, voltages_t):
         """Write analog and digital waveforms to device.
@@ -93,13 +100,6 @@ class WaveformHardware:
         assert type(voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
 
-        # NOT SURE IF WE NEED THIS?
-        # "Commit" if we're not looping. Apparently, this has less overhead.
-        # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
-
-        self.ao_task.out_stream.output_buf_size = 0
-        self.ao_task.out_stream.output_buf_size = len(voltages_t[1])  # Sets buffer to length of voltages
-        self.ao_task.control(TaskMode.TASK_COMMIT)
         # Write analog voltages.
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
 

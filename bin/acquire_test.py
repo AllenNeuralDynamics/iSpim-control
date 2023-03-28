@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     # Initializing NI Class
     ni = NI()
-    ni.configure_tasks(40)
+    ni.configure_tasks(30)
     ni.write_waveforms()
 
     # ni.configure_tasks(30)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     runtime, p, dm = framegrabber.setup_camera(runtime, p, cameras)
 
     # Initializing logging
-    FILEPATH = r"C:\Acquire Test\single_camera_test_02_09_23.log"
+    FILEPATH = r"C:\Acquire Test\single_camera_test_03_15_23.log"
     logging.getLogger().setLevel(logging.DEBUG)
     # Create a file handler.
     log_handler = logging.FileHandler(FILEPATH, 'w')
