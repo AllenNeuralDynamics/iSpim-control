@@ -37,10 +37,11 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
             self.p.video[stream_id].camera.settings.binning = 1
             self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
+            self.runtime.set_configuration(self.p)
             self.p.video[stream_id].camera.settings.offset = (int((2304 - tile_shape[0])/2), int((2304 - tile_shape[1])/2)) #TODO: Not hard code 2304
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
-
+            self.runtime.set_configuration(self.p)
         # self.p.video[0].camera.settings.readout_direction = Direction.Forward
         # self.p.video[1].camera.settings.readout_direction = Direction.Backward
 
@@ -55,11 +56,10 @@ class FrameGrabber:
         # TODO: Should this be looped over so we can configure both cameras at the same time?
         # is there ever a time where there would be different configurations for stack capture?
         dm = self.runtime.device_manager()
-        for stream_id, path in zip(range(0, len(self.cameras)), output_paths):
+        for stream_id in range(0, len(self.cameras)):
             self.log.info(f"Configuring camera.")
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
-            self.log.info(str(path.absolute()))
-            self.p.video[stream_id].storage.settings.filename = str(path.absolute())
+            self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
             self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                      line=2,
@@ -69,24 +69,6 @@ class FrameGrabber:
             # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
             self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
-
-    def setup_live(self):
-        """Setup for live view. Images are sent to trash and there is no max frame count"""
-
-        dm = self.runtime.device_manager()
-        for stream_id in range(0, len(self.cameras)):
-
-            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
-            self.p.video[stream_id].max_frame_count = 1000000
-            live_trigger = Trigger(enable='True',
-                                     line = 2,
-                                     event='FrameStart',
-                                     kind='Input',
-                                     edge='Rising')
-            # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(),live_trigger]
-            self.runtime.set_configuration(self.p)
-
 
     def get_exposure_time(self):
         exposure_time = [
@@ -99,6 +81,7 @@ class FrameGrabber:
         for video in self.p.video:
             video.camera.settings.exposure_time_us = exp_time
             self.log.debug(f'exposure set to: {video.camera.settings.exposure_time_us}')
+
         if live:
             self.stop()
             self.runtime.set_configuration(self.p)
@@ -147,7 +130,8 @@ class FrameGrabber:
     def stop(self):
         """Stop frame acquisition and file writing."""
         self.log.debug("Stopping cameras.")
-        #self.runtime.stop()
+
+        self.runtime.stop()
         self.runtime.abort()
 
     def close(self):

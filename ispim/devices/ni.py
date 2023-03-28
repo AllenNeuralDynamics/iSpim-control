@@ -27,7 +27,7 @@ class WaveformHardware:
         self.log = logging.getLogger(__name__)
         self.live = None
 
-    def configure(self, period_time: float, ao_names_to_channels: dict,
+    def configure(self, period_time: float, ao_names_to_channels: dict, channel_num : int = 1,
                   live: bool = False):
         """Configure the daq with tasks."""
         # Close any existing tasks if we are reconfiguring.
@@ -37,7 +37,7 @@ class WaveformHardware:
             self.stop()
             self.close()
         self.live = live
-        sample_count = round(self.update_freq * period_time)
+        sample_count = round(self.update_freq * period_time)    # sample_count for single channel. All the same sample per channel
         # Create AO task and initialize the required channels
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
@@ -49,7 +49,8 @@ class WaveformHardware:
             rate=self.update_freq,
             active_edge=Edge.RISING,
             sample_mode=AcqType.FINITE,
-            samps_per_chan=sample_count)
+            samps_per_chan=sample_count*channel_num)
+        # Takes into account the number of channels in ao task
         self.ao_task.triggers.start_trigger.retriggerable = True
         self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
             trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
@@ -75,16 +76,19 @@ class WaveformHardware:
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
                 trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
                 trigger_edge=Slope.RISING)
+            
             self.counter_task = nidaqmx.Task("counter_task")
             self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan('/Dev2/ctr0',
                                                                                       edge=nidaqmx.constants.Edge.RISING)
             self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 
-        # NOT SURE IF WE NEED THIS?
-        # "Commit" if we're not looping. Apparently, this has less overhead.
-        # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
-        self.ao_task.out_stream.output_buf_size = sample_count*4    #TODO: Should this not be hard coded?
-        self.ao_task.control(TaskMode.TASK_COMMIT)
+            # NOT SURE IF WE NEED THIS?
+            # "Commit" if we're not looping. Apparently, this has less overhead.
+            # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
+            print(channel_num)
+            self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
+            self.ao_task.control(TaskMode.TASK_COMMIT)
+
 
     def assign_waveforms(self, voltages_t):
         """Write analog and digital waveforms to device.
@@ -95,6 +99,7 @@ class WaveformHardware:
 
         assert type(voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
+
         # Write analog voltages.
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
 
@@ -127,7 +132,7 @@ class WaveformHardware:
 
         self.counter_task.stop()
         self.counter_task.wait_until_done(1)
-        # sleep(.5)
+        sleep(1)
         self.ao_task.stop()
 
     def restart(self):

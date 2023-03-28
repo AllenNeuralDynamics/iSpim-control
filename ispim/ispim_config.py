@@ -14,6 +14,7 @@ class IspimConfig(SpimConfig):
 
         # Note: these are mutable, so reloading the toml doesn't affect them.
         self.imaging_specs = self.cfg['imaging_specs']
+        self.experiment_specs = self.cfg['experiment_specs']
         self.stage_specs = self.cfg['stage_specs']
         self.tiger_specs = self.cfg['tiger_specs']
         self.laser_specs = self.cfg['channel_specs']
@@ -64,14 +65,38 @@ class IspimConfig(SpimConfig):
         return self.cfg['sample_pose_kwds']
 
     @property
+    def experimenters_name(self):
+        return self.experiment_specs['experimenters_name']
+
+    @experimenters_name.setter
+    def experimenters_name(self, name: str):
+        self.experiment_specs['experimenters_name'] = name
+
+    @property
+    def immersion_medium(self):
+        return self.experiment_specs['immersion_medium']
+
+    @immersion_medium.setter
+    def immersion_medium(self, medium : str):
+        self.experiment_specs['immersion_medium'] = medium
+
+    @property
+    def immersion_medium_refractive_index(self):
+        return self.experiment_specs['immersion_medium_refractive_index']
+
+    @immersion_medium_refractive_index.setter
+    def immersion_medium_ri(self, ri: float):
+        self.experiment_specs['immersion_medium_refractive_index'] = ri
+
+    @property
     def scan_direction(self):
         """Lightsheet scan direction: forward or backward."""
         return self.camera_specs['scan_direction']
 
     @scan_direction.setter
-    def scan_direction_left(self, dir:str):
-        # Lightsheet scan direction: forward or backward.
-        self.camera_specs['scan_direction'] = dir
+    def scan_direction(self, direction: str):
+        """Sets line rate of camera in us"""
+        self.camera_specs['scan_direction'] = direction
 
     @property
     def line_time(self):
@@ -141,7 +166,7 @@ class IspimConfig(SpimConfig):
         """Return the volumetric scan speed of the stage."""
         jitter_time_s = 0.01  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
-        scan_speed_mm_s = step_size_mm / (self.get_daq_cycle_time() + jitter_time_s)
+        scan_speed_mm_s = (step_size_mm / ((self.get_daq_cycle_time() * len(self.imaging_wavelengths))+ jitter_time_s))
         return scan_speed_mm_s
 
     # TODO: consider putting this in the parent class.

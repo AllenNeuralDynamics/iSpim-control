@@ -1,23 +1,28 @@
 [imaging_specs]
-local_storage_directory = "C:\\test_dispim"
+local_storage_directory = "C:\\dispim_test"
 subject_id = "test"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 3500.0
-volume_y_um = 5500.0
-volume_z_um = 5000
-laser_wavelengths = [ 405, 488, 561, 638,]
+volume_x_um = 800.0
+volume_y_um = 300.0
+volume_z_um = 10
+laser_wavelengths = [ 488, 561,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\test_dispim"
-filetype = "Zarr"
+external_storage_directory = "Y:\\dispim_test"
+filetype = "Tiff"
+
+[experiment_specs]
+experimenters_name = "Kevin Cao"
+immersion_medium = "PBS"
+immersion_medium_refractive_index = 1.33
 
 [tile_specs]
 x_field_of_view_um = 686.592
-y_field_of_view_um = 686.592
+y_field_of_view_um = 343.296
 row_count_pixels = 2304
-column_count_pixels = 2304
+column_count_pixels = 1152
 data_type = "uint16"
 
 [design_specs]
@@ -44,13 +49,10 @@ input_trigger_name = "PFI0"
 count_trigger_name = "PFI3"
 ao_counter_trigger_name = "PFI2"
 update_frequency_hz = 400000.0
-livestream_frequency_hz = 20
+livestream_frequency_hz = 30
 
 [tiger_controller_driver_kwds]
 com_port = "COM3"
-
-[filter_wheel_left_kwds]
-tiger_axis = 0
 
 [filter_wheel_kwds]
 tiger_axis = 1
@@ -108,27 +110,35 @@ x = "y"
 y = "z"
 z = "x"
 
+[channel_specs.405.coeffecients]
+1 = 3.218
+0 = -57.515
+
 [channel_specs.405.etl]
 offset = 1.75
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.565
+x_offset = 2.584
 x_amplitude = -0.01
-y_offset = 2.4
-y_amplitude = 1.4
+y_offset = 2.544
+y_amplitude = 1.112
 
 [channel_specs.405.kwds]
 port = "COMxx"
 
+[channel_specs.488.coeffecients]
+1 = 2.3125
+0 = -35.09
+
 [channel_specs.488.etl]
-offset = 1.75
-amplitude = 0
+offset = 2.5
+amplitude = 0.0
 
 [channel_specs.488.galvo]
-x_offset = 2.565
+x_offset = 2.572
 x_amplitude = -0.01
-y_offset = 2.4
+y_offset = 2.539
 y_amplitude = 1.15
 
 [channel_specs.488.kwds]
@@ -139,22 +149,26 @@ offset = 1.75
 amplitude = 0
 
 [channel_specs.561.galvo]
-x_offset = 2.56
+x_offset = 2.602
 x_amplitude = -0.02
-y_offset = 3.0
-y_amplitude = 1.4
+y_offset = 2.492
+y_amplitude = 1.172
 
 [channel_specs.561.kwds]
 port = "COMxx"
+
+[channel_specs.638.coeffecients]
+1 = 2.237
+0 = -29.349
 
 [channel_specs.638.etl]
 offset = 1.75
 amplitude = 0
 
 [channel_specs.638.galvo]
-x_offset = 2.57
+x_offset = 2.684
 x_amplitude = -0.01
-y_offset = 2.4
+y_offset = 2.83
 y_amplitude = 1.15
 
 [channel_specs.638.kwds]
