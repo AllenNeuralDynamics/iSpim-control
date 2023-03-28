@@ -153,7 +153,7 @@ class Ispim(Spim):
                                         card_address=31)
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
-        print('setup waveform_hardware', active_wavelength)
+
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
@@ -327,7 +327,6 @@ class Ispim(Spim):
                     self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                    print('stage speed', self.cfg.scan_speed_mm_s)
                     self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
@@ -652,7 +651,6 @@ class Ispim(Spim):
         """Configure system to image with the desired laser wavelength.
         """
         # Bail early if this laser is already setup in the previously set mode.
-        print('setup imaging', wavelength)
         if self.active_lasers == wavelength:
             self.log.info("Skipping daq setup. Laser already provisioned.")
             return
