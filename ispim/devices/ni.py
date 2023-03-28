@@ -85,6 +85,7 @@ class WaveformHardware:
             # NOT SURE IF WE NEED THIS?
             # "Commit" if we're not looping. Apparently, this has less overhead.
             # https://forums.ni.com/t5/LabVIEW/Deleting-channels-from-task-reconfiguring-task/m-p/1544490/highlight/true#M571637
+            print(channel_num)
             self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
 

@@ -153,7 +153,7 @@ class Ispim(Spim):
                                         card_address=31)
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
-
+        print('setup waveform_hardware', active_wavelength)
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_daq_cycle_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
@@ -327,6 +327,7 @@ class Ispim(Spim):
                     self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                     self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
+                    print('stage speed', self.cfg.scan_speed_mm_s)
                     self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
@@ -484,11 +485,13 @@ class Ispim(Spim):
         """Worker yielding the latest frame and frame id during acquisition"""
 
         while True:
-            if self.latest_frame is not None and self.active_lasers is not None:
-                yield self.latest_frame, self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1
-                if len(self.active_lasers) > 1 else -1]
+            if self.latest_frame is not None:
+                yield self.latest_frame, self.cfg.imaging_wavelengths[self.latest_frame_layer %
+                                                                      (len(self.cfg.imaging_wavelengths)) - 1]
 
             sleep(1/17)
+
+
 
     def framedata(self, stream):
 
@@ -649,9 +652,9 @@ class Ispim(Spim):
         """Configure system to image with the desired laser wavelength.
         """
         # Bail early if this laser is already setup in the previously set mode.
-
+        print('setup imaging', wavelength)
         if self.active_lasers == wavelength:
-            self.log.debug("Skipping daq setup. Laser already provisioned.")
+            self.log.info("Skipping daq setup. Laser already provisioned.")
             return
         live_status_msg = " in live mode" if self.livestream_enabled.is_set() else ""
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
