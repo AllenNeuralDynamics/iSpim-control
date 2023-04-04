@@ -40,7 +40,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 
         # Get peaks of previous sawtooth to connect th waveforms
         previous_peak = [0,0] if active_wavelengths.index(ch) ==0 \
-            else voltages_out[:2,(daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples)]
+            else voltages_out[:2,((daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples))-1]
 
         galvo_y, galvo_x = \
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
@@ -49,7 +49,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
                             period_samples, daq_cycle_samples, previous_peak)
 
         previous_etl = [0] if active_wavelengths.index(ch) ==0 \
-            else voltages_out[2,(daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples)]
+            else voltages_out[2,((daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples))-1]
 
         etl = etl_waveforms(etl_amplitude, etl_offset,
                                   exposure_samples, daq_cycle_samples, previous_etl)

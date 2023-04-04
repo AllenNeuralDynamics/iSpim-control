@@ -5,14 +5,12 @@
 #   option here.
 from datetime import timedelta, datetime
 import calendar
-from napari.qt.threading import thread_worker
 import logging
 import numpy as np
 from pathlib import Path
 from time import perf_counter, sleep, time
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
-from collections import deque
 from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
@@ -22,16 +20,13 @@ from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
-# TODO: consolidate these later.
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
-from math import ceil, floor
 from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
-from multiprocessing import Process
-from threading import Thread
-import cv2
+from calliphlox import DeviceState
+
 
 
 class Ispim(Spim):
@@ -188,6 +183,7 @@ class Ispim(Spim):
                                       self.cfg.volume_z_um,
                                       self.cfg.z_step_size_um,
                                       self.cfg.imaging_specs['laser_wavelengths'],
+                                      self.cfg.scan_speed_mm_s,
                                       self.cfg.tile_overlap_x_percent,
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
@@ -200,6 +196,7 @@ class Ispim(Spim):
                                  volume_z_um: float,
                                  z_step_size_um : float,
                                  channels: list,
+                                 scan_speed_mm_s,
                                  tile_overlap_x_percent: float,
                                  tile_overlap_y_percent: float,
                                  tile_prefix: str,
@@ -326,8 +323,9 @@ class Ispim(Spim):
                     self.tigerbox.move_absolute(x=self.stage_z_pos)
                     self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
-                    self.log.info(f"Setting scan speed in Z to {self.cfg.scan_speed_mm_s} mm/sec.")
-                    self.tigerbox.set_speed(X=self.cfg.scan_speed_mm_s)
+                    self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
+                    self.tigerbox.set_speed(X=scan_speed_mm_s)
+                    self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
 
                     self.log.info(f"Setting up lasers for active channels: {channels}")
                     self.setup_imaging_for_laser(channels)
@@ -440,10 +438,12 @@ class Ispim(Spim):
 
 
         self.log.info(f"Configuring framegrabber")
-        # self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths))-100,
-        #                                        filetype)
+        self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths)),
-                                                                                       filetype)
+                                                                                    filetype)
+        #TODO: Why doesn't this work?
+        # while self.frame_grabber.runtime.get_state() != DeviceState.Armed:  # Check if camera is configured
+        #     sleep(.05)
 
         if self.overview_process is not None:   # If doing an overview image, wait till previous tile is done
             if self.overview_process.is_alive():
@@ -452,7 +452,6 @@ class Ispim(Spim):
         self.stack = [None]*(tile_count)  # Create buffer the size of stacked image
 
         self.frame_grabber.start()
-
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan()
@@ -467,11 +466,22 @@ class Ispim(Spim):
                 prev_frame_count = curr_frame_count
                 self.log.info(f'Total frames: {tile_count*len(self.cfg.imaging_wavelengths)} '
                               f'-> Frames collected: {curr_frame_count}')
+            else:
+                print('No new frames')
             sleep(0.05)
+        self.log.info('NI task completed')
 
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
             self.overview_process.start()   # If doing an overview image, start down sampling and mips
+
+        self.log.info('Waiting for camera to finish')
+        start = time()
+        while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
+            sleep(.05)
+            if time() - start > 60:
+                self.log.info('Task timed out')
+                break
 
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
@@ -529,6 +539,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
+                                      ((self.cfg.z_step_size_um * 10/1000) / ((self.cfg.get_daq_cycle_time() * len(self.cfg.imaging_wavelengths)) +0.01 )),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
         if self.overview_process != None:
@@ -537,14 +548,17 @@ class Ispim(Spim):
         # Create empty array size of overview image
         rows = np.shape(self.image_overview[0])[0]
         cols = self.image_overview[0].shape[1]
+        #total_columns = self.image_overview[x].shape[1]
         overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
         overlap_rows = rows - overlap
         reshaped = np.zeros(((xtiles*rows)-(overlap*(xtiles-1)), ytiles*cols))
 
         for x in range(0, xtiles):
             for y in range(0, ytiles):
+                cols = self.image_overview[0].shape[1] # Account for lost frames
+                print(cols)
                 if x == xtiles-1:
-                    reshaped[x * overlap_rows::, y * cols:(y + 1) * cols] = self.image_overview[0]
+                    reshaped[x * overlap_rows:(x * overlap_rows)+rows, y * cols:(y + 1) * cols] = self.image_overview[0]
                 else:
                     reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = self.image_overview[0][0:overlap_rows]
                 del self.image_overview[0]
@@ -580,11 +594,10 @@ class Ispim(Spim):
         # Reshape max
         rows = mipstack[0].shape[0]
         cols = mipstack.shape[0]
-        reshaped = np.zeros((rows, cols))
-        for y in range(0, cols):
-                reshaped[:, y] = mipstack[y]
+        reshaped = np.ones((self.ztiles, rows))
+        reshaped[0:cols, :] = mipstack
+        self.image_overview.append(np.rot90(np.array(reshaped)))
 
-        self.image_overview.append(np.rot90(np.array(mipstack)))
 
     def start_livestream(self, wavelength: list):
         """Repeatedly play the daq waveforms and buffer incoming images."""
