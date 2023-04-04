@@ -36,6 +36,8 @@ delay_time = 0
 rest_time = 0.004
 exposure_time = 0.025
 line_time_us = 10.850694444444445
+pre_buffer_time = 0.004
+post_buffer_time = 0.002
 
 [daq_ao_names_to_channels]
 galvo_y = 0

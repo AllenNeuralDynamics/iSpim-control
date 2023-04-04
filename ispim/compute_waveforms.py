@@ -45,19 +45,19 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
                             galvo_y_amplitude, galvo_y_offset,
                             time_samples, exposure_samples,
-                            period_samples, previous_peak)
+                            period_samples, previous_peak, pre_buffer_samples, post_buffer_samples)
 
         previous_etl = [0] if active_wavelengths.index(ch) == 0 \
             else voltages_out[2,(period_samples*active_wavelengths.index(ch))-(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))]
 
         etl = etl_waveforms(etl_amplitude, etl_offset,
-                                  exposure_samples, period_samples, previous_etl)
+                                  exposure_samples, period_samples, previous_etl, pre_buffer_samples, post_buffer_samples)
         camera_left = \
-            camera_waveforms(exposure_samples, period_samples)
+            camera_waveforms(exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples)
         # laser signals arrive in dict, keyed by wavelength in string form.
         laser_signals_dict =\
             laser_waveforms(cfg.laser_specs, ch,
-                            exposure_samples, period_samples)
+                            exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples)
         # organize signals by name.
         waveforms = \
         {
@@ -89,7 +89,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
             voltages_out = np.concatenate((voltages_out, voltages_t[:,period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples):]), axis=1)
 
 
-    t = np.linspace(0, len(active_wavelengths) * daq_cycle_time, len(active_wavelengths) * period_samples,
+    t = np.linspace(0, len(active_wavelengths) * period_samples, len(active_wavelengths) * period_samples,
                     endpoint=False)
     return t, voltages_out
 
@@ -97,7 +97,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
                     galvo_y_amplitude, galvo_y_offset,
                     time_samples, exposure_samples,
-                    period_samples, previous_peak):
+                    period_samples, previous_peak,pre_buffer_samples,post_buffer_samples):
 
     """Generate galvo waveforms."""
     # Generate relevant galvo signal time chunks
@@ -123,7 +123,7 @@ def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
     return galvo_y, galvo_x
 
 def etl_waveforms(etl_amplitude, etl_offset,
-                  exposure_samples, period_samples, previous_etl):
+                  exposure_samples, period_samples, previous_etl, pre_buffer_samples, post_buffer_samples):
     """Generate etl waveforms."""
     # ETLs are not actually and are held at DC voltage to correct for axial chromatic shifts.
     etl = etl_amplitude * np.ones(period_samples) \
@@ -136,7 +136,7 @@ def etl_waveforms(etl_amplitude, etl_offset,
     return etl
 
 
-def camera_waveforms(pre_buffer_samples, exposure_samples, period_samples):
+def camera_waveforms(exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples):
     """Generate camera waveforms."""
     # Cameras are triggered with some offset specified as % of total exposure time. TODO make this a specified time... not %.
     # Each camera is additionally delay by some time specified by delay time.
@@ -151,7 +151,7 @@ def camera_waveforms(pre_buffer_samples, exposure_samples, period_samples):
 
 
 def laser_waveforms(laser_specs, active_wavelen: int,
-                    pre_buffer_samples, exposure_samples, period_samples):
+                    exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples):
     """Generate multiple laser waveforms with one active signal and the rest
     flatlined.
 
