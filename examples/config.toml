@@ -1,20 +1,20 @@
 [imaging_specs]
-local_storage_directory = "C:\\Rn28_Vglut1_Gad1"
-subject_id = "Rn28_Vglut1_Gad1"
+local_storage_directory = "C:\\dispim_test"
+subject_id = "dispim_test"
 tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 6000.0
+volume_x_um = 2000.0
 volume_y_um = 300.0
-volume_z_um = 4000
-laser_wavelengths = [ 405, 488, 638,]
+volume_z_um = 1000
+laser_wavelengths = [ 405,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\Rn28_Vglut1_Gad1"
+external_storage_directory = "Y:\\dispim_test"
 filetype = "Tiff"
 
 [experiment_specs]
-experimenters_name = "Kevin Cao"
+experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
 immersion_medium_refractive_index = 1.33
 

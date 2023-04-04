@@ -26,6 +26,7 @@ from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
 from calliphlox import DeviceState
+import cv2
 
 
 
@@ -164,14 +165,15 @@ class Ispim(Spim):
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
+        start = time()
         while self.sample_pose.is_moving():
             pos = self.sample_pose.get_position()
             distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 1.0:
+            if distance < 1.0 or time()-start > 60:
                 self.tigerbox.halt()
                 break
             else:
-                self.log.debug(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
+                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
                 sleep(0.1)
 
     def run_from_config(self):
@@ -539,7 +541,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10/1000) / ((self.cfg.get_daq_cycle_time() * len(self.cfg.imaging_wavelengths)) +0.01 )),
+                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_daq_cycle_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
         if self.overview_process != None:
@@ -556,7 +558,6 @@ class Ispim(Spim):
         for x in range(0, xtiles):
             for y in range(0, ytiles):
                 cols = self.image_overview[0].shape[1] # Account for lost frames
-                print(cols)
                 if x == xtiles-1:
                     reshaped[x * overlap_rows:(x * overlap_rows)+rows, y * cols:(y + 1) * cols] = self.image_overview[0]
                 else:
@@ -564,7 +565,10 @@ class Ispim(Spim):
                 del self.image_overview[0]
 
         self.overview_set.clear()
-
+        #TODO: How to now overwrite?
+        cv2.imwrite(
+            fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
+            reshaped)  # Save overview
         # Move back to start position
         self.sample_pose.move_absolute(x=self.start_pos['x'])
         self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
@@ -574,7 +578,7 @@ class Ispim(Spim):
         self.wait_to_stop('z', self.start_pos['z'])
         self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
 
-        self.start_pos = None
+        self.start_pos = None   # Reset start position
 
         return reshaped, xtiles
 

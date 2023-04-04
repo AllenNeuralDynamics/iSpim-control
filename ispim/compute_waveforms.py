@@ -38,15 +38,15 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 
         time_samples = np.linspace(0, 2*pi, period_samples)
 
-        # Get peaks of previous sawtooth to connect th waveforms
-        previous_peak = [0,0] if active_wavelengths.index(ch) ==0 \
+        # Get peaks of previous sawtooth to connect the waveforms
+        previous_galvos = [0,0] if active_wavelengths.index(ch) ==0 \
             else voltages_out[:2,((daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples))-1]
 
         galvo_y, galvo_x = \
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
                             galvo_y_amplitude, galvo_y_offset,
                             delay_samples, time_samples, exposure_samples,
-                            period_samples, daq_cycle_samples, previous_peak)
+                            period_samples, daq_cycle_samples, previous_galvos)
 
         previous_etl = [0] if active_wavelengths.index(ch) ==0 \
             else voltages_out[2,((daq_cycle_samples*active_wavelengths.index(ch))-(daq_cycle_samples-exposure_samples))-1]
