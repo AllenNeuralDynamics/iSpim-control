@@ -65,9 +65,12 @@ scan_direction = "BACKWARD"
 shutter_mode = "LIGHTSHEET"
 
 [tiger_specs.axes]
-etl_axis = "W"
-galvo_x_axis = "C"
-galvo_y_axis = "D"
+etl_left_axis = "W"
+etl_right_axis = "V"
+galvo_left_x_axis = "A"
+galvo_left_y_axis = "B"
+galvo_right_x_axis = "C"
+galvo_right_y_axis = "D"
 
 [channel_specs.405]
 driver = "Oxxius"
