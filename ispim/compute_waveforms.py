@@ -39,7 +39,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 
         # Get peaks of previous sawtooth to connect the waveforms
         previous_peak = [0,0] if active_wavelengths.index(ch) == 0 \
-            else voltages_out[:2,(period_samples*active_wavelengths.index(ch))-(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))]
+            else voltages_out[:2,(period_samples*active_wavelengths.index(ch))-rest_samples]
 
         galvo_y, galvo_x = \
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
@@ -48,7 +48,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
                             period_samples, previous_peak, pre_buffer_samples, post_buffer_samples)
 
         previous_etl = [0] if active_wavelengths.index(ch) == 0 \
-            else voltages_out[2,(period_samples*active_wavelengths.index(ch))-(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))]
+            else voltages_out[2,(period_samples*active_wavelengths.index(ch))-rest_samples]
 
         etl = etl_waveforms(etl_amplitude, etl_offset,
                                   exposure_samples, period_samples, previous_etl, pre_buffer_samples, post_buffer_samples)
@@ -76,21 +76,22 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
             voltages_t[index] = waveforms[name]
 
         # concatenate and add to the growing output voltage matrix along samples axis
-
-        if active_wavelengths.index(ch) != 0:
-            i = active_wavelengths.index(ch)
-            voltages_out[:,(period_samples*i)-(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples)):period_samples*i] = \
-                voltages_t[:,0:period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples)]
-            voltages_out = np.concatenate((voltages_out, voltages_t[:,period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples):]), axis = 1)
-
+        if active_wavelengths.index(ch) == 0:   # Remove beginning of first waveform
+            voltages_out = np.concatenate((voltages_out, voltages_t[:,rest_samples:]), axis=1)
 
         else:
+            i = active_wavelengths.index(ch)
+            voltages_out[:, (period_samples * i) - rest_samples:period_samples * i] = \
+                voltages_t[:, 0:rest_samples]
 
-            voltages_out = np.concatenate((voltages_out, voltages_t[:,period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples):]), axis=1)
+            if i != len(active_wavelengths) - 1:
+                voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:]), axis=1)
+            # else:
+            #     voltages_t[0][period_samples] = voltages_out[0][0]  # galvo snap back down
+            #     voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:period_samples+1]), axis=1)
 
-
-    t = np.linspace(0, len(active_wavelengths) * period_samples, len(active_wavelengths) * period_samples,
-                    endpoint=False)
+    end = period_samples if len(active_wavelengths) == 1 else (len(active_wavelengths) * period_samples)-(rest_samples+1)
+    t = np.linspace(0, len(active_wavelengths) * period_samples, len(voltages_out[0]), endpoint=False)
     return t, voltages_out
 
 

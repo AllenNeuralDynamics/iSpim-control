@@ -8,7 +8,7 @@ z_step_size_um = 0.209
 volume_x_um = 800.0
 volume_y_um = 300.0
 volume_z_um = 10
-laser_wavelengths = [ 488, 561,]
+laser_wavelengths = [ 405, 488, 638,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\dispim_test"
 filetype = "Tiff"
@@ -36,8 +36,8 @@ delay_time = 0
 rest_time = 0.004
 exposure_time = 0.025
 line_time_us = 10.850694444444445
-pre_buffer_time = 0.004
-post_buffer_time = 0.002
+pre_buffer_time = 0.0
+post_buffer_time = 0.0
 
 [daq_ao_names_to_channels]
 galvo_y = 0
@@ -117,14 +117,14 @@ z = "x"
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 1.75
+offset = 1.107
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.584
+x_offset = 2.655
 x_amplitude = -0.01
-y_offset = 2.544
-y_amplitude = 1.112
+y_offset = 2.573
+y_amplitude = 1.196
 
 [channel_specs.405.kwds]
 port = "COMxx"
@@ -134,14 +134,14 @@ port = "COMxx"
 0 = -35.09
 
 [channel_specs.488.etl]
-offset = 2.5
+offset = 1.751
 amplitude = 0.0
 
 [channel_specs.488.galvo]
-x_offset = 2.572
+x_offset = 2.666
 x_amplitude = -0.01
-y_offset = 2.539
-y_amplitude = 1.15
+y_offset = 2.576
+y_amplitude = 1.171
 
 [channel_specs.488.kwds]
 port = "COMxx"
@@ -168,10 +168,10 @@ offset = 1.75
 amplitude = 0
 
 [channel_specs.638.galvo]
-x_offset = 2.684
+x_offset = 2.667
 x_amplitude = -0.01
-y_offset = 2.83
-y_amplitude = 1.15
+y_offset = 2.543
+y_amplitude = 1.159
 
 [channel_specs.638.kwds]
 port = "COMxx"

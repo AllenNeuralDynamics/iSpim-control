@@ -200,7 +200,7 @@ class IspimConfig(SpimConfig):
 
     @pre_buffer_time.setter
     def pre_buffer_time(self, pre_buffer_time: float):
-        self.waveform_specs['pre_buffer_time'] = pre_buffer_time_time
+        self.waveform_specs['pre_buffer_time'] = pre_buffer_time
 
     @property
     def rest_time(self):
