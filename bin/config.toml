@@ -26,7 +26,8 @@ slit_width_pixels = 400
 backlash_reset_distance_um = 4
 
 [waveform_specs]
-delay_time = 0.00
+pre_buffer_time = 0.004
+post_buffer_time = 0.002
 rest_time = 0.004
 exposure_time = 0.025
 line_time_us = 10.850694444444445

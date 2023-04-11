@@ -31,19 +31,22 @@ class IspimConfig(SpimConfig):
     # wavelength. Otherwise, we would need to make @properties *per laser*.
 
     def get_period_time(self):
-        """Return the total waveform cycle time for a frame."""
-        return self.exposure_time + self.rest_time
+        """Return the total waveform period time for a frame."""
 
-    def get_daq_cycle_time(self):
-        """Return the total waveform cycle time for a frame."""
-        return self.get_period_time() + self.delay_time
+        pre_buffer = self.pre_buffer_time_s if self.pre_buffer_time_s > self.laser_pre_buffer_time_s else self.laser_pre_buffer_time_s
+        post_buffer = self.post_buffer_time_s if self.post_buffer_time_s > self.laser_post_buffer_time_s else self.laser_post_buffer_time_s
+        return pre_buffer+ self.exposure_time + post_buffer + self.rest_time
 
-    def get_delay_samples(self):
-        """Return the delay samples between the left and right views."""
-        return round(self.daq_update_freq * self.delay_time)
+    def get_pre_buffer_samples(self):
+        """Return the buffer samples before actuating the galvos."""
+        return round(self.daq_update_freq * self.pre_buffer_time_s)
+
+    def get_post_buffer_samples(self):
+        """Return the buffer samples after actuating the galvos."""
+        return round(self.daq_update_freq * self.post_buffer_time_s)
 
     def get_rest_samples(self):
-        """Return the rest samples between the left and right views."""
+        """Return the rest samples between interleaved channels."""
         return round(self.daq_update_freq * self.rest_time)
 
     def get_exposure_samples(self):
@@ -54,9 +57,13 @@ class IspimConfig(SpimConfig):
         """Return the exposure samples between the left and right views."""
         return round(self.daq_update_freq * self.get_period_time())
 
-    def get_daq_cycle_samples(self):
-        """Return the total waveform cycle time for a frame."""
-        return round(self.daq_update_freq * self.get_daq_cycle_time())
+    def get_laser_post_buffer_samples(self):
+        """Return the buffer samples of laser delay."""
+        return round(self.daq_update_freq * self.laser_post_buffer_time_s)
+
+    def get_laser_pre_buffer_samples(self):
+        """Return the buffer samples of laser delay."""
+        return round(self.daq_update_freq * self.laser_pre_buffer_time_s)
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
@@ -164,9 +171,9 @@ class IspimConfig(SpimConfig):
     @property
     def scan_speed_mm_s(self):
         """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.01  # 10 ms jitter time for stage pulses
+        jitter_time_s = 0.02  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
-        scan_speed_mm_s = (step_size_mm / (((self.get_daq_cycle_time()+0.03) * len(self.imaging_wavelengths))+ jitter_time_s))
+        scan_speed_mm_s = (step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
         return scan_speed_mm_s
 
     # TODO: consider putting this in the parent class.
@@ -187,18 +194,48 @@ class IspimConfig(SpimConfig):
     #   Handle Overlap correctly.
 
     @property
-    def delay_time(self):
-        """Return the delay time between the left and right views.
+    def post_buffer_time_s(self):
+        """Return the buffer time after actuating the galvos.
         :unit s"""
-        return self.waveform_specs['delay_time']
+        return self.waveform_specs['post_buffer_time_s']
 
-    @delay_time.setter
-    def delay_time(self, delay_time: float):
-        self.waveform_specs['delay_time'] = delay_time
+    @post_buffer_time_s.setter
+    def post_buffer_time_s(self, post_buffer_time_s: float):
+        self.waveform_specs['post_buffer_time_s'] = post_buffer_time_s
+
+    @property
+    def pre_buffer_time_s(self):
+        """Return the buffer time before actuating the galvos.
+        :unit s"""
+        return self.waveform_specs['pre_buffer_time_s']
+
+    @pre_buffer_time_s.setter
+    def pre_buffer_time_s(self, pre_buffer_time_s: float):
+        self.waveform_specs['pre_buffer_time_s'] = pre_buffer_time_s
+
+    @property
+    def laser_pre_buffer_time_s(self):
+        """Return the buffer time before actuating the galvos.
+        :unit s"""
+        return self.waveform_specs['laser_pre_buffer_time_s']
+
+    @laser_pre_buffer_time_s.setter
+    def laser_pre_buffer_time_s(self, pre_buffer_time_s: float):
+        self.waveform_specs['laser_pre_buffer_time_s'] = pre_buffer_time_s
+
+    @property
+    def laser_post_buffer_time_s(self):
+        """Return the buffer time before actuating the galvos.
+        :unit s"""
+        return self.waveform_specs['laser_post_buffer_time_s']
+
+    @laser_post_buffer_time_s.setter
+    def laser_post_buffer_time_s(self, post_buffer_time_s: float):
+        self.waveform_specs['laser_post_buffer_time_s'] = post_buffer_time_s
 
     @property
     def rest_time(self):
-        """Return the delay time between the left and right views.
+        """Return the rest time between interleaved channels.
         :unit s"""
         return self.waveform_specs['rest_time']
 

@@ -1,12 +1,10 @@
 from argparse import ArgumentParser
-from dispim.dispim_config import DispimConfig
-from dispim.compute_waveforms import generate_waveforms, plot_waveforms_to_pdf
 
 if __name__ == "__main__":
     # Argparse for a config file.
     parser = ArgumentParser()
     parser.add_argument("--config_path", type=str, default="config.toml")
-    parser.add_argument("--active_wavelength", type=int, default=[488, 561])
+    parser.add_argument("--active_wavelength", type=int, default=[488, 561, 638])
     # grab a config filepath.
     args = parser.parse_args()
     config = DispimConfig(args.config_path)
