@@ -41,6 +41,16 @@ etl_right = 5
 camera_left = 6
 camera_right = 7
 
+#galvo_y = 0
+#galvo_x = 2
+#etl = 4
+#camera = 6
+
+#galvo_y = 1
+#galvo_x = 3
+#etl = 5
+#camera = 7
+
 [daq_driver_kwds]
 dev_name = "Dev2"
 input_trigger_name = "PFI0"

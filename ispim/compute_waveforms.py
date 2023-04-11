@@ -23,7 +23,11 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     exposure_samples = cfg.get_exposure_samples()
     rest_samples = cfg.get_rest_samples()
     period_samples = cfg.get_period_samples()
+    laser_pre_buffer_samples = cfg.get_laser_pre_buffer_samples()
+    laser_post_buffer_samples = cfg.get_laser_post_buffer_samples()
     active_wavelengths.sort()
+
+
 
     for ch in active_wavelengths:
 
@@ -45,19 +49,20 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
                             galvo_y_amplitude, galvo_y_offset,
                             time_samples, exposure_samples,
-                            period_samples, previous_peak, pre_buffer_samples, post_buffer_samples)
+                            period_samples, previous_peak, pre_buffer_samples, post_buffer_samples, rest_samples)
 
         previous_etl = [0] if active_wavelengths.index(ch) == 0 \
             else voltages_out[2,(period_samples*active_wavelengths.index(ch))-rest_samples]
 
         etl = etl_waveforms(etl_amplitude, etl_offset,
-                                  exposure_samples, period_samples, previous_etl, pre_buffer_samples, post_buffer_samples)
+                                  exposure_samples, period_samples, previous_etl, rest_samples)
         camera_left = \
-            camera_waveforms(exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples)
+            camera_waveforms(exposure_samples, pre_buffer_samples, period_samples, rest_samples)
         # laser signals arrive in dict, keyed by wavelength in string form.
         laser_signals_dict =\
             laser_waveforms(cfg.laser_specs, ch,
-                            exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples)
+                            exposure_samples, period_samples, rest_samples, pre_buffer_samples,
+                            laser_pre_buffer_samples, laser_post_buffer_samples)
         # organize signals by name.
         waveforms = \
         {
@@ -84,13 +89,12 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
             voltages_out[:, (period_samples * i) - rest_samples:period_samples * i] = \
                 voltages_t[:, 0:rest_samples]
 
-            if i != len(active_wavelengths) - 1:
-                voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:]), axis=1)
+            #if i != len(active_wavelengths) - 1:
+            voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:]), axis=1)
             # else:
             #     voltages_t[0][period_samples] = voltages_out[0][0]  # galvo snap back down
             #     voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:period_samples+1]), axis=1)
-
-    end = period_samples if len(active_wavelengths) == 1 else (len(active_wavelengths) * period_samples)-(rest_samples+1)
+    #end = period_samples if len(active_wavelengths) == 1 else (len(active_wavelengths) * period_samples)-(rest_samples+1)
     t = np.linspace(0, len(active_wavelengths) * period_samples, len(voltages_out[0]), endpoint=False)
     return t, voltages_out
 
@@ -98,14 +102,13 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
                     galvo_y_amplitude, galvo_y_offset,
                     time_samples, exposure_samples,
-                    period_samples, previous_peak,pre_buffer_samples,post_buffer_samples):
+                    period_samples, previous_peak,pre_buffer_samples,post_buffer_samples, rest_samples):
 
     """Generate galvo waveforms."""
     # Generate relevant galvo signal time chunks
     # Sawtooth duty cycle is adjusted to snapback slowly over the specified rest time
     # x-axis galvos correct for MEMs mirror bow artifact. are quadratic with the y-axis galvo with some scaling amplitude and offset.
-    galvo_y = galvo_y_amplitude*sawtooth(time_samples, width = (pre_buffer_samples + exposure_samples + post_buffer_samples)/period_samples) + galvo_y_offset
-
+    galvo_y = galvo_y_amplitude*sawtooth(time_samples, width = (pre_buffer_samples+exposure_samples+post_buffer_samples)/period_samples) + galvo_y_offset
     # galvo x signal depends on its y signal value.
     galvo_x = abs((galvo_y - galvo_y_offset)**2)*galvo_x_amplitude + galvo_x_offset
     galvo_x[exposure_samples+post_buffer_samples:period_samples] = galvo_x[0]  # constant value
@@ -113,31 +116,31 @@ def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
     # Adding linear snapback to beginning of waveform for previous waveform
     start_pos = previous_peak[0]
     end_pos = galvo_y_offset - galvo_y_amplitude
-    snap_back = np.linspace(start_pos, end_pos, period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))
+    snap_back = np.linspace(start_pos, end_pos, rest_samples)
     galvo_y = np.concatenate((snap_back, galvo_y))
 
     start_pos = previous_peak[1]
     end_pos = galvo_x[0]
-    snap_back = np.linspace(start_pos, end_pos, period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))
+    snap_back = np.linspace(start_pos, end_pos, rest_samples)
     galvo_x = np.concatenate((snap_back,galvo_x))
 
     return galvo_y, galvo_x
 
 def etl_waveforms(etl_amplitude, etl_offset,
-                  exposure_samples, period_samples, previous_etl, pre_buffer_samples, post_buffer_samples):
+                  exposure_samples, period_samples, previous_etl, rest_samples):
     """Generate etl waveforms."""
     # ETLs are not actually and are held at DC voltage to correct for axial chromatic shifts.
     etl = etl_amplitude * np.ones(period_samples) \
                 + etl_offset
 
     # snap to next etl position as soon as possible
-    snapback = np.ones(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))*previous_etl
+    snapback = np.ones(rest_samples)*previous_etl
     etl = np.concatenate((snapback, etl))
 
     return etl
 
 
-def camera_waveforms(exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples):
+def camera_waveforms(exposure_samples, pre_buffer_samples, period_samples, rest_samples):
     """Generate camera waveforms."""
     # Cameras are triggered with some offset specified as % of total exposure time. TODO make this a specified time... not %.
     # Each camera is additionally delay by some time specified by delay time.
@@ -145,14 +148,15 @@ def camera_waveforms(exposure_samples, period_samples, pre_buffer_samples, post_
     camera_left = np.zeros(period_samples)
     camera_left[pre_buffer_samples:exposure_samples+pre_buffer_samples] = 5.0
     # Fake snapback to match other waveforms
-    snapback = np.zeros(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))
+    snapback = np.zeros(rest_samples)
     camera_left = np.concatenate((snapback,camera_left))
 
     return camera_left
 
 
 def laser_waveforms(laser_specs, active_wavelen: int,
-                    exposure_samples, period_samples, pre_buffer_samples, post_buffer_samples):
+                 exposure_samples, period_samples,rest_samples,
+                 pre_buffer_samples, laser_pre_buffer_samples, laser_post_buffer_samples):
     """Generate multiple laser waveforms with one active signal and the rest
     flatlined.
 
@@ -169,9 +173,10 @@ def laser_waveforms(laser_specs, active_wavelen: int,
             enable_voltage = laser_specs[ao_name]['enable_voltage']
         # Generate Laser Signal analog time series.
         laser_t = disable_voltage*np.ones(period_samples)
-        laser_t[pre_buffer_samples:exposure_samples+pre_buffer_samples] = enable_voltage
+        start = pre_buffer_samples-laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
+        laser_t[start:period_samples-abs(rest_samples-laser_post_buffer_samples)] = enable_voltage
         # Fake snapback to match other waveforms
-        snapback = np.zeros(period_samples - (pre_buffer_samples + exposure_samples + post_buffer_samples))
+        snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))
         lasers_t[ao_name] = laser_t
 

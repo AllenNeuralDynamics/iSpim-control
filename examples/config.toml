@@ -5,24 +5,24 @@ tile_prefix = "tile"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 800.0
-volume_y_um = 300.0
-volume_z_um = 10
-laser_wavelengths = [ 405, 488, 638,]
+volume_x_um = 8000.0
+volume_y_um = 800.0
+volume_z_um = 8000
+laser_wavelengths = [ 405, 488,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\dispim_test"
 filetype = "Tiff"
 
 [experiment_specs]
-experimenters_name = "Kevin Cao"
+experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
 immersion_medium_refractive_index = 1.33
 
 [tile_specs]
 x_field_of_view_um = 686.592
-y_field_of_view_um = 343.296
+y_field_of_view_um = 686.592
 row_count_pixels = 2304
-column_count_pixels = 1152
+column_count_pixels = 2304
 data_type = "uint16"
 
 [design_specs]
@@ -36,13 +36,15 @@ delay_time = 0
 rest_time = 0.004
 exposure_time = 0.025
 line_time_us = 10.850694444444445
-pre_buffer_time = 0.0
-post_buffer_time = 0.0
+pre_buffer_time_s = 0.001
+post_buffer_time_s = 0.001
+laser_pre_buffer_time_s = 0.001
+laser_post_buffer_time_s = 0.001
 
 [daq_ao_names_to_channels]
 galvo_y = 0
 galvo_x = 2
-etl = 5
+etl = 4
 camera = 6
 
 [daq_driver_kwds]
@@ -67,9 +69,12 @@ scan_direction = "BACKWARD"
 shutter_mode = "LIGHTSHEET"
 
 [tiger_specs.axes]
-etl_axis = "W"
-galvo_x_axis = "C"
-galvo_y_axis = "D"
+etl_left_axis = "V"
+etl_right_axis = "W"
+galvo_left_x_axis = "A"
+galvo_left_y_axis = "B"
+galvo_right_x_axis = "C"
+galvo_right_y_axis = "D"
 
 [channel_specs.405]
 driver = "Oxxius"
@@ -117,14 +122,14 @@ z = "x"
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 1.107
+offset = 1.846
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.655
+x_offset = 2.657
 x_amplitude = -0.01
-y_offset = 2.573
-y_amplitude = 1.196
+y_offset = 2.478
+y_amplitude = 0.187
 
 [channel_specs.405.kwds]
 port = "COMxx"
@@ -134,14 +139,14 @@ port = "COMxx"
 0 = -35.09
 
 [channel_specs.488.etl]
-offset = 1.751
+offset = 2.424
 amplitude = 0.0
 
 [channel_specs.488.galvo]
-x_offset = 2.666
+x_offset = 2.34
 x_amplitude = -0.01
-y_offset = 2.576
-y_amplitude = 1.171
+y_offset = 2.457
+y_amplitude = 1.244
 
 [channel_specs.488.kwds]
 port = "COMxx"
@@ -153,8 +158,8 @@ amplitude = 0
 [channel_specs.561.galvo]
 x_offset = 2.602
 x_amplitude = -0.02
-y_offset = 2.492
-y_amplitude = 1.172
+y_offset = 2.321
+y_amplitude = 0.0
 
 [channel_specs.561.kwds]
 port = "COMxx"
@@ -164,14 +169,14 @@ port = "COMxx"
 0 = -29.349
 
 [channel_specs.638.etl]
-offset = 1.75
+offset = 2.82
 amplitude = 0
 
 [channel_specs.638.galvo]
-x_offset = 2.667
+x_offset = 2.643
 x_amplitude = -0.01
-y_offset = 2.543
-y_amplitude = 1.159
+y_offset = 2.268
+y_amplitude = 1.296
 
 [channel_specs.638.kwds]
 port = "COMxx"

@@ -32,15 +32,18 @@ class IspimConfig(SpimConfig):
 
     def get_period_time(self):
         """Return the total waveform period time for a frame."""
-        return self.pre_buffer_time + self.exposure_time + self.post_buffer_time + self.rest_time
+
+        pre_buffer = self.pre_buffer_time_s if self.pre_buffer_time_s > self.laser_pre_buffer_time_s else self.laser_pre_buffer_time_s
+        post_buffer = self.post_buffer_time_s if self.post_buffer_time_s > self.laser_post_buffer_time_s else self.laser_post_buffer_time_s
+        return pre_buffer+ self.exposure_time + post_buffer + self.rest_time
 
     def get_pre_buffer_samples(self):
         """Return the buffer samples before actuating the galvos."""
-        return round(self.daq_update_freq * self.pre_buffer_time)
+        return round(self.daq_update_freq * self.pre_buffer_time_s)
 
     def get_post_buffer_samples(self):
         """Return the buffer samples after actuating the galvos."""
-        return round(self.daq_update_freq * self.post_buffer_time)
+        return round(self.daq_update_freq * self.post_buffer_time_s)
 
     def get_rest_samples(self):
         """Return the rest samples between interleaved channels."""
@@ -53,6 +56,14 @@ class IspimConfig(SpimConfig):
     def get_period_samples(self):
         """Return the exposure samples between the left and right views."""
         return round(self.daq_update_freq * self.get_period_time())
+
+    def get_laser_post_buffer_samples(self):
+        """Return the buffer samples of laser delay."""
+        return round(self.daq_update_freq * self.laser_post_buffer_time_s)
+
+    def get_laser_pre_buffer_samples(self):
+        """Return the buffer samples of laser delay."""
+        return round(self.daq_update_freq * self.laser_pre_buffer_time_s)
 
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
@@ -160,7 +171,7 @@ class IspimConfig(SpimConfig):
     @property
     def scan_speed_mm_s(self):
         """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.01  # 10 ms jitter time for stage pulses
+        jitter_time_s = 0.02  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
         scan_speed_mm_s = (step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
         return scan_speed_mm_s
@@ -183,24 +194,44 @@ class IspimConfig(SpimConfig):
     #   Handle Overlap correctly.
 
     @property
-    def post_buffer_time(self):
+    def post_buffer_time_s(self):
         """Return the buffer time after actuating the galvos.
         :unit s"""
-        return self.waveform_specs['post_buffer_time']
+        return self.waveform_specs['post_buffer_time_s']
 
-    @post_buffer_time.setter
-    def post_buffer_time(self, post_buffer_time: float):
-        self.waveform_specs['post_buffer_time'] = post_buffer_time
+    @post_buffer_time_s.setter
+    def post_buffer_time_s(self, post_buffer_time_s: float):
+        self.waveform_specs['post_buffer_time_s'] = post_buffer_time_s
 
     @property
-    def pre_buffer_time(self):
+    def pre_buffer_time_s(self):
         """Return the buffer time before actuating the galvos.
         :unit s"""
-        return self.waveform_specs['pre_buffer_time']
+        return self.waveform_specs['pre_buffer_time_s']
 
-    @pre_buffer_time.setter
-    def pre_buffer_time(self, pre_buffer_time: float):
-        self.waveform_specs['pre_buffer_time'] = pre_buffer_time
+    @pre_buffer_time_s.setter
+    def pre_buffer_time_s(self, pre_buffer_time_s: float):
+        self.waveform_specs['pre_buffer_time_s'] = pre_buffer_time_s
+
+    @property
+    def laser_pre_buffer_time_s(self):
+        """Return the buffer time before actuating the galvos.
+        :unit s"""
+        return self.waveform_specs['laser_pre_buffer_time_s']
+
+    @laser_pre_buffer_time_s.setter
+    def laser_pre_buffer_time_s(self, pre_buffer_time_s: float):
+        self.waveform_specs['laser_pre_buffer_time_s'] = pre_buffer_time_s
+
+    @property
+    def laser_post_buffer_time_s(self):
+        """Return the buffer time before actuating the galvos.
+        :unit s"""
+        return self.waveform_specs['laser_post_buffer_time_s']
+
+    @laser_post_buffer_time_s.setter
+    def laser_post_buffer_time_s(self, post_buffer_time_s: float):
+        self.waveform_specs['laser_post_buffer_time_s'] = post_buffer_time_s
 
     @property
     def rest_time(self):
