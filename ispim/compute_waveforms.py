@@ -27,10 +27,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     laser_post_buffer_samples = cfg.get_laser_post_buffer_samples()
     active_wavelengths.sort()
 
-
-
     for ch in active_wavelengths:
-
         # Create wavelength-dependent constants
         active_laser_specs = cfg.laser_specs[str(ch)]
         etl_offset = active_laser_specs['etl']['offset']
@@ -39,6 +36,8 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
         galvo_y_offset = active_laser_specs['galvo']['y_offset']
         galvo_x_amplitude = active_laser_specs['galvo']['x_amplitude']
         galvo_y_amplitude = active_laser_specs['galvo']['y_amplitude']
+
+
         time_samples = np.linspace(0, 2*pi, period_samples)
 
         # Get peaks of previous sawtooth to connect the waveforms
@@ -179,7 +178,6 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))
         lasers_t[ao_name] = laser_t
-
     return lasers_t
 
 

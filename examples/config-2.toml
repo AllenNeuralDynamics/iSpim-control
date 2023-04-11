@@ -36,8 +36,8 @@ galvo_y_right = 0
 galvo_y_left = 1
 galvo_x_right = 2
 galvo_x_left = 3
-etl_left = 4
-etl_right = 5
+etl_right = 4
+etl_left = 5
 camera_left = 6
 camera_right = 7
 
