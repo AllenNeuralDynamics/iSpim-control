@@ -234,15 +234,16 @@ class Ispim(Spim):
         # TODO, test network speeds?
         # TODO, check that networked storage is visible?
         # Log relevant info about this imaging run.
-        self.schema_log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}')
-        self.schema_log.info(f'local_storage_directoru, {local_storage_dir}')
-        self.schema_log.info(f'external_storage_directory, {img_storage_dir}')
-        self.schema_log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}')
-        self.schema_log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}')
-        self.schema_log.info(f'instrument_id, iSpim 1')
-        self.schema_log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}')
-        self.schema_log.info(f'chamber_immersion_refractive_index, '
-                             f'{self.cfg.immersion_medium_refractive_index}')
+        self.log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
+                      extra={'tags':['schema']})
+        self.log.info(f'local_storage_directory, {local_storage_dir}',extra={'tags':['schema']})
+        self.log.info(f'external_storage_directory, {img_storage_dir}',extra={'tags':['schema']})
+        self.log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}',extra={'tags':['schema']})
+        self.log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}',extra={'tags':['schema']})
+        self.log.info(f'instrument_id, iSpim 1')
+        self.log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}',extra={'tags':['schema']})
+        self.log.info(f'chamber_immersion_refractive_index, '
+                             f'{self.cfg.immersion_medium_refractive_index}',extra={'tags':['schema']})
 
         self.log.info(f"Total tiles: {self.total_tiles}.")
         self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
@@ -351,29 +352,31 @@ class Ispim(Spim):
                     #   collected strictly from the config.
 
                     # Logging for JSON schema
-                    self.schema_log.info(f'file_name, {filenames}')
-                    self.schema_log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers')  # size of pixels
-                    self.schema_log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers')
-                    self.schema_log.info(f'z_voxel_size, {z_step_size_um} micrometers')
-                    self.schema_log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'lightsheet_angle, 45 degrees')
+                    self.log.info(f'chamber_immersion_refractive_index, '
+                                  f'{self.cfg.immersion_medium_refractive_index}', extra={'tags': ['schema']})
+                    self.log.info(f'file_name, {filenames}', extra={'tags': ['schema']})
+                    self.log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers', extra={'tags': ['schema']})  # size of pixels
+                    self.log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers', extra={'tags': ['schema']})
+                    self.log.info(f'z_voxel_size, {z_step_size_um} micrometers', extra={'tags': ['schema']})
+                    self.log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters', extra={'tags': ['schema']})
+                    self.log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters', extra={'tags': ['schema']})
+                    self.log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters', extra={'tags': ['schema']})
+                    self.log.info(f'lightsheet_angle, 45 degrees', extra={'tags': ['schema']})
 
                     for laser in self.active_lasers:
                         laser = str(laser)
-                        self.schema_log.info(f'channel_name, {laser}')
-                        self.schema_log.info(f'laser_wavelength, {laser} nanometers')
+                        self.log.info(f'channel_name, {laser}', extra={'tags': ['schema']})
+                        self.log.info(f'laser_wavelength, {laser} nanometers', extra={'tags': ['schema']})
                         laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(
                             laser) == 561 else \
                             f'{self.lasers[laser].get(Query.LaserCurrentSetting)} percent'  # TODO: convert to mW
-                        self.schema_log.info(f'laser_power: {laser_power}')
-                        self.schema_log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}')
+                        self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
+                        self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}', extra={'tags': ['schema']})
                         # Every variable in calculate waveforms
                         for key in self.cfg.laser_specs[laser]['etl']:
-                            self.schema_log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts')
+                            self.log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts', extra={'tags': ['schema']})
                         for key in self.cfg.laser_specs[laser]['galvo']:
-                            self.schema_log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts')
+                            self.log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts', extra={'tags': ['schema']})
 
                     # Convert to [mm] units for tigerbox.
                     slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
@@ -420,7 +423,7 @@ class Ispim(Spim):
             for wl, specs in self.cfg.laser_specs.items():
                 self.lasers[str(wl)].disable()
             self.active_lasers = None
-            self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
+            self.log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}', extra={'tags': ['schema']})
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
@@ -541,7 +544,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_daq_cycle_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
+                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_period_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
         if self.overview_process != None:
