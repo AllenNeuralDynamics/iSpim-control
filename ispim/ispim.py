@@ -25,7 +25,10 @@ from spim_core.devices.tiger_components import SamplePose
 from spim_core.processes.data_transfer import DataTransfer
 from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
 import os
-from calliphlox import DeviceState
+try:
+    from calliphlox import DeviceState
+except:
+    print('could not import calliphlox')
 import cv2
 
 
@@ -46,7 +49,8 @@ class Ispim(Spim):
         self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
-            self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
+            self.simulated else SimTiger(**self.cfg.tiger_obj_kwds,
+                                         build_config={'Motor Axes': ['X', 'Y', 'Z', 'V', 'W', 'A', 'B', 'C', 'D']})
         self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
@@ -85,10 +89,15 @@ class Ispim(Spim):
         self.overview_process = None
         self.overview_set = Event()
 
+        self.__sim_counter_count = 0
+
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
         #TODO: Intialize offset for shape
+        if self.simulated:
+            self.frame_grabber.runtime = Mock()
+            # self.frame_grabber.runtime.get_state.return_value = 0
 
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
@@ -106,7 +115,6 @@ class Ispim(Spim):
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
                                              cpx_line_interval[0])
-
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
         self.log.debug(f"Attempting to connect to lasers")
@@ -150,6 +158,9 @@ class Ispim(Spim):
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
+        if self.simulated:
+            self.ni.counter_task = Mock()
+            self.ni.counter_task.read = self.__sim_counter_read
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
@@ -158,6 +169,11 @@ class Ispim(Spim):
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
+
+    def __sim_counter_read(self):
+        count = self.__sim_counter_count
+        self.__sim_counter_count += 1
+        return count
 
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
@@ -482,11 +498,12 @@ class Ispim(Spim):
 
         self.log.info('Waiting for camera to finish')
         start = time()
-        while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-            sleep(.05)
-            if time() - start > 60:
-                self.log.info('Task timed out')
-                break
+        if not self.simulated:
+            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
+                sleep(.05)
+                if time() - start > 60:
+                    self.log.info('Task timed out')
+                    break
 
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
@@ -508,11 +525,12 @@ class Ispim(Spim):
 
 
     def framedata(self, stream):
-
+        if self.simulated:
+            return 1
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
             f = next(a.frames())
-            self.latest_frame= f.data().squeeze().copy()
+            self.latest_frame = f.data().squeeze().copy()
             self.latest_frame_layer = f.metadata().frame_id
 
             if self.overview_set.is_set():
