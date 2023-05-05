@@ -15,7 +15,6 @@ from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
-from ispim.devices.oxxius_components import LaserHub
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
@@ -23,7 +22,7 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from spim_core.processes.data_transfer import DataTransfer
-from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
+from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP, OxxiusLaser
 import os
 try:
     from calliphlox import DeviceState
@@ -122,8 +121,8 @@ class Ispim(Spim):
         self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
-            self.lasers[wl] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
-                else Mock(LaserHub)
+            self.lasers[wl] = OxxiusLaser(self.ser, specs['prefix']) if not self.simulated \
+                else Mock(OxxiusLaser)
             # TODO: Needs to not be hardcoded and find out what commands work for 561
             if int(wl) != 561:
                 self.lasers[wl].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
@@ -131,8 +130,8 @@ class Ispim(Spim):
                 self.lasers[wl].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
                 self.lasers[wl].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
 
-        self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
-            else Mock(LaserHub)  # Set up main right and left laser with empty prefix
+        self.lasers['main'] = OxxiusLaser(self.ser) if not self.simulated \
+            else Mock(OxxiusLaser)  # Set up main right and left laser with empty prefix
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
