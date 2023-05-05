@@ -67,8 +67,6 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    args.config = r'C:\Users\Administrator\Projects\ispim-control\examples\config.toml'
-    # FIXME: on windows, path strings need to be raw strings.
     instrument = Ispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu
