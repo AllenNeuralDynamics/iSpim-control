@@ -15,7 +15,7 @@ from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
-from ispim.devices.oxxius_components import LaserHub
+from oxxius_laser import OxxiusLaser
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
@@ -114,8 +114,9 @@ class Ispim(Spim):
         self.log.debug(f"Successfully connected to lasers")
 
         for wl, specs in self.cfg.laser_specs.items():
-            self.lasers[wl] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
-                else Mock(LaserHub)
+
+            self.lasers[wl] = OxxiusLaser(self.ser, specs['prefix']) if not self.simulated \
+                else Mock(OxxiusLaser)
             # TODO: Needs to not be hardcoded and find out what commands work for 561
             if int(wl) != 561:
                 self.lasers[wl].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
@@ -123,8 +124,8 @@ class Ispim(Spim):
                 self.lasers[wl].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
                 self.lasers[wl].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
 
-        self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
-            else Mock(LaserHub)  # Set up main right and left laser with empty prefix
+        self.lasers['main'] = OxxiusLaser(self.ser) if not self.simulated \
+            else Mock(OxxiusLaser)  # Set up main right and left laser with empty prefix
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -441,7 +442,6 @@ class Ispim(Spim):
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
 
-
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths)),
@@ -484,7 +484,7 @@ class Ispim(Spim):
         start = time()
         while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
             sleep(.05)
-            if time() - start > 60:
+            if time() - start > 10:
                 self.log.info('Task timed out')
                 break
 
