@@ -15,7 +15,6 @@ from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
-from oxxius_laser import OxxiusLaser
 from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
@@ -23,7 +22,7 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from spim_core.processes.data_transfer import DataTransfer
-from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
+from laser_base import Laser
 import os
 from calliphlox import DeviceState
 import cv2
@@ -109,23 +108,11 @@ class Ispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-        self.log.debug(f"Attempting to connect to lasers")
-        self.ser = Serial(port='COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
-        self.log.debug(f"Successfully connected to lasers")
 
+        self.log.debug(f"Setting up lasers")
         for wl, specs in self.cfg.laser_specs.items():
-
-            self.lasers[wl] = OxxiusLaser(self.ser, specs['prefix']) if not self.simulated \
-                else Mock(OxxiusLaser)
-            # TODO: Needs to not be hardcoded and find out what commands work for 561
-            if int(wl) != 561:
-                self.lasers[wl].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
-                self.log.debug(f"Setting up {specs['color']} laser.")
-                self.lasers[wl].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
-                self.lasers[wl].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
-
-        self.lasers['main'] = OxxiusLaser(self.ser) if not self.simulated \
-            else Mock(OxxiusLaser)  # Set up main right and left laser with empty prefix
+            self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
+            self.log.debug(f"Successfully connected to {wl} laser")
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -368,9 +355,7 @@ class Ispim(Spim):
                         laser = str(laser)
                         self.log.info(f'channel_name, {laser}', extra={'tags': ['schema']})
                         self.log.info(f'laser_wavelength, {laser} nanometers', extra={'tags': ['schema']})
-                        laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(
-                            laser) == 561 else \
-                            f'{self.lasers[laser].get(Query.LaserCurrentSetting)} percent'  # TODO: convert to mW
+                        laser_power = f'{self.lasers[laser].get_intensity()}'
                         self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
                         self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}', extra={'tags': ['schema']})
                         # Every variable in calculate waveforms
@@ -701,5 +686,4 @@ class Ispim(Spim):
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
-        self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
         super().close()

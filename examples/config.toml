@@ -76,9 +76,19 @@ galvo_left_y_axis = "B"
 galvo_right_x_axis = "C"
 galvo_right_y_axis = "D"
 
+
+[channel_specs.main]
+driver = "oxxius_laser"
+laser = "Splitter"
+intensity_mode = 'current'
+modulation_mode = 'digital'
+
+
 [channel_specs.405]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
+intensity_mode = 'current'
+modulation_mode = 'digital'
 color = "purple"
 filter_index = 1
 ao_channel = 12
@@ -88,6 +98,8 @@ enable_voltage = 5.0
 [channel_specs.488]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
+intensity_mode = 'current'
+modulation_mode = 'digital'
 color = "blue"
 filter_index = 2
 ao_channel = 11
@@ -97,6 +109,8 @@ enable_voltage = 5.0
 [channel_specs.561]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
+intensity_mode = 'power'
+modulation_mode = 'digital'
 color = "green"
 filter_index = 3
 ao_channel = 9
@@ -106,6 +120,8 @@ enable_voltage = 5.0
 [channel_specs.638]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
+intensity_mode = 'current'
+modulation_mode = 'digital'
 color = "red"
 filter_index = 4
 ao_channel = 8
@@ -131,9 +147,11 @@ x_amplitude = -0.01
 y_offset = 2.42
 y_amplitude = 1.238
 
+[channel_specs.main.kwds]
+port = 'COM7'
+
 [channel_specs.405.kwds]
 prefix = "L6"
-port = "COMxx"
 
 [channel_specs.488.coeffecients]
 1 = 2.3125
@@ -151,7 +169,6 @@ y_amplitude = 1.244
 
 [channel_specs.488.kwds]
 prefix = "L5"
-port = "COMxx"
 
 [channel_specs.561.etl]
 offset = 3.012
@@ -165,7 +182,6 @@ y_amplitude = 1.212
 
 [channel_specs.561.kwds]
 prefix = "L3"
-port = "COMxx"
 
 [channel_specs.638.coeffecients]
 1 = 2.237
@@ -183,4 +199,3 @@ y_amplitude = 1.149
 
 [channel_specs.638.kwds]
 prefix = "L1"
-port = "COMxx"
