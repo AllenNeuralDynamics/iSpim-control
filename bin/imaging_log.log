@@ -1,0 +1,1744 @@
+2023-04-25,08:50:02.873 ERROR spim_core.spim_base.Ispim: Could not record git hash of asyncio.
+2023-04-25,08:50:02.874 ERROR spim_core.spim_base.Ispim: Could not record git hash of collections.
+2023-04-25,08:50:02.874 ERROR spim_core.spim_base.Ispim: Could not record git hash of concurrent.
+2023-04-25,08:50:02.875 ERROR spim_core.spim_base.Ispim: Could not record git hash of ctypes.
+2023-04-25,08:50:02.875 ERROR spim_core.spim_base.Ispim: Could not record git hash of curses.
+2023-04-25,08:50:02.876 ERROR spim_core.spim_base.Ispim: Could not record git hash of dbm.
+2023-04-25,08:50:02.876 ERROR spim_core.spim_base.Ispim: Could not record git hash of distutils.
+2023-04-25,08:50:02.877 ERROR spim_core.spim_base.Ispim: Could not record git hash of email.
+2023-04-25,08:50:02.877 ERROR spim_core.spim_base.Ispim: Could not record git hash of encodings.
+2023-04-25,08:50:02.877 ERROR spim_core.spim_base.Ispim: Could not record git hash of ensurepip.
+2023-04-25,08:50:02.878 ERROR spim_core.spim_base.Ispim: Could not record git hash of html.
+2023-04-25,08:50:02.878 ERROR spim_core.spim_base.Ispim: Could not record git hash of http.
+2023-04-25,08:50:02.879 ERROR spim_core.spim_base.Ispim: Could not record git hash of idlelib.
+2023-04-25,08:50:02.879 ERROR spim_core.spim_base.Ispim: Could not record git hash of importlib.
+2023-04-25,08:50:02.880 ERROR spim_core.spim_base.Ispim: Could not record git hash of json.
+2023-04-25,08:50:02.880 ERROR spim_core.spim_base.Ispim: Could not record git hash of lib2to3.
+2023-04-25,08:50:02.881 ERROR spim_core.spim_base.Ispim: Could not record git hash of logging.
+2023-04-25,08:50:02.881 ERROR spim_core.spim_base.Ispim: Could not record git hash of msilib.
+2023-04-25,08:50:02.882 ERROR spim_core.spim_base.Ispim: Could not record git hash of multiprocessing.
+2023-04-25,08:50:02.882 ERROR spim_core.spim_base.Ispim: Could not record git hash of pydoc_data.
+2023-04-25,08:50:02.882 ERROR spim_core.spim_base.Ispim: Could not record git hash of sqlite3.
+2023-04-25,08:50:02.883 ERROR spim_core.spim_base.Ispim: Could not record git hash of test.
+2023-04-25,08:50:02.883 ERROR spim_core.spim_base.Ispim: Could not record git hash of tkinter.
+2023-04-25,08:50:02.884 ERROR spim_core.spim_base.Ispim: Could not record git hash of turtledemo.
+2023-04-25,08:50:02.884 ERROR spim_core.spim_base.Ispim: Could not record git hash of unittest.
+2023-04-25,08:50:02.885 ERROR spim_core.spim_base.Ispim: Could not record git hash of urllib.
+2023-04-25,08:50:02.885 ERROR spim_core.spim_base.Ispim: Could not record git hash of venv.
+2023-04-25,08:50:02.886 ERROR spim_core.spim_base.Ispim: Could not record git hash of wsgiref.
+2023-04-25,08:50:02.886 ERROR spim_core.spim_base.Ispim: Could not record git hash of xml.
+2023-04-25,08:50:02.886 ERROR spim_core.spim_base.Ispim: Could not record git hash of xmlrpc.
+2023-04-25,08:50:02.887 ERROR spim_core.spim_base.Ispim: Could not record git hash of zoneinfo.
+2023-04-25,08:50:02.890 DEBUG spim_core.spim_base.Ispim.schema: tigerasi on branch refs/heads/main at 646ad140db6f13d5e71ef461d128a4ae15575e5d
+2023-04-25,08:50:02.897 ERROR spim_core.spim_base.Ispim.schema: tigerasi has uncommitted changes.
+2023-04-25,08:50:02.899 DEBUG spim_core.spim_base.Ispim.schema: obis_laser on branch refs/heads/main at bbb01d7b8c1afe8dd754fe7246e9dfc2cde5cf6d
+2023-04-25,08:50:02.903 DEBUG spim_core.spim_base.Ispim.schema: vortran_laser on branch refs/heads/main at 43fe7b61db880fd3d48f7af0d4b91b7f14f7b345
+2023-04-25,08:50:02.906 ERROR spim_core.spim_base.Ispim.schema: vortran_laser has uncommitted changes.
+2023-04-25,08:50:02.908 DEBUG spim_core.spim_base.Ispim.schema: ispim on branch refs/heads/dev/MindScope_version at a9424c94603becbd162033fd18aa39ff5c65b03d
+2023-04-25,08:50:02.912 ERROR spim_core.spim_base.Ispim.schema: ispim has uncommitted changes.
+2023-04-25,08:50:02.914 DEBUG spim_core.spim_base.Ispim.schema: calliphlox on branch refs/heads/main at 4fe49de7e997e927487363440d66e7c963f3f9d6
+2023-04-25,08:50:02.945 ERROR spim_core.spim_base.Ispim: Could not record git hash of pywin.
+2023-04-25,08:50:02.947 WARNING spim_core.spim_base.Ispim: Checking disk space not implemented.
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: session_start_time, 2023-04-25T08:50:02
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: local_storage_directoru, C:\dispim_test
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: external_storage_directory, C:\dispim\test-ID_2023-04-25_08-50-02\micr
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: specimen_id,test
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: subject_id,test
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: instrument_id, iSpim 1
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: chamber_immersion_medium, PBS
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim.schema: chamber_immersion_refractive_index, 1.33
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim: Total tiles: 958.
+2023-04-25,08:50:02.947 INFO spim_core.spim_base.Ispim: Total disk space: 4.74[GB].
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Time Esimate: 0.00 days. Imaging run should finish after Tuesday, 25 Apr, 2023 at 08:51 AM.
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Desired dimensions: 800.0[um] x 300.0[um] x 100.0[um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Actual dimensions: 1270.2[um] x 343.3[um] x 99.9[um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: X grid step: 583.6032 [um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Y grid step: 291.8016 [um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Z grid step: 0.209 [um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: Z grid step: 0.209 [um]
+2023-04-25,08:50:02.948 INFO spim_core.spim_base.Ispim: xtiles: 2, ytiles: 1, ztiles: 479
+2023-04-25,08:50:02.948 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:02.965 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771149 212966.1 \r\n'
+2023-04-25,08:50:02.965 INFO spim_core.spim_base.Ispim: Scan start position set to {'z': 330638.0, 'x': 771149.0, 'y': 212966.1}
+2023-04-25,08:50:02.965 INFO spim_core.spim_base.Ispim: Setting speed in Y to 1.0 mm/sec
+2023-04-25,08:50:02.965 DEBUG tigerasi.tiger_controller: Sending: 'S Z=1.0\r'
+2023-04-25,08:50:02.971 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:02.971 INFO spim_core.spim_base.Ispim: Moving to Y = 212966.1.
+2023-04-25,08:50:02.971 DEBUG tigerasi.tiger_controller: Sending: 'M Z=212966\r'
+2023-04-25,08:50:02.978 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:02.993 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:02.996 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:02.996 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.013 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771149 213036.8 \r\n'
+2023-04-25,08:50:03.013 INFO spim_core.spim_base.Ispim: Stage is still moving! y = 213036.8 -> 212966.1
+2023-04-25,08:50:03.114 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.117 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.117 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.134 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771149 212967.0 \r\n'
+2023-04-25,08:50:03.134 DEBUG tigerasi.tiger_controller: Sending: '\\\r'
+2023-04-25,08:50:03.135 DEBUG tigerasi.tiger_controller: Reply: ':A\r\n'
+2023-04-25,08:50:03.135 DEBUG spim_core.spim_base.Ispim: Setting speed in X to 1.0 mm/sec
+2023-04-25,08:50:03.135 DEBUG tigerasi.tiger_controller: Sending: 'S Y=1.0\r'
+2023-04-25,08:50:03.141 DEBUG tigerasi.tiger_controller: Reply: '\x15:A \r\n'
+2023-04-25,08:50:03.142 DEBUG spim_core.spim_base.Ispim: Moving to X = 771149.
+2023-04-25,08:50:03.142 DEBUG tigerasi.tiger_controller: Sending: 'M Y=771149\r'
+2023-04-25,08:50:03.149 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:03.164 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.166 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.166 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.183 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771179 212973.2 \r\n'
+2023-04-25,08:50:03.183 INFO spim_core.spim_base.Ispim: Stage is still moving! x = 771179.0 -> 771149.0
+2023-04-25,08:50:03.284 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.286 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.286 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.303 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771527 212975.2 \r\n'
+2023-04-25,08:50:03.303 INFO spim_core.spim_base.Ispim: Stage is still moving! x = 771527.0 -> 771149.0
+2023-04-25,08:50:03.403 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.405 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.405 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.422 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771146 212975.2 \r\n'
+2023-04-25,08:50:03.422 INFO spim_core.spim_base.Ispim: Stage is still moving! x = 771146.0 -> 771149.0
+2023-04-25,08:50:03.523 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.529 DEBUG tigerasi.tiger_controller: Reply: 'N\r\n'
+2023-04-25,08:50:03.529 DEBUG spim_core.spim_base.Ispim: Setting speed in Z to 1.0 mm/sec
+2023-04-25,08:50:03.530 DEBUG tigerasi.tiger_controller: Sending: 'S X=1.0\r'
+2023-04-25,08:50:03.536 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:03.536 DEBUG spim_core.spim_base.Ispim: Applying extra move to take out backlash.
+2023-04-25,08:50:03.536 DEBUG tigerasi.tiger_controller: Sending: 'M X=-40\r'
+2023-04-25,08:50:03.542 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:03.542 INFO spim_core.spim_base.Ispim: Moving to Z = 330638.0.
+2023-04-25,08:50:03.542 DEBUG tigerasi.tiger_controller: Sending: 'M X=330638.0\r'
+2023-04-25,08:50:03.550 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:03.564 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.566 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.566 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.583 DEBUG tigerasi.tiger_controller: Reply: ':A 330634 771149 212975.2 \r\n'
+2023-04-25,08:50:03.583 INFO spim_core.spim_base.Ispim: Stage is still moving! z = 330634.0 -> 330638.0
+2023-04-25,08:50:03.683 DEBUG tigerasi.tiger_controller: Sending: '/\r'
+2023-04-25,08:50:03.685 DEBUG tigerasi.tiger_controller: Reply: 'B\r\n'
+2023-04-25,08:50:03.685 DEBUG tigerasi.tiger_controller: Sending: 'W X Y Z\r'
+2023-04-25,08:50:03.702 DEBUG tigerasi.tiger_controller: Reply: ':A 330638 771149 212975.2 \r\n'
+2023-04-25,08:50:03.702 DEBUG tigerasi.tiger_controller: Sending: '\\\r'
+2023-04-25,08:50:03.703 DEBUG tigerasi.tiger_controller: Reply: ':A\r\n'
+2023-04-25,08:50:03.704 INFO spim_core.spim_base.Ispim: Setting scan speed in Z to 0.004098039215686274 mm/sec.
+2023-04-25,08:50:03.704 DEBUG tigerasi.tiger_controller: Sending: 'S X=0.0041\r'
+2023-04-25,08:50:03.711 DEBUG tigerasi.tiger_controller: Reply: '\x15:A \r\n'
+2023-04-25,08:50:03.711 DEBUG tigerasi.tiger_controller: Sending: 'S X?\r'
+2023-04-25,08:50:03.718 DEBUG tigerasi.tiger_controller: Reply: ':A X=0.004130 \r\n'
+2023-04-25,08:50:03.719 INFO spim_core.spim_base.Ispim: Actual speed {'X': 0.00413}mm/sec.
+2023-04-25,08:50:03.719 INFO spim_core.spim_base.Ispim: Setting up lasers for active channels: 488
+2023-04-25,08:50:03.719 INFO spim_core.spim_base.Ispim: Configuring [488][nm] laser.
+2023-04-25,08:50:03.719 DEBUG spim_core.devices.tiger_components.FilterWheel: FW0 move to index: 0.
+2023-04-25,08:50:03.719 DEBUG tigerasi.tiger_controller: Sending: 'FW0 1\r\n'
+2023-04-25,08:50:04.725 DEBUG tigerasi.tiger_controller: Reply: 'FW0  -48\n\r\x00>'
+2023-04-25,08:50:04.725 DEBUG tigerasi.tiger_controller: Sending: 'MP 0\r\n'
+2023-04-25,08:50:05.734 DEBUG tigerasi.tiger_controller: Reply: '0MP 0  0\n\r\x00>'
+2023-04-25,08:50:05.734 INFO spim_core.spim_base.Ispim: Configuring NIDAQ
+2023-04-25,08:50:05.790 DEBUG ispim.devices.ni: Setting up ao channel galvo_y on /Dev1/ao0
+2023-04-25,08:50:05.815 DEBUG ispim.devices.ni: Setting up ao channel galvo_x on /Dev1/ao2
+2023-04-25,08:50:05.816 DEBUG ispim.devices.ni: Setting up ao channel etl on /Dev1/ao4
+2023-04-25,08:50:05.816 DEBUG ispim.devices.ni: Setting up ao channel camera on /Dev1/ao6
+2023-04-25,08:50:05.816 DEBUG ispim.devices.ni: Setting up ao channel 405 on /Dev1/ao12
+2023-04-25,08:50:05.816 DEBUG ispim.devices.ni: Setting up ao channel 488 on /Dev1/ao11
+2023-04-25,08:50:05.816 DEBUG ispim.devices.ni: Setting up ao channel 514 on /Dev1/ao19
+2023-04-25,08:50:05.817 DEBUG ispim.devices.ni: Setting up ao channel 594 on /Dev1/ao17
+2023-04-25,08:50:05.817 DEBUG ispim.devices.ni: Setting up ao channel 561 on /Dev1/ao9
+2023-04-25,08:50:05.817 DEBUG ispim.devices.ni: Setting up ao channel 638 on /Dev1/ao14
+2023-04-25,08:50:05.823 INFO spim_core.spim_base.Ispim: Generating waveforms.
+2023-04-25,08:50:05.826 INFO spim_core.spim_base.Ispim: Writing waveforms to hardware.
+2023-04-25,08:50:05.829 DEBUG vortran_laser.stradus.StradusLaser.COM12: Sending: b'LE=1\r'
+2023-04-25,08:50:05.853 DEBUG vortran_laser.stradus.StradusLaser.COM12: Received: b'\r\n'
+2023-04-25,08:50:05.853 DEBUG vortran_laser.stradus.StradusLaser.COM12: Received: b'LE=1\r\n'
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim: Collecting tile stacks at (77114.9, 21296.61) [um] for channels [488] and saving to: [WindowsPath('C:/dispim_test/tile_X_0000_Y_0000_Z_0000_ch_488.tiff')]
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: file_name, ['tile_X_0000_Y_0000_Z_0000_ch_488.tiff']
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: x_voxel_size, 686.592 micrometers
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: y_voxel_size, 343.296 micrometers
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: z_voxel_size, 0.209 micrometers
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: tile_x_position, 77.1149 millimeters
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: tile_y_position, 21.29661 millimeters
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: tile_z_positione, 33.0638 millimeters
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: lightsheet_angle, 45 degrees
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: channel_name, 488
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: laser_wavelength, 488 nanometers
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: filter_wheel_index: 0
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: daq etl offset: 2.5 volts
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: daq etl amplitude: 0.0 volts
+2023-04-25,08:50:05.854 INFO spim_core.spim_base.Ispim.schema: daq galvo x_offset: 2.572 volts
+2023-04-25,08:50:05.855 INFO spim_core.spim_base.Ispim.schema: daq galvo x_amplitude: -0.01 volts
+2023-04-25,08:50:05.855 INFO spim_core.spim_base.Ispim.schema: daq galvo y_offset: 2.539 volts
+2023-04-25,08:50:05.855 INFO spim_core.spim_base.Ispim.schema: daq galvo y_amplitude: 1.15 volts
+2023-04-25,08:50:05.855 INFO spim_core.spim_base.Ispim: Configuring stage scan parameters
+2023-04-25,08:50:05.855 INFO spim_core.spim_base.Ispim: Starting scan at Z = 33.0638 mm
+2023-04-25,08:50:05.855 DEBUG spim_core.devices.tiger_components.SamplePose: machine fast axis start: 33.0638,machine slow axis start: 77.11489999999999
+2023-04-25,08:50:05.855 DEBUG tigerasi.tiger_controller: Sending: 'Z2B X?\r'
+2023-04-25,08:50:05.864 DEBUG tigerasi.tiger_controller: Reply: ':A X=0 \r\n'
+2023-04-25,08:50:05.865 DEBUG tigerasi.tiger_controller: Sending: 'Z2B Y?\r'
+2023-04-25,08:50:05.874 DEBUG tigerasi.tiger_controller: Reply: ':A Y=1 \r\n'
+2023-04-25,08:50:05.874 DEBUG tigerasi.tiger_controller: Sending: '31SCAN Y=0 Z=1 F=0\r'
+2023-04-25,08:50:05.890 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:05.891 DEBUG tigerasi.tiger_controller: Sending: 'CNTS X?\r'
+2023-04-25,08:50:05.900 DEBUG tigerasi.tiger_controller: Reply: ':X=45397.600000 A\r\n'
+2023-04-25,08:50:05.900 WARNING tigerasi.tiger_controller: Requested scan x-stack spacing: 0.209000[um]. Actual spacing: 0.2[um].
+2023-04-25,08:50:05.900 DEBUG tigerasi.tiger_controller: Sending: '31SCANR X=33.0638 Z=9 F=479 R=100\r'
+2023-04-25,08:50:05.923 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:05.923 DEBUG tigerasi.tiger_controller: Sending: '31SCANV X=77.1149 Y=77.1149 Z=1\r'
+2023-04-25,08:50:05.942 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:05.942 INFO spim_core.spim_base.Ispim: Configuring framegrabber
+2023-04-25,08:50:05.943 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (0,0) for Camera "C15440-20UP S/N: 501102"
+2023-04-25,08:50:05.943 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:05.943 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:05.988 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:06.032 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:06.077 DEBUG ispim.devices.frame_grabber.FrameGrabber: line interval set to: 10.85069465637207
+2023-04-25,08:50:06.077 DEBUG ispim.devices.frame_grabber.FrameGrabber: line interval set to: 10.85069465637207
+2023-04-25,08:50:06.077 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:06.121 DEBUG ispim.devices.frame_grabber.FrameGrabber: exposure set to: 1627.604248046875
+2023-04-25,08:50:06.121 DEBUG ispim.devices.frame_grabber.FrameGrabber: exposure set to: 1627.604248046875
+2023-04-25,08:50:06.121 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,3) for Storage "Trash"
+2023-04-25,08:50:06.165 INFO ispim.devices.frame_grabber.FrameGrabber: Configuring camera.
+2023-04-25,08:50:06.165 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,2) for Storage "Tiff"
+2023-04-25,08:50:06.166 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,2) for Storage "Tiff"
+2023-04-25,08:50:06.250 DEBUG ispim.devices.frame_grabber.FrameGrabber: Starting cameras.
+2023-04-25,08:50:06.798 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\devices\storage\tiff.cpp:470 - `anonymous-namespace'::Tiff::start(): TIFF: Streaming to C:\dispim_test\tile_X_0000_Y_0000_Z_0000_ch_488.tiff
+2023-04-25,08:50:06.799 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:414 - frame_processing_thread(): [stream 0] PROCESSING: Entering frame processing thread
+2023-04-25,08:50:06.800 INFO spim_core.spim_base.Ispim: Starting scan.
+2023-04-25,08:50:06.800 DEBUG tigerasi.tiger_controller: Sending: '31SCAN S\r'
+2023-04-25,08:50:06.808 DEBUG tigerasi.tiger_controller: Reply: ':A \r\n'
+2023-04-25,08:50:06.837 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 1
+2023-04-25,08:50:06.865 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x197fff90000-0x198004a0060:5308512
+2023-04-25,08:50:06.866 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:06.866 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 1
+2023-04-25,08:50:07.205 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 2
+2023-04-25,08:50:07.226 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198004a0060-0x198009b00c0:5308512
+2023-04-25,08:50:07.226 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.226 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 2
+2023-04-25,08:50:07.256 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 3
+2023-04-25,08:50:07.283 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198009b00c0-0x19800ec0120:5308512
+2023-04-25,08:50:07.283 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.283 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 3
+2023-04-25,08:50:07.309 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 4
+2023-04-25,08:50:07.339 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19800ec0120-0x198013d0180:5308512
+2023-04-25,08:50:07.339 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.339 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 4
+2023-04-25,08:50:07.343 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 5
+2023-04-25,08:50:07.381 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 6
+2023-04-25,08:50:07.395 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198013d0180-0x19801df0240:10617024
+2023-04-25,08:50:07.395 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:07.395 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 6
+2023-04-25,08:50:07.420 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 7
+2023-04-25,08:50:07.451 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19801df0240-0x198023002a0:5308512
+2023-04-25,08:50:07.452 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.452 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 7
+2023-04-25,08:50:07.463 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 8
+2023-04-25,08:50:07.505 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 9
+2023-04-25,08:50:07.508 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198023002a0-0x19802810300:5308512
+2023-04-25,08:50:07.508 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.508 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 8
+2023-04-25,08:50:07.550 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 10
+2023-04-25,08:50:07.565 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19802810300-0x198032303c0:10617024
+2023-04-25,08:50:07.565 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:07.565 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 10
+2023-04-25,08:50:07.590 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 11
+2023-04-25,08:50:07.622 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198032303c0-0x19803740420:5308512
+2023-04-25,08:50:07.622 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.622 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 11
+2023-04-25,08:50:07.634 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 12
+2023-04-25,08:50:07.679 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19803740420-0x19803c50480:5308512
+2023-04-25,08:50:07.679 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.679 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 13
+2023-04-25,08:50:07.679 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 12
+2023-04-25,08:50:07.719 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 14
+2023-04-25,08:50:07.737 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19803c50480-0x19804670540:10617024
+2023-04-25,08:50:07.738 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:07.738 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 14
+2023-04-25,08:50:07.762 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 15
+2023-04-25,08:50:07.795 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19804670540-0x19804b805a0:5308512
+2023-04-25,08:50:07.795 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.795 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 15
+2023-04-25,08:50:07.805 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 16
+2023-04-25,08:50:07.848 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 17
+2023-04-25,08:50:07.852 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19804b805a0-0x19805090600:5308512
+2023-04-25,08:50:07.852 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.852 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 16
+2023-04-25,08:50:07.889 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 18
+2023-04-25,08:50:07.909 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805090600-0x19805ab06c0:10617024
+2023-04-25,08:50:07.910 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:07.910 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 18
+2023-04-25,08:50:07.932 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 19
+2023-04-25,08:50:07.967 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805ab06c0-0x19805fc0720:5308512
+2023-04-25,08:50:07.967 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:07.967 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 19
+2023-04-25,08:50:07.975 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 20
+2023-04-25,08:50:08.018 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 21
+2023-04-25,08:50:08.025 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805fc0720-0x198069e07e0:10617024
+2023-04-25,08:50:08.025 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.025 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 21
+2023-04-25,08:50:08.060 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 22
+2023-04-25,08:50:08.082 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198069e07e0-0x19806ef0840:5308512
+2023-04-25,08:50:08.082 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.082 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 22
+2023-04-25,08:50:08.102 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 23
+2023-04-25,08:50:08.138 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 24
+2023-04-25,08:50:08.140 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19806ef0840-0x198074008a0:5308512
+2023-04-25,08:50:08.140 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.140 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 23
+2023-04-25,08:50:08.187 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 25
+2023-04-25,08:50:08.196 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198074008a0-0x19807e20960:10617024
+2023-04-25,08:50:08.196 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.196 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 25
+2023-04-25,08:50:08.232 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 26
+2023-04-25,08:50:08.253 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19807e20960-0x198083309c0:5308512
+2023-04-25,08:50:08.253 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.253 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 26
+2023-04-25,08:50:08.284 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 27
+2023-04-25,08:50:08.310 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198083309c0-0x19808840a20:5308512
+2023-04-25,08:50:08.310 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.310 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 27
+2023-04-25,08:50:08.321 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 28
+2023-04-25,08:50:08.364 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 29
+2023-04-25,08:50:08.367 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19808840a20-0x19808d50a80:5308512
+2023-04-25,08:50:08.368 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.368 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 28
+2023-04-25,08:50:08.405 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 30
+2023-04-25,08:50:08.424 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19808d50a80-0x19809770b40:10617024
+2023-04-25,08:50:08.424 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.424 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 30
+2023-04-25,08:50:08.445 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 31
+2023-04-25,08:50:08.481 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19809770b40-0x19809c80ba0:5308512
+2023-04-25,08:50:08.481 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.481 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 31
+2023-04-25,08:50:08.486 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 32
+2023-04-25,08:50:08.531 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 33
+2023-04-25,08:50:08.538 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19809c80ba0-0x1980a6a0c60:10617024
+2023-04-25,08:50:08.538 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.538 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 33
+2023-04-25,08:50:08.574 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 34
+2023-04-25,08:50:08.595 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980a6a0c60-0x1980abb0cc0:5308512
+2023-04-25,08:50:08.596 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.596 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 34
+2023-04-25,08:50:08.617 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 35
+2023-04-25,08:50:08.653 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980abb0cc0-0x1980b0c0d20:5308512
+2023-04-25,08:50:08.653 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.653 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 35
+2023-04-25,08:50:08.660 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 36
+2023-04-25,08:50:08.702 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 37
+2023-04-25,08:50:08.710 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980b0c0d20-0x1980bae0de0:10617024
+2023-04-25,08:50:08.710 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.710 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 37
+2023-04-25,08:50:08.743 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 38
+2023-04-25,08:50:08.766 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980bae0de0-0x1980bff0e40:5308512
+2023-04-25,08:50:08.766 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.766 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 38
+2023-04-25,08:50:08.786 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 39
+2023-04-25,08:50:08.822 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980bff0e40-0x1980c500ea0:5308512
+2023-04-25,08:50:08.822 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.822 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 39
+2023-04-25,08:50:08.828 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 40
+2023-04-25,08:50:08.872 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 41
+2023-04-25,08:50:08.879 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980c500ea0-0x1980cf20f60:10617024
+2023-04-25,08:50:08.879 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:08.879 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 41
+2023-04-25,08:50:08.913 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 42
+2023-04-25,08:50:08.936 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980cf20f60-0x1980d430fc0:5308512
+2023-04-25,08:50:08.936 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.936 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 42
+2023-04-25,08:50:08.958 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 43
+2023-04-25,08:50:08.992 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980d430fc0-0x1980d941020:5308512
+2023-04-25,08:50:08.992 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:08.992 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 43
+2023-04-25,08:50:08.998 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 44
+2023-04-25,08:50:09.045 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 45
+2023-04-25,08:50:09.048 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980d941020-0x1980de51080:5308512
+2023-04-25,08:50:09.048 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.048 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 44
+2023-04-25,08:50:09.083 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 46
+2023-04-25,08:50:09.105 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980de51080-0x1980e871140:10617024
+2023-04-25,08:50:09.105 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.105 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 46
+2023-04-25,08:50:09.127 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 47
+2023-04-25,08:50:09.162 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980e871140-0x1980ed811a0:5308512
+2023-04-25,08:50:09.163 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.163 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 47
+2023-04-25,08:50:09.169 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 48
+2023-04-25,08:50:09.213 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 49
+2023-04-25,08:50:09.219 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980ed811a0-0x1980f7a1260:10617024
+2023-04-25,08:50:09.219 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.220 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 49
+2023-04-25,08:50:09.250 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 50
+2023-04-25,08:50:09.277 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980f7a1260-0x1980fcb12c0:5308512
+2023-04-25,08:50:09.277 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.277 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 50
+2023-04-25,08:50:09.295 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 51
+2023-04-25,08:50:09.334 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980fcb12c0-0x198101c1320:5308512
+2023-04-25,08:50:09.334 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.334 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 51
+2023-04-25,08:50:09.341 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 52
+2023-04-25,08:50:09.391 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198101c1320-0x198106d1380:5308512
+2023-04-25,08:50:09.392 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.391 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 53
+2023-04-25,08:50:09.392 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 52
+2023-04-25,08:50:09.429 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 54
+2023-04-25,08:50:09.448 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198106d1380-0x198110f1440:10617024
+2023-04-25,08:50:09.448 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.448 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 54
+2023-04-25,08:50:09.471 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 55
+2023-04-25,08:50:09.506 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198110f1440-0x198116014a0:5308512
+2023-04-25,08:50:09.506 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.506 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 55
+2023-04-25,08:50:09.514 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 56
+2023-04-25,08:50:09.555 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 57
+2023-04-25,08:50:09.562 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198116014a0-0x19812021560:10617024
+2023-04-25,08:50:09.563 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.563 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 57
+2023-04-25,08:50:09.597 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 58
+2023-04-25,08:50:09.620 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19812021560-0x198125315c0:5308512
+2023-04-25,08:50:09.620 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.621 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 58
+2023-04-25,08:50:09.641 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 59
+2023-04-25,08:50:09.677 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198125315c0-0x19812a41620:5308512
+2023-04-25,08:50:09.678 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.678 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 59
+2023-04-25,08:50:09.681 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 60
+2023-04-25,08:50:09.727 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 61
+2023-04-25,08:50:09.734 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19812a41620-0x198134616e0:10617024
+2023-04-25,08:50:09.734 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.734 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 61
+2023-04-25,08:50:09.768 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 62
+2023-04-25,08:50:09.791 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198134616e0-0x19813971740:5308512
+2023-04-25,08:50:09.791 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.791 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 62
+2023-04-25,08:50:09.811 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 63
+2023-04-25,08:50:09.847 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19813971740-0x19813e817a0:5308512
+2023-04-25,08:50:09.847 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.847 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 63
+2023-04-25,08:50:09.853 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 64
+2023-04-25,08:50:09.900 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 65
+2023-04-25,08:50:09.904 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19813e817a0-0x198148a1860:10617024
+2023-04-25,08:50:09.905 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:09.905 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 65
+2023-04-25,08:50:09.939 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 66
+2023-04-25,08:50:09.962 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198148a1860-0x19814db18c0:5308512
+2023-04-25,08:50:09.962 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:09.962 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 66
+2023-04-25,08:50:09.981 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 67
+2023-04-25,08:50:10.019 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19814db18c0-0x198152c1920:5308512
+2023-04-25,08:50:10.020 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.020 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 67
+2023-04-25,08:50:10.026 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 68
+2023-04-25,08:50:10.067 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 69
+2023-04-25,08:50:10.077 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198152c1920-0x19815ce19e0:10617024
+2023-04-25,08:50:10.078 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.078 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 69
+2023-04-25,08:50:10.109 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 70
+2023-04-25,08:50:10.135 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19815ce19e0-0x198161f1a40:5308512
+2023-04-25,08:50:10.135 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.135 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 70
+2023-04-25,08:50:10.151 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 71
+2023-04-25,08:50:10.192 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198161f1a40-0x19816701aa0:5308512
+2023-04-25,08:50:10.192 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.192 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 71
+2023-04-25,08:50:10.194 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 72
+2023-04-25,08:50:10.237 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 73
+2023-04-25,08:50:10.249 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19816701aa0-0x19817121b60:10617024
+2023-04-25,08:50:10.249 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.249 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 73
+2023-04-25,08:50:10.279 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 74
+2023-04-25,08:50:10.305 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19817121b60-0x19817631bc0:5308512
+2023-04-25,08:50:10.305 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.306 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 74
+2023-04-25,08:50:10.316 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 75
+2023-04-25,08:50:10.363 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19817631bc0-0x19817b41c20:5308512
+2023-04-25,08:50:10.363 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.363 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 75
+2023-04-25,08:50:10.363 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 76
+2023-04-25,08:50:10.420 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19817b41c20-0x19818051c80:5308512
+2023-04-25,08:50:10.420 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.420 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 76
+2023-04-25,08:50:10.421 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 77
+2023-04-25,08:50:10.456 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 78
+2023-04-25,08:50:10.476 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19818051c80-0x19818a71d40:10617024
+2023-04-25,08:50:10.476 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.476 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 78
+2023-04-25,08:50:10.496 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 79
+2023-04-25,08:50:10.533 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19818a71d40-0x19818f81da0:5308512
+2023-04-25,08:50:10.533 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.533 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 79
+2023-04-25,08:50:10.536 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 80
+2023-04-25,08:50:10.578 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 81
+2023-04-25,08:50:10.590 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19818f81da0-0x198199a1e60:10617024
+2023-04-25,08:50:10.590 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.590 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 81
+2023-04-25,08:50:10.622 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 82
+2023-04-25,08:50:10.647 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198199a1e60-0x19819eb1ec0:5308512
+2023-04-25,08:50:10.647 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.647 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 82
+2023-04-25,08:50:10.665 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 83
+2023-04-25,08:50:10.703 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19819eb1ec0-0x1981a3c1f20:5308512
+2023-04-25,08:50:10.703 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.703 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 83
+2023-04-25,08:50:10.706 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 84
+2023-04-25,08:50:10.749 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 85
+2023-04-25,08:50:10.759 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981a3c1f20-0x1981ade1fe0:10617024
+2023-04-25,08:50:10.759 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.759 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 85
+2023-04-25,08:50:10.792 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 86
+2023-04-25,08:50:10.816 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981ade1fe0-0x1981b2f2040:5308512
+2023-04-25,08:50:10.816 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.816 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 86
+2023-04-25,08:50:10.835 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 87
+2023-04-25,08:50:10.873 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981b2f2040-0x1981b8020a0:5308512
+2023-04-25,08:50:10.873 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.873 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 87
+2023-04-25,08:50:10.878 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 88
+2023-04-25,08:50:10.920 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 89
+2023-04-25,08:50:10.929 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981b8020a0-0x1981c222160:10617024
+2023-04-25,08:50:10.929 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:10.929 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 89
+2023-04-25,08:50:10.961 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 90
+2023-04-25,08:50:10.986 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981c222160-0x1981c7321c0:5308512
+2023-04-25,08:50:10.987 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:10.987 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 90
+2023-04-25,08:50:11.003 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 91
+2023-04-25,08:50:11.044 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981c7321c0-0x1981cc42220:5308512
+2023-04-25,08:50:11.044 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.044 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 91
+2023-04-25,08:50:11.048 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 92
+2023-04-25,08:50:11.090 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 93
+2023-04-25,08:50:11.100 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981cc42220-0x1981d6622e0:10617024
+2023-04-25,08:50:11.101 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.101 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 93
+2023-04-25,08:50:11.133 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 94
+2023-04-25,08:50:11.157 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981d6622e0-0x1981db72340:5308512
+2023-04-25,08:50:11.157 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.157 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 94
+2023-04-25,08:50:11.178 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 95
+2023-04-25,08:50:11.214 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981db72340-0x1981e0823a0:5308512
+2023-04-25,08:50:11.214 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.215 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 95
+2023-04-25,08:50:11.221 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 96
+2023-04-25,08:50:11.264 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 97
+2023-04-25,08:50:11.271 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981e0823a0-0x1981eaa2460:10617024
+2023-04-25,08:50:11.271 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.271 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 97
+2023-04-25,08:50:11.304 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 98
+2023-04-25,08:50:11.328 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981eaa2460-0x1981efb24c0:5308512
+2023-04-25,08:50:11.329 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.329 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 98
+2023-04-25,08:50:11.345 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 99
+2023-04-25,08:50:11.385 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981efb24c0-0x1981f4c2520:5308512
+2023-04-25,08:50:11.385 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.385 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 99
+2023-04-25,08:50:11.389 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 100
+2023-04-25,08:50:11.430 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 101
+2023-04-25,08:50:11.442 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981f4c2520-0x1981fee25e0:10617024
+2023-04-25,08:50:11.442 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.442 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 101
+2023-04-25,08:50:11.473 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 102
+2023-04-25,08:50:11.499 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1981fee25e0-0x198203f2640:5308512
+2023-04-25,08:50:11.499 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.499 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 102
+2023-04-25,08:50:11.525 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 103
+2023-04-25,08:50:11.555 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198203f2640-0x198209026a0:5308512
+2023-04-25,08:50:11.555 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.555 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 103
+2023-04-25,08:50:11.563 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 104
+2023-04-25,08:50:11.604 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 105
+2023-04-25,08:50:11.612 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198209026a0-0x19821322760:10617024
+2023-04-25,08:50:11.612 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.612 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 105
+2023-04-25,08:50:11.647 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 106
+2023-04-25,08:50:11.668 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19821322760-0x198218327c0:5308512
+2023-04-25,08:50:11.668 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.668 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 106
+2023-04-25,08:50:11.689 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 107
+2023-04-25,08:50:11.726 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198218327c0-0x19821d42820:5308512
+2023-04-25,08:50:11.726 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.726 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 107
+2023-04-25,08:50:11.731 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 108
+2023-04-25,08:50:11.775 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 109
+2023-04-25,08:50:11.782 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19821d42820-0x198227628e0:10617024
+2023-04-25,08:50:11.782 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.783 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 109
+2023-04-25,08:50:11.817 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 110
+2023-04-25,08:50:11.839 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198227628e0-0x19822c72940:5308512
+2023-04-25,08:50:11.839 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.839 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 110
+2023-04-25,08:50:11.861 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 111
+2023-04-25,08:50:11.896 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19822c72940-0x198231829a0:5308512
+2023-04-25,08:50:11.896 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:11.896 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 111
+2023-04-25,08:50:11.900 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 112
+2023-04-25,08:50:11.946 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 113
+2023-04-25,08:50:11.953 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198231829a0-0x19823ba2a60:10617024
+2023-04-25,08:50:11.954 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:11.954 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 113
+2023-04-25,08:50:11.987 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 114
+2023-04-25,08:50:12.011 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19823ba2a60-0x198240b2ac0:5308512
+2023-04-25,08:50:12.011 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.011 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 114
+2023-04-25,08:50:12.030 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 115
+2023-04-25,08:50:12.069 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198240b2ac0-0x198245c2b20:5308512
+2023-04-25,08:50:12.069 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.069 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 115
+2023-04-25,08:50:12.072 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 116
+2023-04-25,08:50:12.114 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 117
+2023-04-25,08:50:12.125 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198245c2b20-0x19824fe2be0:10617024
+2023-04-25,08:50:12.125 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.125 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 117
+2023-04-25,08:50:12.159 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 118
+2023-04-25,08:50:12.182 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19824fe2be0-0x198254f2c40:5308512
+2023-04-25,08:50:12.182 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.182 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 118
+2023-04-25,08:50:12.201 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 119
+2023-04-25,08:50:12.238 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198254f2c40-0x19825a02ca0:5308512
+2023-04-25,08:50:12.238 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.238 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 119
+2023-04-25,08:50:12.243 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 120
+2023-04-25,08:50:12.286 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 121
+2023-04-25,08:50:12.294 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19825a02ca0-0x19826422d60:10617024
+2023-04-25,08:50:12.294 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.294 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 121
+2023-04-25,08:50:12.328 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 122
+2023-04-25,08:50:12.351 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19826422d60-0x19826932dc0:5308512
+2023-04-25,08:50:12.351 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.351 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 122
+2023-04-25,08:50:12.371 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 123
+2023-04-25,08:50:12.407 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19826932dc0-0x19826e42e20:5308512
+2023-04-25,08:50:12.407 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.408 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 123
+2023-04-25,08:50:12.414 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 124
+2023-04-25,08:50:12.456 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 125
+2023-04-25,08:50:12.465 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19826e42e20-0x19827862ee0:10617024
+2023-04-25,08:50:12.465 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.465 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 125
+2023-04-25,08:50:12.498 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 126
+2023-04-25,08:50:12.522 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19827862ee0-0x19827d72f40:5308512
+2023-04-25,08:50:12.522 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.522 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 126
+2023-04-25,08:50:12.533 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 127
+2023-04-25,08:50:12.579 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19827d72f40-0x19828282fa0:5308512
+2023-04-25,08:50:12.579 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.579 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 127
+2023-04-25,08:50:12.583 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 128
+2023-04-25,08:50:12.636 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19828282fa0-0x19828793000:5308512
+2023-04-25,08:50:12.637 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.636 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 129
+2023-04-25,08:50:12.637 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 128
+2023-04-25,08:50:12.675 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 130
+2023-04-25,08:50:12.694 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19828793000-0x198291b30c0:10617024
+2023-04-25,08:50:12.694 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.694 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 130
+2023-04-25,08:50:12.713 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 131
+2023-04-25,08:50:12.750 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198291b30c0-0x198296c3120:5308512
+2023-04-25,08:50:12.750 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.750 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 131
+2023-04-25,08:50:12.755 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 132
+2023-04-25,08:50:12.802 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 133
+2023-04-25,08:50:12.806 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198296c3120-0x1982a0e31e0:10617024
+2023-04-25,08:50:12.806 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.806 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 133
+2023-04-25,08:50:12.840 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 134
+2023-04-25,08:50:12.863 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982a0e31e0-0x1982a5f3240:5308512
+2023-04-25,08:50:12.863 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.864 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 134
+2023-04-25,08:50:12.884 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 135
+2023-04-25,08:50:12.921 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982a5f3240-0x1982ab032a0:5308512
+2023-04-25,08:50:12.921 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:12.921 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 135
+2023-04-25,08:50:12.928 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 136
+2023-04-25,08:50:12.968 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 137
+2023-04-25,08:50:12.978 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982ab032a0-0x1982b523360:10617024
+2023-04-25,08:50:12.978 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:12.978 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 137
+2023-04-25,08:50:13.011 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 138
+2023-04-25,08:50:13.034 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982b523360-0x1982ba333c0:5308512
+2023-04-25,08:50:13.034 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.034 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 138
+2023-04-25,08:50:13.056 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 139
+2023-04-25,08:50:13.091 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982ba333c0-0x1982bf43420:5308512
+2023-04-25,08:50:13.091 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.091 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 139
+2023-04-25,08:50:13.096 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 140
+2023-04-25,08:50:13.139 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 141
+2023-04-25,08:50:13.148 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982bf43420-0x1982c9634e0:10617024
+2023-04-25,08:50:13.148 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:13.148 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 141
+2023-04-25,08:50:13.182 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 142
+2023-04-25,08:50:13.205 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982c9634e0-0x1982ce73540:5308512
+2023-04-25,08:50:13.205 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.205 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 142
+2023-04-25,08:50:13.225 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 143
+2023-04-25,08:50:13.262 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982ce73540-0x1982d3835a0:5308512
+2023-04-25,08:50:13.263 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.263 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 143
+2023-04-25,08:50:13.268 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 144
+2023-04-25,08:50:13.311 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 145
+2023-04-25,08:50:13.320 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982d3835a0-0x1982dda3660:10617024
+2023-04-25,08:50:13.320 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:13.320 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 145
+2023-04-25,08:50:13.351 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 146
+2023-04-25,08:50:13.377 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982dda3660-0x1982e2b36c0:5308512
+2023-04-25,08:50:13.377 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.377 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 146
+2023-04-25,08:50:13.393 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 147
+2023-04-25,08:50:13.434 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982e2b36c0-0x1982e7c3720:5308512
+2023-04-25,08:50:13.435 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.435 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 147
+2023-04-25,08:50:13.438 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 148
+2023-04-25,08:50:13.482 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 149
+2023-04-25,08:50:13.491 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982e7c3720-0x1982f1e37e0:10617024
+2023-04-25,08:50:13.491 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:13.491 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 149
+2023-04-25,08:50:13.524 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 150
+2023-04-25,08:50:13.547 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982f1e37e0-0x1982f6f3840:5308512
+2023-04-25,08:50:13.547 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.547 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 150
+2023-04-25,08:50:13.566 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 151
+2023-04-25,08:50:13.601 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 152
+2023-04-25,08:50:13.604 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982f6f3840-0x1982fc038a0:5308512
+2023-04-25,08:50:13.604 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.604 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 151
+2023-04-25,08:50:13.649 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 153
+2023-04-25,08:50:13.660 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1982fc038a0-0x19830623960:10617024
+2023-04-25,08:50:13.660 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:13.660 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 153
+2023-04-25,08:50:13.694 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 154
+2023-04-25,08:50:13.717 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19830623960-0x19830b339c0:5308512
+2023-04-25,08:50:13.717 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.717 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 154
+2023-04-25,08:50:13.747 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 155
+2023-04-25,08:50:13.773 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19830b339c0-0x19831043a20:5308512
+2023-04-25,08:50:13.773 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.773 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 155
+2023-04-25,08:50:13.785 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 156
+2023-04-25,08:50:13.826 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 157
+2023-04-25,08:50:13.829 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19831043a20-0x19831553a80:5308512
+2023-04-25,08:50:13.829 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.829 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 156
+2023-04-25,08:50:13.868 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 158
+2023-04-25,08:50:13.885 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19831553a80-0x19831f73b40:10617024
+2023-04-25,08:50:13.885 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:13.885 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 158
+2023-04-25,08:50:13.907 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 159
+2023-04-25,08:50:13.942 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19831f73b40-0x19832483ba0:5308512
+2023-04-25,08:50:13.943 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:13.943 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 159
+2023-04-25,08:50:13.952 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 160
+2023-04-25,08:50:13.994 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 161
+2023-04-25,08:50:14.000 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19832483ba0-0x19832ea3c60:10617024
+2023-04-25,08:50:14.000 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.000 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 161
+2023-04-25,08:50:14.035 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 162
+2023-04-25,08:50:14.057 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19832ea3c60-0x198333b3cc0:5308512
+2023-04-25,08:50:14.057 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.057 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 162
+2023-04-25,08:50:14.079 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 163
+2023-04-25,08:50:14.113 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198333b3cc0-0x198338c3d20:5308512
+2023-04-25,08:50:14.113 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.113 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 163
+2023-04-25,08:50:14.122 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 164
+2023-04-25,08:50:14.166 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 165
+2023-04-25,08:50:14.170 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198338c3d20-0x19833dd3d80:5308512
+2023-04-25,08:50:14.170 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.170 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 164
+2023-04-25,08:50:14.207 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 166
+2023-04-25,08:50:14.227 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19833dd3d80-0x198347f3e40:10617024
+2023-04-25,08:50:14.227 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.227 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 166
+2023-04-25,08:50:14.250 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 167
+2023-04-25,08:50:14.284 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198347f3e40-0x19834d03ea0:5308512
+2023-04-25,08:50:14.284 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.284 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 167
+2023-04-25,08:50:14.293 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 168
+2023-04-25,08:50:14.337 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 169
+2023-04-25,08:50:14.341 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19834d03ea0-0x19835213f00:5308512
+2023-04-25,08:50:14.342 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.342 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 168
+2023-04-25,08:50:14.377 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 170
+2023-04-25,08:50:14.398 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19835213f00-0x19835c33fc0:10617024
+2023-04-25,08:50:14.398 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.398 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 170
+2023-04-25,08:50:14.419 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 171
+2023-04-25,08:50:14.455 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19835c33fc0-0x19836144020:5308512
+2023-04-25,08:50:14.455 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.456 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 171
+2023-04-25,08:50:14.461 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 172
+2023-04-25,08:50:14.504 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 173
+2023-04-25,08:50:14.513 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19836144020-0x19836b640e0:10617024
+2023-04-25,08:50:14.513 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.513 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 173
+2023-04-25,08:50:14.546 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 174
+2023-04-25,08:50:14.569 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19836b640e0-0x19837074140:5308512
+2023-04-25,08:50:14.570 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.570 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 174
+2023-04-25,08:50:14.589 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 175
+2023-04-25,08:50:14.626 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19837074140-0x198375841a0:5308512
+2023-04-25,08:50:14.626 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.626 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 175
+2023-04-25,08:50:14.634 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 176
+2023-04-25,08:50:14.674 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 177
+2023-04-25,08:50:14.682 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198375841a0-0x19837fa4260:10617024
+2023-04-25,08:50:14.682 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.682 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 177
+2023-04-25,08:50:14.706 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 178
+2023-04-25,08:50:14.739 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19837fa4260-0x198384b42c0:5308512
+2023-04-25,08:50:14.739 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.739 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 178
+2023-04-25,08:50:14.756 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 179
+2023-04-25,08:50:14.796 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198384b42c0-0x198389c4320:5308512
+2023-04-25,08:50:14.796 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.796 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 179
+2023-04-25,08:50:14.805 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 180
+2023-04-25,08:50:14.852 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198389c4320-0x19838ed4380:5308512
+2023-04-25,08:50:14.852 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.852 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 180
+2023-04-25,08:50:14.856 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 181
+2023-04-25,08:50:14.893 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 182
+2023-04-25,08:50:14.910 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19838ed4380-0x198398f4440:10617024
+2023-04-25,08:50:14.910 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:14.910 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 182
+2023-04-25,08:50:14.933 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 183
+2023-04-25,08:50:14.967 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198398f4440-0x19839e044a0:5308512
+2023-04-25,08:50:14.967 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:14.968 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 183
+2023-04-25,08:50:14.977 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 184
+2023-04-25,08:50:15.016 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 185
+2023-04-25,08:50:15.024 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19839e044a0-0x1983a824560:10617024
+2023-04-25,08:50:15.024 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.024 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 185
+2023-04-25,08:50:15.060 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 186
+2023-04-25,08:50:15.081 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983a824560-0x1983ad345c0:5308512
+2023-04-25,08:50:15.081 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.081 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 186
+2023-04-25,08:50:15.104 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 187
+2023-04-25,08:50:15.137 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983ad345c0-0x1983b244620:5308512
+2023-04-25,08:50:15.137 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.137 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 187
+2023-04-25,08:50:15.145 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 188
+2023-04-25,08:50:15.187 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 189
+2023-04-25,08:50:15.194 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983b244620-0x1983bc646e0:10617024
+2023-04-25,08:50:15.194 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.194 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 189
+2023-04-25,08:50:15.230 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 190
+2023-04-25,08:50:15.251 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983bc646e0-0x1983c174740:5308512
+2023-04-25,08:50:15.251 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.251 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 190
+2023-04-25,08:50:15.273 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 191
+2023-04-25,08:50:15.307 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983c174740-0x1983c6847a0:5308512
+2023-04-25,08:50:15.307 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.307 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 191
+2023-04-25,08:50:15.315 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 192
+2023-04-25,08:50:15.360 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 193
+2023-04-25,08:50:15.364 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983c6847a0-0x1983cb94800:5308512
+2023-04-25,08:50:15.365 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.365 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 192
+2023-04-25,08:50:15.402 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 194
+2023-04-25,08:50:15.421 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983cb94800-0x1983d5b48c0:10617024
+2023-04-25,08:50:15.421 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.421 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 194
+2023-04-25,08:50:15.444 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 195
+2023-04-25,08:50:15.478 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983d5b48c0-0x1983dac4920:5308512
+2023-04-25,08:50:15.478 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.478 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 195
+2023-04-25,08:50:15.488 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 196
+2023-04-25,08:50:15.531 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 197
+2023-04-25,08:50:15.535 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983dac4920-0x1983dfd4980:5308512
+2023-04-25,08:50:15.535 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.535 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 196
+2023-04-25,08:50:15.571 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 198
+2023-04-25,08:50:15.592 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983dfd4980-0x1983e9f4a40:10617024
+2023-04-25,08:50:15.592 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.593 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 198
+2023-04-25,08:50:15.613 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 199
+2023-04-25,08:50:15.649 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983e9f4a40-0x1983ef04aa0:5308512
+2023-04-25,08:50:15.649 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.649 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 199
+2023-04-25,08:50:15.657 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 200
+2023-04-25,08:50:15.701 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 201
+2023-04-25,08:50:15.705 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983ef04aa0-0x1983f414b00:5308512
+2023-04-25,08:50:15.705 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.705 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 200
+2023-04-25,08:50:15.743 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 202
+2023-04-25,08:50:15.763 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983f414b00-0x1983fe34bc0:10617024
+2023-04-25,08:50:15.763 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.763 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 202
+2023-04-25,08:50:15.775 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 203
+2023-04-25,08:50:15.820 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1983fe34bc0-0x19840344c20:5308512
+2023-04-25,08:50:15.821 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.821 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 203
+2023-04-25,08:50:15.826 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 204
+2023-04-25,08:50:15.877 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19840344c20-0x19840854c80:5308512
+2023-04-25,08:50:15.877 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.877 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 204
+2023-04-25,08:50:15.882 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 205
+2023-04-25,08:50:15.919 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 206
+2023-04-25,08:50:15.934 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19840854c80-0x19841274d40:10617024
+2023-04-25,08:50:15.934 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:15.934 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 206
+2023-04-25,08:50:15.958 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 207
+2023-04-25,08:50:15.991 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19841274d40-0x19841784da0:5308512
+2023-04-25,08:50:15.991 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:15.991 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 207
+2023-04-25,08:50:16.000 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 208
+2023-04-25,08:50:16.044 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 209
+2023-04-25,08:50:16.048 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19841784da0-0x19841c94e00:5308512
+2023-04-25,08:50:16.048 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.048 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 208
+2023-04-25,08:50:16.085 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 210
+2023-04-25,08:50:16.105 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19841c94e00-0x198426b4ec0:10617024
+2023-04-25,08:50:16.105 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:16.105 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 210
+2023-04-25,08:50:16.128 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 211
+2023-04-25,08:50:16.161 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198426b4ec0-0x19842bc4f20:5308512
+2023-04-25,08:50:16.161 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.161 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 211
+2023-04-25,08:50:16.171 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 212
+2023-04-25,08:50:16.214 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 213
+2023-04-25,08:50:16.218 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19842bc4f20-0x198430d4f80:5308512
+2023-04-25,08:50:16.218 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.219 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 212
+2023-04-25,08:50:16.254 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 214
+2023-04-25,08:50:16.276 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198430d4f80-0x19843af5040:10617024
+2023-04-25,08:50:16.276 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:16.276 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 214
+2023-04-25,08:50:16.297 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 215
+2023-04-25,08:50:16.332 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19843af5040-0x198440050a0:5308512
+2023-04-25,08:50:16.332 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.332 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 215
+2023-04-25,08:50:16.339 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 216
+2023-04-25,08:50:16.386 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 217
+2023-04-25,08:50:16.389 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198440050a0-0x19844515100:5308512
+2023-04-25,08:50:16.389 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.389 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 216
+2023-04-25,08:50:16.427 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 218
+2023-04-25,08:50:16.446 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19844515100-0x19844f351c0:10617024
+2023-04-25,08:50:16.446 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:16.446 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 218
+2023-04-25,08:50:16.468 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 219
+2023-04-25,08:50:16.503 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19844f351c0-0x19845445220:5308512
+2023-04-25,08:50:16.503 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.503 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 219
+2023-04-25,08:50:16.510 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 220
+2023-04-25,08:50:16.554 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 221
+2023-04-25,08:50:16.560 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19845445220-0x19845e652e0:10617024
+2023-04-25,08:50:16.561 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:16.561 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 221
+2023-04-25,08:50:16.595 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 222
+2023-04-25,08:50:16.618 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19845e652e0-0x19846375340:5308512
+2023-04-25,08:50:16.618 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.618 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 222
+2023-04-25,08:50:16.639 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 223
+2023-04-25,08:50:16.675 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19846375340-0x198468853a0:5308512
+2023-04-25,08:50:16.675 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.675 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 223
+2023-04-25,08:50:16.682 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 224
+2023-04-25,08:50:16.724 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 225
+2023-04-25,08:50:16.733 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198468853a0-0x198472a5460:10617024
+2023-04-25,08:50:16.733 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:16.733 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 225
+2023-04-25,08:50:16.767 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 226
+2023-04-25,08:50:16.789 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198472a5460-0x198477b54c0:5308512
+2023-04-25,08:50:16.789 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.789 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 226
+2023-04-25,08:50:16.809 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 227
+2023-04-25,08:50:16.845 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198477b54c0-0x19847cc5520:5308512
+2023-04-25,08:50:16.845 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.845 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 227
+2023-04-25,08:50:16.853 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 228
+2023-04-25,08:50:16.902 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19847cc5520-0x198481d5580:5308512
+2023-04-25,08:50:16.903 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.903 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 228
+2023-04-25,08:50:16.932 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 229
+2023-04-25,08:50:16.960 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198481d5580-0x198486e55e0:5308512
+2023-04-25,08:50:16.960 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:16.960 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 229
+2023-04-25,08:50:16.996 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 230
+2023-04-25,08:50:17.017 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198486e55e0-0x19848bf5640:5308512
+2023-04-25,08:50:17.017 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.017 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 230
+2023-04-25,08:50:17.030 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 231
+2023-04-25,08:50:17.070 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 232
+2023-04-25,08:50:17.074 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19848bf5640-0x198491056a0:5308512
+2023-04-25,08:50:17.074 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.075 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 231
+2023-04-25,08:50:17.110 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 233
+2023-04-25,08:50:17.132 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198491056a0-0x19849b25760:10617024
+2023-04-25,08:50:17.132 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.132 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 233
+2023-04-25,08:50:17.153 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 234
+2023-04-25,08:50:17.188 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19849b25760-0x1984a0357c0:5308512
+2023-04-25,08:50:17.189 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.189 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 234
+2023-04-25,08:50:17.196 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 235
+2023-04-25,08:50:17.238 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 236
+2023-04-25,08:50:17.246 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984a0357c0-0x1984aa55880:10617024
+2023-04-25,08:50:17.246 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.246 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 236
+2023-04-25,08:50:17.278 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 237
+2023-04-25,08:50:17.303 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984aa55880-0x1984af658e0:5308512
+2023-04-25,08:50:17.303 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.304 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 237
+2023-04-25,08:50:17.322 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 238
+2023-04-25,08:50:17.360 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984af658e0-0x1984b475940:5308512
+2023-04-25,08:50:17.360 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.360 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 238
+2023-04-25,08:50:17.365 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 239
+2023-04-25,08:50:17.409 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 240
+2023-04-25,08:50:17.416 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984b475940-0x1984be95a00:10617024
+2023-04-25,08:50:17.416 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.416 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 240
+2023-04-25,08:50:17.451 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 241
+2023-04-25,08:50:17.473 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984be95a00-0x1984c3a5a60:5308512
+2023-04-25,08:50:17.474 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.474 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 241
+2023-04-25,08:50:17.492 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 242
+2023-04-25,08:50:17.530 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984c3a5a60-0x1984c8b5ac0:5308512
+2023-04-25,08:50:17.530 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.530 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 242
+2023-04-25,08:50:17.534 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 243
+2023-04-25,08:50:17.578 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 244
+2023-04-25,08:50:17.586 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984c8b5ac0-0x1984d2d5b80:10617024
+2023-04-25,08:50:17.586 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.586 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 244
+2023-04-25,08:50:17.619 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 245
+2023-04-25,08:50:17.644 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984d2d5b80-0x1984d7e5be0:5308512
+2023-04-25,08:50:17.644 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.644 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 245
+2023-04-25,08:50:17.663 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 246
+2023-04-25,08:50:17.702 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984d7e5be0-0x1984dcf5c40:5308512
+2023-04-25,08:50:17.703 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.703 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 246
+2023-04-25,08:50:17.706 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 247
+2023-04-25,08:50:17.749 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 248
+2023-04-25,08:50:17.761 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984dcf5c40-0x1984e715d00:10617024
+2023-04-25,08:50:17.761 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.761 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 248
+2023-04-25,08:50:17.792 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 249
+2023-04-25,08:50:17.817 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984e715d00-0x1984ec25d60:5308512
+2023-04-25,08:50:17.817 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.817 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 249
+2023-04-25,08:50:17.835 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 250
+2023-04-25,08:50:17.874 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984ec25d60-0x1984f135dc0:5308512
+2023-04-25,08:50:17.874 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.874 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 250
+2023-04-25,08:50:17.877 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 251
+2023-04-25,08:50:17.922 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 252
+2023-04-25,08:50:17.930 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984f135dc0-0x1984fb55e80:10617024
+2023-04-25,08:50:17.930 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:17.930 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 252
+2023-04-25,08:50:17.962 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 253
+2023-04-25,08:50:17.987 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1984fb55e80-0x19850065ee0:5308512
+2023-04-25,08:50:17.987 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:17.988 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 253
+2023-04-25,08:50:17.994 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 254
+2023-04-25,08:50:18.045 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19850065ee0-0x19850575f40:5308512
+2023-04-25,08:50:18.045 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.045 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 254
+2023-04-25,08:50:18.045 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 255
+2023-04-25,08:50:18.101 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19850575f40-0x19850a85fa0:5308512
+2023-04-25,08:50:18.101 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 256
+2023-04-25,08:50:18.102 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.102 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 255
+2023-04-25,08:50:18.138 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 257
+2023-04-25,08:50:18.158 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19850a85fa0-0x198514a6060:10617024
+2023-04-25,08:50:18.158 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.158 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 257
+2023-04-25,08:50:18.178 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 258
+2023-04-25,08:50:18.214 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198514a6060-0x198519b60c0:5308512
+2023-04-25,08:50:18.215 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.215 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 258
+2023-04-25,08:50:18.218 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 259
+2023-04-25,08:50:18.263 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 260
+2023-04-25,08:50:18.271 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198519b60c0-0x198523d6180:10617024
+2023-04-25,08:50:18.271 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.271 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 260
+2023-04-25,08:50:18.305 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 261
+2023-04-25,08:50:18.327 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198523d6180-0x198528e61e0:5308512
+2023-04-25,08:50:18.327 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.327 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 261
+2023-04-25,08:50:18.346 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 262
+2023-04-25,08:50:18.384 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198528e61e0-0x19852df6240:5308512
+2023-04-25,08:50:18.384 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.384 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 262
+2023-04-25,08:50:18.389 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 263
+2023-04-25,08:50:18.430 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 264
+2023-04-25,08:50:18.441 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19852df6240-0x19853816300:10617024
+2023-04-25,08:50:18.442 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.442 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 264
+2023-04-25,08:50:18.473 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 265
+2023-04-25,08:50:18.498 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19853816300-0x19853d26360:5308512
+2023-04-25,08:50:18.498 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.498 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 265
+2023-04-25,08:50:18.518 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 266
+2023-04-25,08:50:18.556 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19853d26360-0x198542363c0:5308512
+2023-04-25,08:50:18.556 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.556 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 266
+2023-04-25,08:50:18.559 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 267
+2023-04-25,08:50:18.603 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 268
+2023-04-25,08:50:18.614 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198542363c0-0x19854c56480:10617024
+2023-04-25,08:50:18.614 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.614 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 268
+2023-04-25,08:50:18.645 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 269
+2023-04-25,08:50:18.671 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19854c56480-0x198551664e0:5308512
+2023-04-25,08:50:18.671 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.671 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 269
+2023-04-25,08:50:18.688 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 270
+2023-04-25,08:50:18.727 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198551664e0-0x19855676540:5308512
+2023-04-25,08:50:18.727 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.727 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 270
+2023-04-25,08:50:18.732 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 271
+2023-04-25,08:50:18.774 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 272
+2023-04-25,08:50:18.784 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19855676540-0x19856096600:10617024
+2023-04-25,08:50:18.784 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.784 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 272
+2023-04-25,08:50:18.815 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 273
+2023-04-25,08:50:18.842 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19856096600-0x198565a6660:5308512
+2023-04-25,08:50:18.843 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.843 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 273
+2023-04-25,08:50:18.859 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 274
+2023-04-25,08:50:18.899 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198565a6660-0x19856ab66c0:5308512
+2023-04-25,08:50:18.899 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:18.900 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 274
+2023-04-25,08:50:18.902 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 275
+2023-04-25,08:50:18.944 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 276
+2023-04-25,08:50:18.957 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19856ab66c0-0x198574d6780:10617024
+2023-04-25,08:50:18.957 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:18.958 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 276
+2023-04-25,08:50:18.986 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 277
+2023-04-25,08:50:19.014 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198574d6780-0x198579e67e0:5308512
+2023-04-25,08:50:19.015 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.015 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 277
+2023-04-25,08:50:19.029 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 278
+2023-04-25,08:50:19.072 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198579e67e0-0x19857ef6840:5308512
+2023-04-25,08:50:19.073 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.073 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 278
+2023-04-25,08:50:19.107 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 279
+2023-04-25,08:50:19.130 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19857ef6840-0x198584068a0:5308512
+2023-04-25,08:50:19.130 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.130 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 279
+2023-04-25,08:50:19.155 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 280
+2023-04-25,08:50:19.186 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198584068a0-0x19858916900:5308512
+2023-04-25,08:50:19.186 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.186 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 280
+2023-04-25,08:50:19.215 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 281
+2023-04-25,08:50:19.243 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19858916900-0x19858e26960:5308512
+2023-04-25,08:50:19.243 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.244 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 281
+2023-04-25,08:50:19.250 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 282
+2023-04-25,08:50:19.288 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 283
+2023-04-25,08:50:19.300 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19858e26960-0x19859846a20:10617024
+2023-04-25,08:50:19.300 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:19.300 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 283
+2023-04-25,08:50:19.330 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 284
+2023-04-25,08:50:19.356 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19859846a20-0x19859d56a80:5308512
+2023-04-25,08:50:19.356 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.356 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 284
+2023-04-25,08:50:19.373 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 285
+2023-04-25,08:50:19.413 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19859d56a80-0x1985a266ae0:5308512
+2023-04-25,08:50:19.413 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.413 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 285
+2023-04-25,08:50:19.414 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 286
+2023-04-25,08:50:19.455 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 287
+2023-04-25,08:50:19.470 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985a266ae0-0x1985ac86ba0:10617024
+2023-04-25,08:50:19.470 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:19.470 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 287
+2023-04-25,08:50:19.500 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 288
+2023-04-25,08:50:19.527 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985ac86ba0-0x1985b196c00:5308512
+2023-04-25,08:50:19.527 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.527 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 288
+2023-04-25,08:50:19.540 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 289
+2023-04-25,08:50:19.583 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985b196c00-0x1985b6a6c60:5308512
+2023-04-25,08:50:19.583 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.583 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 290
+2023-04-25,08:50:19.583 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 289
+2023-04-25,08:50:19.625 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 291
+2023-04-25,08:50:19.640 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985b6a6c60-0x1985c0c6d20:10617024
+2023-04-25,08:50:19.641 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:19.641 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 291
+2023-04-25,08:50:19.669 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 292
+2023-04-25,08:50:19.698 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985c0c6d20-0x1985c5d6d80:5308512
+2023-04-25,08:50:19.698 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.698 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 292
+2023-04-25,08:50:19.713 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 293
+2023-04-25,08:50:19.754 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 294
+2023-04-25,08:50:19.755 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985c5d6d80-0x1985cae6de0:5308512
+2023-04-25,08:50:19.755 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.755 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 293
+2023-04-25,08:50:19.798 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 295
+2023-04-25,08:50:19.812 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985cae6de0-0x1985d506ea0:10617024
+2023-04-25,08:50:19.812 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:19.812 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 295
+2023-04-25,08:50:19.841 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 296
+2023-04-25,08:50:19.869 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985d506ea0-0x1985da16f00:5308512
+2023-04-25,08:50:19.869 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.870 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 296
+2023-04-25,08:50:19.881 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 297
+2023-04-25,08:50:19.926 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985da16f00-0x1985df26f60:5308512
+2023-04-25,08:50:19.926 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:19.926 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 298
+2023-04-25,08:50:19.926 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 297
+2023-04-25,08:50:19.970 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 299
+2023-04-25,08:50:19.983 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985df26f60-0x1985e947020:10617024
+2023-04-25,08:50:19.983 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:19.983 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 299
+2023-04-25,08:50:20.011 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 300
+2023-04-25,08:50:20.040 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985e947020-0x1985ee57080:5308512
+2023-04-25,08:50:20.040 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.040 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 300
+2023-04-25,08:50:20.053 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 301
+2023-04-25,08:50:20.096 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985ee57080-0x1985f3670e0:5308512
+2023-04-25,08:50:20.096 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.096 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 302
+2023-04-25,08:50:20.096 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 301
+2023-04-25,08:50:20.140 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 303
+2023-04-25,08:50:20.153 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985f3670e0-0x1985fd871a0:10617024
+2023-04-25,08:50:20.153 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:20.153 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 303
+2023-04-25,08:50:20.220 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 304
+2023-04-25,08:50:20.261 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1985fd871a0-0x19860297200:5308512
+2023-04-25,08:50:20.261 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.262 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 304
+2023-04-25,08:50:20.267 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 305
+2023-04-25,08:50:20.319 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19860297200-0x198607a7260:5308512
+2023-04-25,08:50:20.320 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.320 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 306
+2023-04-25,08:50:20.320 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 305
+2023-04-25,08:50:20.355 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 307
+2023-04-25,08:50:20.377 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198607a7260-0x198611c7320:10617024
+2023-04-25,08:50:20.377 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:20.377 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 307
+2023-04-25,08:50:20.396 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 308
+2023-04-25,08:50:20.434 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198611c7320-0x198616d7380:5308512
+2023-04-25,08:50:20.434 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.434 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 308
+2023-04-25,08:50:20.439 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 309
+2023-04-25,08:50:20.482 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 310
+2023-04-25,08:50:20.491 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198616d7380-0x198620f7440:10617024
+2023-04-25,08:50:20.491 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:20.492 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 310
+2023-04-25,08:50:20.522 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 311
+2023-04-25,08:50:20.549 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198620f7440-0x198626074a0:5308512
+2023-04-25,08:50:20.550 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.550 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 311
+2023-04-25,08:50:20.564 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 312
+2023-04-25,08:50:20.606 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198626074a0-0x19862b17500:5308512
+2023-04-25,08:50:20.606 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.606 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 312
+2023-04-25,08:50:20.607 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 313
+2023-04-25,08:50:20.650 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 314
+2023-04-25,08:50:20.663 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19862b17500-0x198635375c0:10617024
+2023-04-25,08:50:20.663 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:20.663 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 314
+2023-04-25,08:50:20.695 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 315
+2023-04-25,08:50:20.719 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198635375c0-0x19863a47620:5308512
+2023-04-25,08:50:20.719 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.720 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 315
+2023-04-25,08:50:20.739 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 316
+2023-04-25,08:50:20.776 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19863a47620-0x19863f57680:5308512
+2023-04-25,08:50:20.776 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.776 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 316
+2023-04-25,08:50:20.780 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 317
+2023-04-25,08:50:20.822 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 318
+2023-04-25,08:50:20.832 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19863f57680-0x19864977740:10617024
+2023-04-25,08:50:20.832 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:20.832 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 318
+2023-04-25,08:50:20.865 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 319
+2023-04-25,08:50:20.889 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19864977740-0x19864e877a0:5308512
+2023-04-25,08:50:20.889 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.889 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 319
+2023-04-25,08:50:20.907 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 320
+2023-04-25,08:50:20.945 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19864e877a0-0x19865397800:5308512
+2023-04-25,08:50:20.946 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:20.946 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 320
+2023-04-25,08:50:20.949 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 321
+2023-04-25,08:50:20.991 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 322
+2023-04-25,08:50:21.003 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19865397800-0x19865db78c0:10617024
+2023-04-25,08:50:21.003 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.003 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 322
+2023-04-25,08:50:21.035 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 323
+2023-04-25,08:50:21.060 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19865db78c0-0x198662c7920:5308512
+2023-04-25,08:50:21.060 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.060 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 323
+2023-04-25,08:50:21.077 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 324
+2023-04-25,08:50:21.117 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198662c7920-0x198667d7980:5308512
+2023-04-25,08:50:21.117 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.117 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 324
+2023-04-25,08:50:21.121 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 325
+2023-04-25,08:50:21.164 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 326
+2023-04-25,08:50:21.173 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198667d7980-0x198671f7a40:10617024
+2023-04-25,08:50:21.173 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.173 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 326
+2023-04-25,08:50:21.204 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 327
+2023-04-25,08:50:21.230 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198671f7a40-0x19867707aa0:5308512
+2023-04-25,08:50:21.230 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.230 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 327
+2023-04-25,08:50:21.287 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 328
+2023-04-25,08:50:21.337 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19867707aa0-0x19867c17b00:5308512
+2023-04-25,08:50:21.337 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.337 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 328
+2023-04-25,08:50:21.349 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 329
+2023-04-25,08:50:21.385 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 330
+2023-04-25,08:50:21.394 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19867c17b00-0x19868637bc0:10617024
+2023-04-25,08:50:21.394 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.394 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 330
+2023-04-25,08:50:21.423 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 331
+2023-04-25,08:50:21.452 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19868637bc0-0x19868b47c20:5308512
+2023-04-25,08:50:21.452 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.452 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 331
+2023-04-25,08:50:21.463 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 332
+2023-04-25,08:50:21.507 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 333
+2023-04-25,08:50:21.509 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19868b47c20-0x19869057c80:5308512
+2023-04-25,08:50:21.510 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.510 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 332
+2023-04-25,08:50:21.548 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 334
+2023-04-25,08:50:21.566 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19869057c80-0x19869a77d40:10617024
+2023-04-25,08:50:21.566 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.566 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 334
+2023-04-25,08:50:21.590 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 335
+2023-04-25,08:50:21.623 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19869a77d40-0x19869f87da0:5308512
+2023-04-25,08:50:21.623 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.623 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 335
+2023-04-25,08:50:21.634 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 336
+2023-04-25,08:50:21.676 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 337
+2023-04-25,08:50:21.679 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19869f87da0-0x1986a497e00:5308512
+2023-04-25,08:50:21.679 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.679 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 336
+2023-04-25,08:50:21.716 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 338
+2023-04-25,08:50:21.736 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986a497e00-0x1986aeb7ec0:10617024
+2023-04-25,08:50:21.736 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.736 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 338
+2023-04-25,08:50:21.759 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 339
+2023-04-25,08:50:21.792 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986aeb7ec0-0x1986b3c7f20:5308512
+2023-04-25,08:50:21.792 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.792 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 339
+2023-04-25,08:50:21.802 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 340
+2023-04-25,08:50:21.847 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 341
+2023-04-25,08:50:21.850 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986b3c7f20-0x1986b8d7f80:5308512
+2023-04-25,08:50:21.850 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.850 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 340
+2023-04-25,08:50:21.890 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 342
+2023-04-25,08:50:21.906 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986b8d7f80-0x1986c2f8040:10617024
+2023-04-25,08:50:21.906 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:21.906 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 342
+2023-04-25,08:50:21.931 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 343
+2023-04-25,08:50:21.963 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986c2f8040-0x1986c8080a0:5308512
+2023-04-25,08:50:21.963 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:21.963 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 343
+2023-04-25,08:50:21.974 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 344
+2023-04-25,08:50:22.019 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986c8080a0-0x1986cd18100:5308512
+2023-04-25,08:50:22.020 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.020 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 345
+2023-04-25,08:50:22.020 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 344
+2023-04-25,08:50:22.059 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 346
+2023-04-25,08:50:22.077 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986cd18100-0x1986d7381c0:10617024
+2023-04-25,08:50:22.077 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.077 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 346
+2023-04-25,08:50:22.101 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 347
+2023-04-25,08:50:22.133 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986d7381c0-0x1986dc48220:5308512
+2023-04-25,08:50:22.133 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.134 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 347
+2023-04-25,08:50:22.144 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 348
+2023-04-25,08:50:22.187 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 349
+2023-04-25,08:50:22.190 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986dc48220-0x1986e158280:5308512
+2023-04-25,08:50:22.190 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.190 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 348
+2023-04-25,08:50:22.229 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 350
+2023-04-25,08:50:22.246 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986e158280-0x1986eb78340:10617024
+2023-04-25,08:50:22.247 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.247 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 350
+2023-04-25,08:50:22.271 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 351
+2023-04-25,08:50:22.304 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986eb78340-0x1986f0883a0:5308512
+2023-04-25,08:50:22.304 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.304 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 351
+2023-04-25,08:50:22.315 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 352
+2023-04-25,08:50:22.347 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 353
+2023-04-25,08:50:22.361 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986f0883a0-0x1986faa8460:10617024
+2023-04-25,08:50:22.361 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.361 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 353
+2023-04-25,08:50:22.399 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 354
+2023-04-25,08:50:22.418 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986faa8460-0x1986ffb84c0:5308512
+2023-04-25,08:50:22.418 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.418 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 354
+2023-04-25,08:50:22.457 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 355
+2023-04-25,08:50:22.475 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1986ffb84c0-0x198704c8520:5308512
+2023-04-25,08:50:22.475 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.475 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 355
+2023-04-25,08:50:22.493 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 356
+2023-04-25,08:50:22.532 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198704c8520-0x198709d8580:5308512
+2023-04-25,08:50:22.533 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.532 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 357
+2023-04-25,08:50:22.533 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 356
+2023-04-25,08:50:22.573 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 358
+2023-04-25,08:50:22.589 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198709d8580-0x198713f8640:10617024
+2023-04-25,08:50:22.589 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.589 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 358
+2023-04-25,08:50:22.614 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 359
+2023-04-25,08:50:22.646 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198713f8640-0x198719086a0:5308512
+2023-04-25,08:50:22.647 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.647 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 359
+2023-04-25,08:50:22.660 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 360
+2023-04-25,08:50:22.700 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 361
+2023-04-25,08:50:22.704 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198719086a0-0x19871e18700:5308512
+2023-04-25,08:50:22.704 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.704 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 360
+2023-04-25,08:50:22.741 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 362
+2023-04-25,08:50:22.761 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19871e18700-0x198728387c0:10617024
+2023-04-25,08:50:22.761 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.761 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 362
+2023-04-25,08:50:22.785 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 363
+2023-04-25,08:50:22.817 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198728387c0-0x19872d48820:5308512
+2023-04-25,08:50:22.817 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.817 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 363
+2023-04-25,08:50:22.828 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 364
+2023-04-25,08:50:22.871 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 365
+2023-04-25,08:50:22.873 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19872d48820-0x19873258880:5308512
+2023-04-25,08:50:22.873 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.873 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 364
+2023-04-25,08:50:22.914 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 366
+2023-04-25,08:50:22.930 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19873258880-0x19873c78940:10617024
+2023-04-25,08:50:22.930 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:22.930 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 366
+2023-04-25,08:50:22.958 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 367
+2023-04-25,08:50:22.986 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19873c78940-0x198741889a0:5308512
+2023-04-25,08:50:22.986 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:22.986 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 367
+2023-04-25,08:50:23.000 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 368
+2023-04-25,08:50:23.040 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 369
+2023-04-25,08:50:23.042 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198741889a0-0x19874698a00:5308512
+2023-04-25,08:50:23.042 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.042 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 368
+2023-04-25,08:50:23.082 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 370
+2023-04-25,08:50:23.099 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19874698a00-0x198750b8ac0:10617024
+2023-04-25,08:50:23.099 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:23.099 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 370
+2023-04-25,08:50:23.126 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 371
+2023-04-25,08:50:23.156 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198750b8ac0-0x198755c8b20:5308512
+2023-04-25,08:50:23.156 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.156 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 371
+2023-04-25,08:50:23.171 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 372
+2023-04-25,08:50:23.211 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 373
+2023-04-25,08:50:23.213 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198755c8b20-0x19875ad8b80:5308512
+2023-04-25,08:50:23.213 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.213 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 372
+2023-04-25,08:50:23.254 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 374
+2023-04-25,08:50:23.269 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19875ad8b80-0x198764f8c40:10617024
+2023-04-25,08:50:23.269 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:23.269 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 374
+2023-04-25,08:50:23.297 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 375
+2023-04-25,08:50:23.326 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198764f8c40-0x19876a08ca0:5308512
+2023-04-25,08:50:23.326 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.326 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 375
+2023-04-25,08:50:23.342 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 376
+2023-04-25,08:50:23.382 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19876a08ca0-0x19876f18d00:5308512
+2023-04-25,08:50:23.382 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.382 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 376
+2023-04-25,08:50:23.383 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 377
+2023-04-25,08:50:23.426 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 378
+2023-04-25,08:50:23.439 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19876f18d00-0x19877938dc0:10617024
+2023-04-25,08:50:23.439 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:23.439 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 378
+2023-04-25,08:50:23.505 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 379
+2023-04-25,08:50:23.546 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19877938dc0-0x19877e48e20:5308512
+2023-04-25,08:50:23.546 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.547 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 379
+2023-04-25,08:50:23.565 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 380
+2023-04-25,08:50:23.601 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 381
+2023-04-25,08:50:23.604 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19877e48e20-0x19878358e80:5308512
+2023-04-25,08:50:23.604 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.604 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 380
+2023-04-25,08:50:23.641 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 382
+2023-04-25,08:50:23.660 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19878358e80-0x19878d78f40:10617024
+2023-04-25,08:50:23.660 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:23.660 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 382
+2023-04-25,08:50:23.682 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 383
+2023-04-25,08:50:23.717 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19878d78f40-0x19879288fa0:5308512
+2023-04-25,08:50:23.717 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.717 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 383
+2023-04-25,08:50:23.725 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 384
+2023-04-25,08:50:23.769 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 385
+2023-04-25,08:50:23.773 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19879288fa0-0x19879799000:5308512
+2023-04-25,08:50:23.773 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.773 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 384
+2023-04-25,08:50:23.810 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 386
+2023-04-25,08:50:23.830 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19879799000-0x1987a1b90c0:10617024
+2023-04-25,08:50:23.830 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:23.830 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 386
+2023-04-25,08:50:23.854 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 387
+2023-04-25,08:50:23.886 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987a1b90c0-0x1987a6c9120:5308512
+2023-04-25,08:50:23.886 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.886 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 387
+2023-04-25,08:50:23.894 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 388
+2023-04-25,08:50:23.938 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 389
+2023-04-25,08:50:23.942 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987a6c9120-0x1987abd9180:5308512
+2023-04-25,08:50:23.942 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:23.942 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 388
+2023-04-25,08:50:23.978 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 390
+2023-04-25,08:50:24.000 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987abd9180-0x1987b5f9240:10617024
+2023-04-25,08:50:24.000 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.001 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 390
+2023-04-25,08:50:24.023 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 391
+2023-04-25,08:50:24.057 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987b5f9240-0x1987bb092a0:5308512
+2023-04-25,08:50:24.057 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.057 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 391
+2023-04-25,08:50:24.066 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 392
+2023-04-25,08:50:24.109 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 393
+2023-04-25,08:50:24.113 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987bb092a0-0x1987c019300:5308512
+2023-04-25,08:50:24.113 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.113 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 392
+2023-04-25,08:50:24.149 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 394
+2023-04-25,08:50:24.169 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987c019300-0x1987ca393c0:10617024
+2023-04-25,08:50:24.169 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.169 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 394
+2023-04-25,08:50:24.194 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 395
+2023-04-25,08:50:24.225 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987ca393c0-0x1987cf49420:5308512
+2023-04-25,08:50:24.226 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.226 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 395
+2023-04-25,08:50:24.236 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 396
+2023-04-25,08:50:24.279 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 397
+2023-04-25,08:50:24.283 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987cf49420-0x1987d459480:5308512
+2023-04-25,08:50:24.283 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.283 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 396
+2023-04-25,08:50:24.320 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 398
+2023-04-25,08:50:24.339 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987d459480-0x1987de79540:10617024
+2023-04-25,08:50:24.339 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.339 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 398
+2023-04-25,08:50:24.363 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 399
+2023-04-25,08:50:24.395 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987de79540-0x1987e3895a0:5308512
+2023-04-25,08:50:24.395 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.395 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 399
+2023-04-25,08:50:24.407 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 400
+2023-04-25,08:50:24.448 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 401
+2023-04-25,08:50:24.451 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987e3895a0-0x1987e899600:5308512
+2023-04-25,08:50:24.451 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.452 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 400
+2023-04-25,08:50:24.491 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 402
+2023-04-25,08:50:24.509 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987e899600-0x1987f2b96c0:10617024
+2023-04-25,08:50:24.509 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.509 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 402
+2023-04-25,08:50:24.526 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 403
+2023-04-25,08:50:24.565 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987f2b96c0-0x1987f7c9720:5308512
+2023-04-25,08:50:24.565 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.565 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 403
+2023-04-25,08:50:24.576 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 404
+2023-04-25,08:50:24.620 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 405
+2023-04-25,08:50:24.621 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1987f7c9720-0x1987fcd9780:5308512
+2023-04-25,08:50:24.622 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.622 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 404
+2023-04-25,08:50:24.676 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 406
+2023-04-25,08:50:24.678 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x197fff90000-0x198004a0060:5308512
+2023-04-25,08:50:24.679 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.679 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 405
+2023-04-25,08:50:24.713 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 407
+2023-04-25,08:50:24.735 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198004a0060-0x19800ec0120:10617024
+2023-04-25,08:50:24.736 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.736 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 407
+2023-04-25,08:50:24.752 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 408
+2023-04-25,08:50:24.792 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19800ec0120-0x198013d0180:5308512
+2023-04-25,08:50:24.792 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.793 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 408
+2023-04-25,08:50:24.793 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 409
+2023-04-25,08:50:24.835 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 410
+2023-04-25,08:50:24.849 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198013d0180-0x19801df0240:10617024
+2023-04-25,08:50:24.849 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:24.849 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 410
+2023-04-25,08:50:24.877 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 411
+2023-04-25,08:50:24.906 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19801df0240-0x198023002a0:5308512
+2023-04-25,08:50:24.906 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.906 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 411
+2023-04-25,08:50:24.919 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 412
+2023-04-25,08:50:24.962 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198023002a0-0x19802810300:5308512
+2023-04-25,08:50:24.962 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:24.962 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 412
+2023-04-25,08:50:24.962 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 413
+2023-04-25,08:50:25.004 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 414
+2023-04-25,08:50:25.019 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19802810300-0x198032303c0:10617024
+2023-04-25,08:50:25.019 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:25.019 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 414
+2023-04-25,08:50:25.048 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 415
+2023-04-25,08:50:25.076 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198032303c0-0x19803740420:5308512
+2023-04-25,08:50:25.076 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.076 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 415
+2023-04-25,08:50:25.091 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 416
+2023-04-25,08:50:25.133 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19803740420-0x19803c50480:5308512
+2023-04-25,08:50:25.133 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.133 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 416
+2023-04-25,08:50:25.133 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 417
+2023-04-25,08:50:25.175 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 418
+2023-04-25,08:50:25.189 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19803c50480-0x19804670540:10617024
+2023-04-25,08:50:25.189 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:25.189 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 418
+2023-04-25,08:50:25.219 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 419
+2023-04-25,08:50:25.246 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19804670540-0x19804b805a0:5308512
+2023-04-25,08:50:25.246 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.246 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 419
+2023-04-25,08:50:25.261 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 420
+2023-04-25,08:50:25.302 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19804b805a0-0x19805090600:5308512
+2023-04-25,08:50:25.302 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.303 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 420
+2023-04-25,08:50:25.303 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 421
+2023-04-25,08:50:25.346 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 422
+2023-04-25,08:50:25.360 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805090600-0x19805ab06c0:10617024
+2023-04-25,08:50:25.360 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:25.360 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 422
+2023-04-25,08:50:25.388 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 423
+2023-04-25,08:50:25.417 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805ab06c0-0x19805fc0720:5308512
+2023-04-25,08:50:25.417 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.418 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 423
+2023-04-25,08:50:25.430 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 424
+2023-04-25,08:50:25.473 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 425
+2023-04-25,08:50:25.475 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19805fc0720-0x198064d0780:5308512
+2023-04-25,08:50:25.475 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.475 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 424
+2023-04-25,08:50:25.515 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 426
+2023-04-25,08:50:25.532 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198064d0780-0x19806ef0840:10617024
+2023-04-25,08:50:25.532 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:25.533 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 426
+2023-04-25,08:50:25.562 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 427
+2023-04-25,08:50:25.590 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19806ef0840-0x198074008a0:5308512
+2023-04-25,08:50:25.590 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.590 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 427
+2023-04-25,08:50:25.604 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 428
+2023-04-25,08:50:25.647 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198074008a0-0x19807910900:5308512
+2023-04-25,08:50:25.647 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.648 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 428
+2023-04-25,08:50:25.681 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 429
+2023-04-25,08:50:25.705 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19807910900-0x19807e20960:5308512
+2023-04-25,08:50:25.705 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.705 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 429
+2023-04-25,08:50:25.731 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 430
+2023-04-25,08:50:25.761 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19807e20960-0x198083309c0:5308512
+2023-04-25,08:50:25.761 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.761 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 430
+2023-04-25,08:50:25.784 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 431
+2023-04-25,08:50:25.818 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198083309c0-0x19808840a20:5308512
+2023-04-25,08:50:25.818 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.818 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 431
+2023-04-25,08:50:25.821 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 432
+2023-04-25,08:50:25.860 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 433
+2023-04-25,08:50:25.875 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19808840a20-0x19809260ae0:10617024
+2023-04-25,08:50:25.875 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:25.875 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 433
+2023-04-25,08:50:25.902 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 434
+2023-04-25,08:50:25.931 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19809260ae0-0x19809770b40:5308512
+2023-04-25,08:50:25.932 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.932 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 434
+2023-04-25,08:50:25.945 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 435
+2023-04-25,08:50:25.988 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 436
+2023-04-25,08:50:25.989 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19809770b40-0x19809c80ba0:5308512
+2023-04-25,08:50:25.989 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:25.989 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 435
+2023-04-25,08:50:26.029 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 437
+2023-04-25,08:50:26.046 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19809c80ba0-0x1980a6a0c60:10617024
+2023-04-25,08:50:26.046 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:26.046 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 437
+2023-04-25,08:50:26.071 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 438
+2023-04-25,08:50:26.102 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980a6a0c60-0x1980abb0cc0:5308512
+2023-04-25,08:50:26.103 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.103 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 438
+2023-04-25,08:50:26.115 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 439
+2023-04-25,08:50:26.157 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 440
+2023-04-25,08:50:26.160 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980abb0cc0-0x1980b0c0d20:5308512
+2023-04-25,08:50:26.160 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.160 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 439
+2023-04-25,08:50:26.198 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 441
+2023-04-25,08:50:26.217 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980b0c0d20-0x1980bae0de0:10617024
+2023-04-25,08:50:26.217 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:26.217 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 441
+2023-04-25,08:50:26.243 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 442
+2023-04-25,08:50:26.274 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980bae0de0-0x1980bff0e40:5308512
+2023-04-25,08:50:26.274 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.274 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 442
+2023-04-25,08:50:26.286 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 443
+2023-04-25,08:50:26.328 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 444
+2023-04-25,08:50:26.330 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980bff0e40-0x1980c500ea0:5308512
+2023-04-25,08:50:26.330 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.330 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 443
+2023-04-25,08:50:26.371 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 445
+2023-04-25,08:50:26.386 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980c500ea0-0x1980cf20f60:10617024
+2023-04-25,08:50:26.386 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:26.386 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 445
+2023-04-25,08:50:26.414 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 446
+2023-04-25,08:50:26.443 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980cf20f60-0x1980d430fc0:5308512
+2023-04-25,08:50:26.443 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.443 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 446
+2023-04-25,08:50:26.456 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 447
+2023-04-25,08:50:26.498 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 448
+2023-04-25,08:50:26.500 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980d430fc0-0x1980d941020:5308512
+2023-04-25,08:50:26.500 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.500 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 447
+2023-04-25,08:50:26.539 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 449
+2023-04-25,08:50:26.557 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980d941020-0x1980e3610e0:10617024
+2023-04-25,08:50:26.557 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:26.557 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 449
+2023-04-25,08:50:26.582 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 450
+2023-04-25,08:50:26.613 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980e3610e0-0x1980e871140:5308512
+2023-04-25,08:50:26.613 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.613 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 450
+2023-04-25,08:50:26.628 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 451
+2023-04-25,08:50:26.668 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 452
+2023-04-25,08:50:26.670 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980e871140-0x1980ed811a0:5308512
+2023-04-25,08:50:26.670 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.670 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 451
+2023-04-25,08:50:26.727 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980ed811a0-0x1980f291200:5308512
+2023-04-25,08:50:26.728 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.728 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 452
+2023-04-25,08:50:26.752 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 453
+2023-04-25,08:50:26.784 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980f291200-0x1980f7a1260:5308512
+2023-04-25,08:50:26.784 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.784 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 453
+2023-04-25,08:50:26.811 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 454
+2023-04-25,08:50:26.841 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980f7a1260-0x1980fcb12c0:5308512
+2023-04-25,08:50:26.841 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.841 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 454
+2023-04-25,08:50:26.846 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 455
+2023-04-25,08:50:26.885 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 456
+2023-04-25,08:50:26.898 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x1980fcb12c0-0x198106d1380:10617024
+2023-04-25,08:50:26.898 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:26.898 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 456
+2023-04-25,08:50:26.927 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 457
+2023-04-25,08:50:26.955 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198106d1380-0x19810be13e0:5308512
+2023-04-25,08:50:26.955 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:26.956 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 457
+2023-04-25,08:50:26.969 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 458
+2023-04-25,08:50:27.012 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19810be13e0-0x198110f1440:5308512
+2023-04-25,08:50:27.012 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:27.012 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 459
+2023-04-25,08:50:27.012 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 458
+2023-04-25,08:50:27.054 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 460
+2023-04-25,08:50:27.069 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198110f1440-0x19811b11500:10617024
+2023-04-25,08:50:27.069 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:27.069 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 460
+2023-04-25,08:50:27.096 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 461
+2023-04-25,08:50:27.126 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19811b11500-0x19812021560:5308512
+2023-04-25,08:50:27.126 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:27.126 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 461
+2023-04-25,08:50:27.140 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 462
+2023-04-25,08:50:27.182 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19812021560-0x198125315c0:5308512
+2023-04-25,08:50:27.183 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:27.182 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 463
+2023-04-25,08:50:27.183 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 462
+2023-04-25,08:50:27.224 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 464
+2023-04-25,08:50:27.240 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198125315c0-0x19812f51680:10617024
+2023-04-25,08:50:27.240 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:27.240 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 464
+2023-04-25,08:50:27.267 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 465
+2023-04-25,08:50:27.296 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19812f51680-0x198134616e0:5308512
+2023-04-25,08:50:27.296 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:27.296 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 465
+2023-04-25,08:50:27.309 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 466
+2023-04-25,08:50:27.350 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 467
+2023-04-25,08:50:27.353 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x198134616e0-0x19813971740:5308512
+2023-04-25,08:50:27.353 DEBUG root: Frames in packet: 1
+2023-04-25,08:50:27.353 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 466
+2023-04-25,08:50:27.394 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 468
+2023-04-25,08:50:27.410 DEBUG calliphlox.runtime: [stream 0] DROP read region: 0x19813971740-0x19814391800:10617024
+2023-04-25,08:50:27.410 DEBUG root: Frames in packet: 2
+2023-04-25,08:50:27.410 INFO spim_core.spim_base.Ispim: Total frames: 479 -> Frames collected: 468
+2023-04-25,08:50:27.437 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 469
+2023-04-25,08:50:27.462 INFO spim_core.spim_base.Ispim: NI task completed
+2023-04-25,08:50:27.462 DEBUG ispim.devices.ni: Issuing a task stop.
+2023-04-25,08:50:27.480 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\cpx.c:497 - video_streamer_thread(): [stream 0] wrote frame 470
+2023-04-25,08:50:33.462 INFO spim_core.spim_base.Ispim: Waiting for camera to finish
+2023-04-25,08:50:43.510 INFO spim_core.spim_base.Ispim: Task timed out
+2023-04-25,08:50:43.510 INFO spim_core.spim_base.Ispim: Stopping camera
+2023-04-25,08:52:13.512 DEBUG calliphlox.runtime: C:\Users\hcr-fish\cpx-python\cpx\src\device\device.manager.cpp:217 - `anonymous-namespace'::DeviceManagerV0::select(): Selecting (1,2) for Storage "Tiff"

@@ -21,14 +21,20 @@ from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
-from spim_core.devices.tiger_components import SamplePose
+from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
-from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP
+from obis_laser import ObisLS, LSModulationType, AnalogInputImpedanceType
+from vortran_laser.stradus import StradusLaser as Vortran
+from vortran_laser.stradus import Cmd, Query
 import os
 from calliphlox import DeviceState
 import cv2
 
-
+LASER_MODEL_TO_OBJ = \
+    {
+       "Vortran": Vortran,
+        "ObisLS": ObisLS
+    }
 
 class Ispim(Spim):
 
@@ -48,6 +54,8 @@ class Ispim(Spim):
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
         self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
+        self.filter_wheel = FilterWheel(self.tigerbox,
+                                        **self.cfg.filter_wheel_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
 
@@ -109,22 +117,28 @@ class Ispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-        self.log.debug(f"Attempting to connect to lasers")
-        self.ser = Serial(port='COM7', **OXXIUS_COM_SETUP) if not self.simulated else None
-        self.log.debug(f"Successfully connected to lasers")
 
-        for wl, specs in self.cfg.laser_specs.items():
-            self.lasers[wl] = LaserHub(self.ser, specs['prefix']) if not self.simulated \
-                else Mock(LaserHub)
-            # TODO: Needs to not be hardcoded and find out what commands work for 561
-            if int(wl) != 561:
-                self.lasers[wl].set(Cmd.LaserDriverControlMode, 1)  # Set constant current mode
-                self.log.debug(f"Setting up {specs['color']} laser.")
-                self.lasers[wl].set(Cmd.ExternalPowerControl, 0)  # Disables external modulation
-                self.lasers[wl].set(Cmd.DigitalModulation, 1)  # Enables digital modulation
+        for wavelength_str, specs in self.cfg.laser_specs.items():
+            if specs['kwds']['port'] =='COMxx':
+                self.log.warning(f'Skipping setup for laser {wavelength_str} due to no COM port specified')
+                continue
+            self.log.debug(f"Setting up {wavelength_str} laser.")
+            cls = LASER_MODEL_TO_OBJ[specs['driver']]
+            # Mock Lasers. We can't wrap them in Mock(cls(**specs['kwds'])
+            laser_obj = cls(**specs['kwds']) if not self.simulated else Mock(cls)
+            # Put all lasers in analog mode.
+            # TODO: can this be abstracted, not case-specific?
+            if cls == ObisLS:
+                self.log.debug("Applying analog mode settings to ObisLS laser.")
+                laser_obj.set_modulation_mode(LSModulationType.ANALOG)
+                laser_obj.set_analog_input_impedance(
+                    AnalogInputImpedanceType.TWO_THOUSAND_OHM)
+            if cls == Vortran:
+                laser_obj.set(Cmd.PulseMode, 0)             # Disable digital modulation
+                laser_obj.set(Cmd.FiveSecEmissionDelay, 0)  # Disable five sec delay
+                laser_obj.set(Cmd.ExternalPowerControl, 1)  # Enable Analog modulation
 
-        self.lasers['main'] = LaserHub(self.ser) if not self.simulated \
-            else Mock(LaserHub)  # Set up main right and left laser with empty prefix
+            self.lasers[int(wavelength_str)] = laser_obj
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -141,7 +155,7 @@ class Ispim(Spim):
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
-        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+        #self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
@@ -153,7 +167,6 @@ class Ispim(Spim):
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
-
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
@@ -314,93 +327,93 @@ class Ispim(Spim):
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos))
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
-                    # TODO: handle this through sample pose class, which remaps axes
-                    # Move to specified Z position
-                    self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                    self.tigerbox.set_speed(X=1.0)  # X maps to Z
-                    self.log.debug("Applying extra move to take out backlash.")
-                    z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                    self.tigerbox.move_absolute(x=round(z_backup_pos))
-                    self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                    self.tigerbox.move_absolute(x=self.stage_z_pos)
-                    self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
+                    for channel in channels:
 
-                    self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
-                    self.tigerbox.set_speed(X=scan_speed_mm_s)
-                    self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
+                        # TODO: handle this through sample pose class, which remaps axes
+                        # Move to specified Z position
+                        self.log.debug("Setting speed in Z to 1.0 mm/sec")
+                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
+                        self.log.debug("Applying extra move to take out backlash.")
+                        z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
+                        self.tigerbox.move_absolute(x=round(z_backup_pos))
+                        self.log.info(f"Moving to Z = {self.stage_z_pos}.")
+                        self.tigerbox.move_absolute(x=self.stage_z_pos)
+                        self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
-                    self.log.info(f"Setting up lasers for active channels: {channels}")
-                    self.setup_imaging_for_laser(channels)
+                        self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
+                        self.tigerbox.set_speed(X=scan_speed_mm_s)
+                        self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
 
-                    # Setup capture of next Z stack.
-                    # TODO: CPX handels how to save files. How to name files for all channels?
-                    filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'  # if filetype is trash, it'll be zarr but doesn't matter
-                    channel_string = '_'.join(map(str, self.active_lasers))
-                    filenames = [
-                        f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}" #add all channel names
-                        for
-                        camera in self.stream_ids]
+                        self.log.info(f"Setting up lasers for active channels: {channel}")
+                        self.setup_imaging_for_laser([channel])     # Not changing waveform generator so give a one channel list
 
-                    os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
-                    filepath_srcs = [local_storage_dir / f for f in filenames]
-                    self.log.info(f"Collecting tile stacks at "
-                                  f"({self.stage_x_pos / STEPS_PER_UM}, "
-                                  f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
-                                  f"for channels {channels} and saving to: {filepath_srcs}")
-                    # TODO: consider making z step size a fn parameter instead of
-                    #   collected strictly from the config.
+                        # Setup capture of next Z stack.
+                        filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'  # if filetype is trash, it'll be zarr but doesn't matter
 
-                    # Logging for JSON schema
-                    self.schema_log.info(f'file_name, {filenames}')
-                    self.schema_log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers')  # size of pixels
-                    self.schema_log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers')
-                    self.schema_log.info(f'z_voxel_size, {z_step_size_um} micrometers')
-                    self.schema_log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'lightsheet_angle, 45 degrees')
+                        #channel_string = '_'.join(map(str, self.active_lasers))
+                        filenames = [
+                            f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel}.{filetype_suffix}" #add all channel names
+                            for
+                            camera in self.stream_ids]
 
-                    for laser in self.active_lasers:
-                        laser = str(laser)
-                        self.schema_log.info(f'channel_name, {laser}')
-                        self.schema_log.info(f'laser_wavelength, {laser} nanometers')
-                        laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(
-                            laser) == 561 else \
-                            f'{self.lasers[laser].get(Query.LaserCurrentSetting)} percent'  # TODO: convert to mW
-                        self.schema_log.info(f'laser_power: {laser_power}')
-                        self.schema_log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}')
+                        os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
+                        filepath_srcs = [local_storage_dir / f for f in filenames]
+                        self.log.info(f"Collecting tile stacks at "
+                                      f"({self.stage_x_pos / STEPS_PER_UM}, "
+                                      f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
+                                      f"for channels {channels} and saving to: {filepath_srcs}")
+                        # TODO: consider making z step size a fn parameter instead of
+                        #   collected strictly from the config.
+
+                        # Logging for JSON schema
+                        self.schema_log.info(f'file_name, {filenames}')
+                        self.schema_log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers')  # size of pixels
+                        self.schema_log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers')
+                        self.schema_log.info(f'z_voxel_size, {z_step_size_um} micrometers')
+                        self.schema_log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters')
+                        self.schema_log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters')
+                        self.schema_log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters')
+                        self.schema_log.info(f'lightsheet_angle, 45 degrees')
+
+                        self.schema_log.info(f'channel_name, {channel}')
+                        self.schema_log.info(f'laser_wavelength, {channel} nanometers')
+                        # laser_power = f'{self.lasers[laser].get(Query.LaserPowerSetting)} milliwatts' if int(
+                        #     laser) == 561 else \
+                        #     f'{self.lasers[laser].get(Query.LaserCurrentSetting)} percent'  # TODO: convert to mW
+                        # self.schema_log.info(f'laser_power: {laser_power}')
+                        self.schema_log.info(f'filter_wheel_index: {self.cfg.laser_specs[str(channel)]["filter_index"]}')
                         # Every variable in calculate waveforms
-                        for key in self.cfg.laser_specs[laser]['etl']:
-                            self.schema_log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts')
-                        for key in self.cfg.laser_specs[laser]['galvo']:
-                            self.schema_log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts')
+                        for key in self.cfg.laser_specs[str(channel)]['etl']:
+                            self.schema_log.info(f'daq etl {key}: {self.cfg.laser_specs[str(channel)]["etl"][key]} volts')
+                        for key in self.cfg.laser_specs[str(channel)]['galvo']:
+                            self.schema_log.info(f'daq galvo {key}: {self.cfg.laser_specs[str(channel)]["galvo"][key]} volts')
 
-                    # Convert to [mm] units for tigerbox.
-                    slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
-                    self._collect_stacked_tiff(slow_scan_axis_position,
-                                               ztiles,
-                                               z_step_size_um,
-                                               filepath_srcs,
-                                               filetype)
+                        # Convert to [mm] units for tigerbox.
+                        slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
+                        self._collect_stacked_tiff(slow_scan_axis_position,
+                                                   ztiles,
+                                                   z_step_size_um,
+                                                   filepath_srcs,
+                                                   filetype)
 
-                    # Start transferring file to its destination.
-                    # Note: Image transfer is faster than image capture, but
-                    #   we still wait for prior process to finish.
-                    if transfer_processes is not None:
-                        self.log.info(f"Waiting for {filetype} transfer process "
-                                      "to complete.")
-                        for p in transfer_processes:
-                            p.join()
-                    if img_storage_dir is not None:
-                        filepath_dests = [img_storage_dir / f for f in filenames]
-                        self.log.info("Starting transfer process for "
-                                      f"{filepath_dests}.")
-                        # ↓TODO, use xcopy transfer for speed
-                        transfer_processes = [DataTransfer(filepath_srcs[streams],
-                                                           filepath_dests[streams]) for streams in self.stream_ids]
-                        for p in transfer_processes:
-                            p.start()
-                    # TODO, set speed of sample Z / tiger X axis to ~1
+                        # Start transferring file to its destination.
+                        # Note: Image transfer is faster than image capture, but
+                        #   we still wait for prior process to finish.
+                        if transfer_processes is not None:
+                            self.log.info(f"Waiting for {filetype} transfer process "
+                                          "to complete.")
+                            for p in transfer_processes:
+                                p.join()
+                        if img_storage_dir is not None:
+                            filepath_dests = [img_storage_dir / f for f in filenames]
+                            self.log.info("Starting transfer process for "
+                                          f"{filepath_dests}.")
+                            # ↓TODO, use xcopy transfer for speed
+                            transfer_processes = [DataTransfer(filepath_srcs[streams],
+                                                               filepath_dests[streams]) for streams in self.stream_ids]
+                            for p in transfer_processes:
+                                p.start()
+                        # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
@@ -418,7 +431,7 @@ class Ispim(Spim):
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
-                self.lasers[str(wl)].disable()
+                self.lasers[wl].disable()
             self.active_lasers = None
             self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
 
@@ -441,8 +454,10 @@ class Ispim(Spim):
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
-        self.frame_grabber.setup_stack_capture(filepath_srcs, (tile_count * len(self.cfg.imaging_wavelengths)),
-                                                                                    filetype)
+        self.frame_grabber.setup_stack_capture(filepath_srcs,
+                                               #(tile_count * len(self.cfg.imaging_wavelengths)),
+                                               tile_count,
+                                               filetype)
         #TODO: Why doesn't this work?
         # while self.frame_grabber.runtime.get_state() != DeviceState.Armed:  # Check if camera is configured
         #     sleep(.05)
@@ -466,13 +481,14 @@ class Ispim(Spim):
             curr_frame_count += frame_count
             if curr_frame_count != prev_frame_count:
                 prev_frame_count = curr_frame_count
-                self.log.info(f'Total frames: {tile_count*len(self.cfg.imaging_wavelengths)} '
+                self.log.info(f'Total frames: {tile_count} '
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
             sleep(0.05)
         self.log.info('NI task completed')
-
+        self.ni.stop()
+        sleep(5)
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
             self.overview_process.start()   # If doing an overview image, start down sampling and mips
@@ -481,10 +497,9 @@ class Ispim(Spim):
         start = time()
         while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
             sleep(.05)
-            if time() - start > 60:
+            if time() - start > 10:
                 self.log.info('Task timed out')
                 break
-
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
         self.log.info('Stopping NI Card')
@@ -631,7 +646,7 @@ class Ispim(Spim):
         self.ni.stop()
         self.ni.close()
 
-        for laser in self.active_lasers: self.lasers[str(laser)].disable()
+        for laser in self.active_lasers: self.lasers[laser].disable()
         self.active_lasers = None
 
     def _livestream_worker(self):
@@ -675,12 +690,15 @@ class Ispim(Spim):
         self.log.info(f"Configuring {wavelength}[nm] laser{live_status_msg}.")
 
         if self.active_lasers is not None:
-            for laser in self.active_lasers: self.lasers[str(laser)].disable()
+            for laser in self.active_lasers: self.lasers[laser].disable()
+
+        fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for
+        self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
         self.active_lasers = wavelength
-        for laser in self.active_lasers: self.lasers[str(laser)].enable()
+        for laser in self.active_lasers: self.lasers[laser].enable()
 
     def set_scan_start(self, start):
 
@@ -698,5 +716,4 @@ class Ispim(Spim):
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
             laser.disable()
-        self.ser.close()  # TODO: refactor oxxius lasers into wrapper class.
         super().close()
