@@ -111,8 +111,13 @@ class Ispim(Spim):
 
         self.log.debug(f"Setting up lasers")
         for wl, specs in self.cfg.laser_specs.items():
+            if specs['kwds']['port'] == 'COMxx':
+                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
+                continue
             self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
             self.log.debug(f"Successfully connected to {wl} laser")
+            self.lasers[wl].setup_control()
+            self.log.debug(f"Successfully setup {wl} laser")
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
