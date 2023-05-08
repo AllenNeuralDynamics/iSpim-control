@@ -63,6 +63,13 @@ class IspimConfig(SpimConfig):
         """Return the buffer samples of laser delay."""
         return round(self.daq_update_freq * self.laser_pre_buffer_time_s)
 
+    @property
+    def acquisition_style(self):
+        """Returns whether acquisition will play interleaved waveforms at each tile
+        or take sequential rounds of tiling"""
+        #TODO: Error if not interleaved or sequential?
+        return self.imaging_specs['acquisition_style']
+
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
     @property
@@ -171,8 +178,12 @@ class IspimConfig(SpimConfig):
         """Return the volumetric scan speed of the stage."""
         jitter_time_s = 0.02  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
-        #scan_speed_mm_s = (step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))  #TODO: PLEASE REVERT ME BACK!!
-        scan_speed_mm_s = (step_size_mm / ((self.get_period_time()) + jitter_time_s))
+        if self.acquisition_style == 'interleaved':
+            scan_speed_mm_s = (
+                        step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
+        elif self.acquisition_style == 'sequential':
+            scan_speed_mm_s = (step_size_mm / ((self.get_period_time()) + jitter_time_s))
+        # TODO: Error if niether one?
         return scan_speed_mm_s
 
     # TODO: consider putting this in the parent class.

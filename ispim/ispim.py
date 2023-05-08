@@ -23,18 +23,10 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
-from obis_laser import ObisLS, LSModulationType, AnalogInputImpedanceType
-from vortran_laser.stradus import StradusLaser as Vortran
-from vortran_laser.stradus import Cmd, Query
+from laser_base import Laser
 import os
 from calliphlox import DeviceState
 import cv2
-
-LASER_MODEL_TO_OBJ = \
-    {
-       "Vortran": Vortran,
-        "ObisLS": ObisLS
-    }
 
 class Ispim(Spim):
 
@@ -51,11 +43,11 @@ class Ispim(Spim):
             Mock(FrameGrabber)
         self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
-        self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
-            self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
-        self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
-        self.filter_wheel = FilterWheel(self.tigerbox,
-                                        **self.cfg.filter_wheel_kwds)
+        # self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
+        #     self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
+        # self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
+        # self.filter_wheel = FilterWheel(self.tigerbox,
+        #                                 **self.cfg.filter_wheel_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
 
@@ -71,7 +63,7 @@ class Ispim(Spim):
         # Setup hardware according to the config.
         self._setup_camera()
         self._setup_lasers()
-        self._setup_motion_stage()
+        #self._setup_motion_stage()
         # TODO, note NIDAQ is channel specific and gets instantiated within imaging loop
 
         # Internal state attributes.
@@ -118,27 +110,15 @@ class Ispim(Spim):
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
-        for wavelength_str, specs in self.cfg.laser_specs.items():
+        self.log.debug(f"Setting up lasers")
+        for wl, specs in self.cfg.laser_specs.items():
             if specs['kwds']['port'] =='COMxx':
-                self.log.warning(f'Skipping setup for laser {wavelength_str} due to no COM port specified')
+                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
                 continue
-            self.log.debug(f"Setting up {wavelength_str} laser.")
-            cls = LASER_MODEL_TO_OBJ[specs['driver']]
-            # Mock Lasers. We can't wrap them in Mock(cls(**specs['kwds'])
-            laser_obj = cls(**specs['kwds']) if not self.simulated else Mock(cls)
-            # Put all lasers in analog mode.
-            # TODO: can this be abstracted, not case-specific?
-            if cls == ObisLS:
-                self.log.debug("Applying analog mode settings to ObisLS laser.")
-                laser_obj.set_modulation_mode(LSModulationType.ANALOG)
-                laser_obj.set_analog_input_impedance(
-                    AnalogInputImpedanceType.TWO_THOUSAND_OHM)
-            if cls == Vortran:
-                laser_obj.set(Cmd.PulseMode, 0)             # Disable digital modulation
-                laser_obj.set(Cmd.FiveSecEmissionDelay, 0)  # Disable five sec delay
-                laser_obj.set(Cmd.ExternalPowerControl, 1)  # Enable Analog modulation
-
-            self.lasers[int(wavelength_str)] = laser_obj
+            self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
+            self.log.debug(f"Successfully connected to {wl} laser")
+            self.lasers[wl].setup_control()
+            self.log.debug(f"Successfully setup {wl} laser")
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
