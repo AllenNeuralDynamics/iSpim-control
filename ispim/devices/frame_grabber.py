@@ -60,8 +60,7 @@ class FrameGrabber:
             self.log.info(f"Configuring camera.")
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
-            #self.p.video[stream_id].max_frame_count = frame_count
-            print(self.p.video[stream_id].max_frame_count)
+            self.p.video[stream_id].max_frame_count = frame_count
             acq_trigger = Trigger(enable='True',
                                      line=2,
                                      event='FrameStart',

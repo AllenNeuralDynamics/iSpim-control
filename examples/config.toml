@@ -8,11 +8,12 @@ z_step_size_um = 0.209
 volume_x_um = 800.0
 volume_y_um = 300.0
 volume_z_um = 100
-laser_wavelengths = [ 488,]
+laser_wavelengths = [ 405, 488, 514, 638,]
 camera_streams = [ 0,]
 external_storage_directory = "C:\\dispim"
 filetype = "Tiff"
-acquisition_style = 'sequential'
+acquisition_style = "sequential"
+
 [experiment_specs]
 experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
@@ -143,7 +144,7 @@ z = "x"
 
 [channel_specs.405.setup]
 set_modulation_mode = "analog"
-set_laser_driver_control_mode = "current"
+set_laser_driver_control_mode = "power"
 set_external_control = true
 
 [channel_specs.405.etl]
@@ -161,7 +162,7 @@ port = "COM9"
 
 [channel_specs.488.setup]
 set_modulation_mode = "analog"
-set_laser_driver_control_mode = "current"
+set_laser_driver_control_mode = "power"
 set_external_control = true
 
 [channel_specs.488.etl]
@@ -179,7 +180,7 @@ port = "COM12"
 
 [channel_specs.514.setup]
 set_modulation_mode = "analog"
-set_laser_driver_control_mode = "current"
+set_laser_driver_control_mode = "power"
 set_external_control = true
 
 [channel_specs.514.etl]
@@ -213,7 +214,7 @@ port = "COM13"
 
 [channel_specs.561.setup]
 set_modulation_mode = "analog"
-set_laser_driver_control_mode = "current"
+set_laser_driver_control_mode = "power"
 set_external_control = true
 
 [channel_specs.561.etl]
@@ -231,7 +232,7 @@ port = "COMxx"
 
 [channel_specs.638.setup]
 set_modulation_mode = "analog"
-set_laser_driver_control_mode = "current"
+set_laser_driver_control_mode = "power"
 set_external_control = true
 
 [channel_specs.638.etl]
