@@ -78,7 +78,7 @@ class WaveformHardware:
                 trigger_edge=Slope.RISING)
             
             self.counter_task = nidaqmx.Task("counter_task")
-            self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan('/Dev2/ctr0',
+            self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(f'/{self.dev_name}/ctr0',
                                                                                       edge=nidaqmx.constants.Edge.RISING)
             self.counter_loop.ci_count_edges_term = f"/{self.dev_name}/{self.input_trigger_name}"
 

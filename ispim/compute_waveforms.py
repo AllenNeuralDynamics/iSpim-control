@@ -164,7 +164,7 @@ def laser_waveforms(laser_specs, active_wavelen: int,
     lasers_t = {}
     # Generate Laser Signal. Signal should be:
     # a pulse for the active laser but a flatline for inactive lasers.
-    for ao_name in [str(nm) for nm in laser_specs]:
+    for ao_name in [str(nm) for nm in laser_specs if nm.isdigit()]:
         disable_voltage = laser_specs[ao_name]['disable_voltage']
         enable_voltage = laser_specs[ao_name]['disable_voltage']
         # Only enable the active wavelengths.
