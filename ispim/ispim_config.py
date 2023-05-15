@@ -65,6 +65,13 @@ class IspimConfig(SpimConfig):
         """Return the buffer samples of laser delay."""
         return round(self.daq_update_freq * self.laser_pre_buffer_time_s)
 
+    @property
+    def acquisition_style(self):
+        """Returns whether acquisition will play interleaved waveforms at each tile
+        or take sequential rounds of tiling"""
+        # TODO: Error if not interleaved or sequential?
+        return self.imaging_specs['acquisition_style']
+
     # TODO: consider putting this in the base class since literally every
     #   machine has a sample.
     @property
@@ -257,7 +264,7 @@ class IspimConfig(SpimConfig):
     def laser_wavelengths(self):
         """Returns set of all configured laser wavelengths.
         Note: this is NOT the subset of wavelengths used for imaging."""
-        return set([int(nm) for nm in self.cfg['channel_specs'].keys()])
+        return set([int(nm) for nm in self.cfg['channel_specs'].keys() if nm.isdigit()])
 
     @property
     def daq_used_channels(self):

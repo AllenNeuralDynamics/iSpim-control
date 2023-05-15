@@ -1,17 +1,18 @@
 [imaging_specs]
-local_storage_directory = "C:\\584_d15_round2"
-subject_id = "test"
-tile_prefix = "584_d15_round2"
+local_storage_directory = "C:\\dispim_rn28s_test"
+subject_id = "812_d4_rn28s"
+tile_prefix = "812_d4_rn28s"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
-volume_x_um = 11000.0
+volume_x_um = 1500.0
 volume_y_um = 200.0
-volume_z_um = 8000
-laser_wavelengths = [ 488, 561, 638,]
+volume_z_um = 1000
+laser_wavelengths = [ 405,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\584_d15_round2"
+external_storage_directory = "Y:\\dispim_rn28s_test"
 filetype = "Tiff"
+acquisition_style = "interleaved"
 
 [experiment_specs]
 experimenters_name = "Kevin Cao"
@@ -48,7 +49,7 @@ etl = 4
 camera = 6
 
 [daq_driver_kwds]
-dev_name = "Dev2"
+dev_name = "Dev1"
 input_trigger_name = "PFI0"
 count_trigger_name = "PFI3"
 ao_counter_trigger_name = "PFI2"
@@ -76,9 +77,15 @@ galvo_left_y_axis = "B"
 galvo_right_x_axis = "C"
 galvo_right_y_axis = "D"
 
+[channel_specs.main]
+driver = "oxxius_laser"
+laser = "Splitter"
+intensity_mode = "current"
+
 [channel_specs.405]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
+intensity_mode = "current"
 color = "purple"
 filter_index = 1
 ao_channel = 12
@@ -89,6 +96,7 @@ enable_voltage = 5.0
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
 color = "blue"
+intensity_mode = "current"
 filter_index = 2
 ao_channel = 11
 disable_voltage = 0.0
@@ -98,6 +106,7 @@ enable_voltage = 5.0
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
 color = "green"
+intensity_mode = "power"
 filter_index = 3
 ao_channel = 9
 disable_voltage = 0.0
@@ -107,6 +116,7 @@ enable_voltage = 5.0
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
 color = "red"
+intensity_mode = "current"
 filter_index = 4
 ao_channel = 8
 disable_voltage = 0.0
@@ -117,45 +127,63 @@ x = "y"
 y = "z"
 z = "x"
 
+[channel_specs.main.kwds]
+port = "COM7"
+
+[channel_specs.main.setup]
+
 [channel_specs.405.coeffecients]
 1 = 3.218
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 1.687
+offset = 2.861
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.34
+x_offset = 2.267
 x_amplitude = -0.01
 y_offset = 2.42
 y_amplitude = 1.238
 
 [channel_specs.405.kwds]
 prefix = "L6"
-port = "COMxx"
+
+[channel_specs.405.setup]
+set_modulation_mode = "digital"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.488.coeffecients]
 1 = 2.3125
 0 = -35.09
+
+[channel_specs.488.setup]
+set_modulation_mode = "digital"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.488.etl]
 offset = 0.799
 amplitude = 2.373
 
 [channel_specs.488.galvo]
-x_offset = 2.317
+x_offset = 2.49
 x_amplitude = -0.01
 y_offset = 2.409
-y_amplitude = 1.244
+y_amplitude = 1.235
 
 [channel_specs.488.kwds]
 prefix = "L5"
-port = "COMxx"
 
 [channel_specs.561.etl]
 offset = 3.012
 amplitude = 0
+
+[channel_specs.561.setup]
+set_modulation_mode = "digital"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.561.galvo]
 x_offset = 2.315
@@ -165,11 +193,15 @@ y_amplitude = 1.212
 
 [channel_specs.561.kwds]
 prefix = "L3"
-port = "COMxx"
 
 [channel_specs.638.coeffecients]
 1 = 2.237
 0 = -29.349
+
+[channel_specs.638.setup]
+set_modulation_mode = "digital"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.638.etl]
 offset = 3.78
@@ -183,4 +215,3 @@ y_amplitude = 1.149
 
 [channel_specs.638.kwds]
 prefix = "L1"
-port = "COMxx"
