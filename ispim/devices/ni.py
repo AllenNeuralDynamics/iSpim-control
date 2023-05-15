@@ -89,7 +89,6 @@ class WaveformHardware:
             self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
 
-
     def assign_waveforms(self, voltages_t):
         """Write analog and digital waveforms to device.
         Order is driven by the TOML config file.

@@ -8,7 +8,7 @@ z_step_size_um = 0.209
 volume_x_um = 800.0
 volume_y_um = 300.0
 volume_z_um = 100
-laser_wavelengths = [ 405, 488, 514, 638,]
+laser_wavelengths = [ 405, 488,]
 camera_streams = [ 0,]
 external_storage_directory = "C:\\dispim"
 filetype = "Tiff"
@@ -161,19 +161,19 @@ y_amplitude = 1.112
 port = "COM9"
 
 [channel_specs.488.setup]
-set_modulation_mode = "analog"
+set_modulation_mode = "digital"
 set_laser_driver_control_mode = "power"
-set_external_control = true
+set_external_control = false
 
 [channel_specs.488.etl]
-offset = 2.5
+offset = 1.524
 amplitude = 0.0
 
 [channel_specs.488.galvo]
-x_offset = 2.572
-x_amplitude = -0.01
-y_offset = 2.539
-y_amplitude = 1.15
+x_offset = 2.542
+x_amplitude = -0.02
+y_offset = 2.557
+y_amplitude = 2.595
 
 [channel_specs.488.kwds]
 port = "COM12"

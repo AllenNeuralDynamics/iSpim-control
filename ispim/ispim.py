@@ -133,7 +133,7 @@ class Ispim(Spim):
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
-        #self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
+        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
@@ -329,10 +329,12 @@ class Ispim(Spim):
                             self.schema_log.info(
                                 f'daq galvo {key}: {self.cfg.laser_specs[str(channel)]["galvo"][key]} volts')
 
+                    #Block comment here describing what's happening
+
                     loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)     # Only loop through once if interleave
                     channel = [[channels]] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]    # Feed in whole list if interleaved
 
-                    while i in range(0, loops):
+                    for k in range(0, loops):
 
                         # TODO: handle this through sample pose class, which remaps axes
                         # Move to specified Z position
@@ -349,13 +351,14 @@ class Ispim(Spim):
                         self.tigerbox.set_speed(X=scan_speed_mm_s)
                         self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
 
-                        self.log.info(f"Setting up lasers for active channels: {channel[i]}")
-                        self.setup_imaging_for_laser(channel[i])     # Not changing waveform generator so give a one channel list
+                        self.log.info(f"Setting up lasers for active channels: {channel[k]}")
+                        self.setup_imaging_for_laser(channel[k])     # Not changing waveform generator so give a one channel list
 
                         # Setup capture of next Z stack.
                         filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'  # if filetype is trash, it'll be zarr but doesn't matter
 
-                        channel_string = '_'.join(map(str, self.active_lasers)) if self.cfg.acquisition_style == 'interleaved' else channel[i[0]]
+                        channel_string = '_'.join(map(str, self.active_lasers)) if \
+                            self.cfg.acquisition_style == 'interleaved' else channel[k][0]
                         filenames = [
                             f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}" #add all channel names
                             for
@@ -366,7 +369,7 @@ class Ispim(Spim):
                         self.log.info(f"Collecting tile stacks at "
                                       f"({self.stage_x_pos / STEPS_PER_UM}, "
                                       f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
-                                      f"for channels {channel[i]} and saving to: {filepath_srcs}")
+                                      f"for channels {channel[k]} and saving to: {filepath_srcs}")
 
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
@@ -409,8 +412,9 @@ class Ispim(Spim):
             self.ni.close() if not self.overview_set.is_set() else self.ni.stop()   # TODO: Should we just stop ni card anyways in case we want to image after?
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
-            for wl, laser in self.lasers.values():
-                laser.disable()
+            for wl, specs in self.cfg.laser_specs.items():
+                if str(wl) in self.lasers:
+                    self.lasers[str(wl)].disable()
             self.active_lasers = None
             self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
 
@@ -490,7 +494,7 @@ class Ispim(Spim):
         """Worker yielding the latest frame and frame id during acquisition"""
 
         while True:
-            if self.latest_frame is not None:
+            if self.latest_frame is not None and self.active_lasers is not None:
                 wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1] if \
                     self.cfg.acquisition_style == 'interleaved' else self.active_lasers[0]
                 yield self.latest_frame, wl
