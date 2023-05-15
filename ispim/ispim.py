@@ -22,7 +22,6 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose
 from spim_core.processes.data_transfer import DataTransfer
-from oxxius_laser import Cmd, Query, OXXIUS_COM_SETUP, OxxiusLaser
 from laser_base import Laser
 import os
 from calliphlox import DeviceState
@@ -108,12 +107,16 @@ class Ispim(Spim):
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
-        self.log.debug(f"Attempting to connect to lasers")
+
+        self.log.debug(f"Setting up lasers")
         for wl, specs in self.cfg.laser_specs.items():
-            # TODO: Need to make sure that main laser is initialized first in order to open serial port
-            # Way to make sure in oxxius driver?
-            self.lasers[wl] = Laser(specs)
+            if specs['kwds']['port'] == 'COMxx':
+                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
+                continue
+            self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
+            self.log.debug(f"Successfully connected to {wl} laser")
             self.lasers[wl].setup_control()
+            self.log.debug(f"Successfully setup {wl} laser")
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -365,6 +368,7 @@ class Ispim(Spim):
                         intensity = self.lasers[str(laser)].get_intensity()
                         laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
                                                                    == 'power' else f'{intensity} percent'
+                        laser_power = f'{self.lasers[laser].get_intensity()}'
                         self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
                         self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}',
                                       extra={'tags': ['schema']})

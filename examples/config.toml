@@ -82,6 +82,8 @@ driver = "oxxius_laser"
 laser = "Splitter"
 intensity_mode = "current"
 
+[channel_specs.main.setup]
+
 [channel_specs.405]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
@@ -91,6 +93,11 @@ filter_index = 1
 ao_channel = 12
 disable_voltage = 0.0
 enable_voltage = 5.0
+
+[channel_specs.405.setup]
+set_modulation_mode = 'digital'
+set_laser_driver_control_mode = 'current'
+set_external_control = false
 
 [channel_specs.488]
 driver = "oxxius_laser"
@@ -102,6 +109,11 @@ ao_channel = 11
 disable_voltage = 0.0
 enable_voltage = 5.0
 
+[channel_specs.488.setup]
+set_modulation_mode = 'digital'
+set_laser_driver_control_mode = 'current'
+set_external_control = false
+
 [channel_specs.561]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
@@ -112,6 +124,11 @@ ao_channel = 9
 disable_voltage = 0.0
 enable_voltage = 5.0
 
+[channel_specs.561.setup]
+set_modulation_mode = 'digital'
+set_laser_driver_control_mode = 'current'
+set_external_control = false
+
 [channel_specs.638]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
@@ -121,6 +138,11 @@ filter_index = 4
 ao_channel = 8
 disable_voltage = 0.0
 enable_voltage = 5.0
+
+[channel_specs.638.setup]
+set_modulation_mode = 'digital'
+set_laser_driver_control_mode = 'current'
+set_external_control = false
 
 [sample_pose_kwds.axis_map]
 x = "y"
@@ -137,11 +159,11 @@ port = "COM7"
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 2.861
+offset = 1.687
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.267
+x_offset = 2.34
 x_amplitude = -0.01
 y_offset = 2.42
 y_amplitude = 1.238
@@ -168,10 +190,10 @@ offset = 0.799
 amplitude = 2.373
 
 [channel_specs.488.galvo]
-x_offset = 2.49
+x_offset = 2.317
 x_amplitude = -0.01
 y_offset = 2.409
-y_amplitude = 1.235
+y_amplitude = 1.244
 
 [channel_specs.488.kwds]
 prefix = "L5"
@@ -193,6 +215,7 @@ y_amplitude = 1.212
 
 [channel_specs.561.kwds]
 prefix = "L3"
+port = "COMxx"
 
 [channel_specs.638.coeffecients]
 1 = 2.237
