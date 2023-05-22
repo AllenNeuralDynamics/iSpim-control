@@ -2,11 +2,8 @@ import logging
 from mock import Mock
 from pprint import pprint
 
-try:
-    import calliphlox
-    from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
-except ImportError:
-    print("WARNING: failed to import calliphlox")
+import acquire
+from acquire import DeviceKind, Trigger, SampleType, Trigger, SignalIOKind, TriggerEdge, Direction
 from pathlib import Path
 
 
@@ -14,7 +11,7 @@ class FrameGrabber:
 
     def __init__(self):
 
-        self.runtime = calliphlox.Runtime()
+        self.runtime = acquire.Runtime()
         dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
 
@@ -61,13 +58,8 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
             self.p.video[stream_id].max_frame_count = frame_count
-            acq_trigger = Trigger(enable='True',
-                                     line=2,
-                                     event='FrameStart',
-                                     kind='Input',
-                                     edge='Rising')
-            # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
+            self.p.video[stream_id].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
+
         self.runtime.set_configuration(self.p)
 
     def get_exposure_time(self):

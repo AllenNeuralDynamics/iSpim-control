@@ -1,21 +1,21 @@
 [imaging_specs]
-local_storage_directory = "C:\\dispim_rn28s_test"
-subject_id = "812_d4_rn28s"
-tile_prefix = "812_d4_rn28s"
+local_storage_directory = "C:\\dispim_test"
+subject_id = "test"
+tile_prefix = "test"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.209
 volume_x_um = 1500.0
 volume_y_um = 200.0
-volume_z_um = 1000
-laser_wavelengths = [ 405,]
+volume_z_um = 500
+laser_wavelengths = [ 405, 488, 638,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\dispim_rn28s_test"
+external_storage_directory = "Y:\\dispim_test\\test"
 filetype = "Tiff"
 acquisition_style = "interleaved"
 
 [experiment_specs]
-experimenters_name = "Kevin Cao"
+experimenters_name = "Micah Woodard"
 immersion_medium = "PBS"
 immersion_medium_refractive_index = 1.33
 
@@ -82,8 +82,6 @@ driver = "oxxius_laser"
 laser = "Splitter"
 intensity_mode = "current"
 
-[channel_specs.main.setup]
-
 [channel_specs.405]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
@@ -93,11 +91,6 @@ filter_index = 1
 ao_channel = 12
 disable_voltage = 0.0
 enable_voltage = 5.0
-
-[channel_specs.405.setup]
-set_modulation_mode = 'digital'
-set_laser_driver_control_mode = 'current'
-set_external_control = false
 
 [channel_specs.488]
 driver = "oxxius_laser"
@@ -109,11 +102,6 @@ ao_channel = 11
 disable_voltage = 0.0
 enable_voltage = 5.0
 
-[channel_specs.488.setup]
-set_modulation_mode = 'digital'
-set_laser_driver_control_mode = 'current'
-set_external_control = false
-
 [channel_specs.561]
 driver = "oxxius_laser"
 laser = "OxxiusLaser"
@@ -123,11 +111,6 @@ filter_index = 3
 ao_channel = 9
 disable_voltage = 0.0
 enable_voltage = 5.0
-
-[channel_specs.561.setup]
-set_modulation_mode = 'digital'
-set_laser_driver_control_mode = 'current'
-set_external_control = false
 
 [channel_specs.638]
 driver = "oxxius_laser"
@@ -139,40 +122,40 @@ ao_channel = 8
 disable_voltage = 0.0
 enable_voltage = 5.0
 
-[channel_specs.638.setup]
-set_modulation_mode = 'digital'
-set_laser_driver_control_mode = 'current'
-set_external_control = false
-
 [sample_pose_kwds.axis_map]
 x = "y"
 y = "z"
 z = "x"
 
+[channel_specs.main.setup]
+
 [channel_specs.main.kwds]
 port = "COM7"
 
-[channel_specs.main.setup]
+[channel_specs.405.setup]
+set_modulation_mode = "DigitalModulation"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.405.coeffecients]
 1 = 3.218
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 1.687
+offset = 2.183
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.34
+x_offset = 2.277
 x_amplitude = -0.01
-y_offset = 2.42
+y_offset = 2.335
 y_amplitude = 1.238
 
 [channel_specs.405.kwds]
 prefix = "L6"
 
-[channel_specs.405.setup]
-set_modulation_mode = "digital"
+[channel_specs.488.setup]
+set_modulation_mode = "DigitalModulation"
 set_laser_driver_control_mode = "current"
 set_external_control = false
 
@@ -180,32 +163,27 @@ set_external_control = false
 1 = 2.3125
 0 = -35.09
 
-[channel_specs.488.setup]
-set_modulation_mode = "digital"
-set_laser_driver_control_mode = "current"
-set_external_control = false
-
 [channel_specs.488.etl]
-offset = 0.799
+offset = 0.901
 amplitude = 2.373
 
 [channel_specs.488.galvo]
-x_offset = 2.317
+x_offset = 2.267
 x_amplitude = -0.01
-y_offset = 2.409
+y_offset = 2.351
 y_amplitude = 1.244
 
 [channel_specs.488.kwds]
 prefix = "L5"
 
+[channel_specs.561.setup]
+set_modulation_mode = "DigitalModulation"
+set_laser_driver_control_mode = "current"
+set_external_control = false
+
 [channel_specs.561.etl]
 offset = 3.012
 amplitude = 0
-
-[channel_specs.561.setup]
-set_modulation_mode = "digital"
-set_laser_driver_control_mode = "current"
-set_external_control = false
 
 [channel_specs.561.galvo]
 x_offset = 2.315
@@ -215,25 +193,24 @@ y_amplitude = 1.212
 
 [channel_specs.561.kwds]
 prefix = "L3"
-port = "COMxx"
+
+[channel_specs.638.setup]
+set_modulation_mode = "DigitalModulation"
+set_laser_driver_control_mode = "current"
+set_external_control = false
 
 [channel_specs.638.coeffecients]
 1 = 2.237
 0 = -29.349
 
-[channel_specs.638.setup]
-set_modulation_mode = "digital"
-set_laser_driver_control_mode = "current"
-set_external_control = false
-
 [channel_specs.638.etl]
-offset = 3.78
+offset = 3.344
 amplitude = 0
 
 [channel_specs.638.galvo]
-x_offset = 2.31
+x_offset = 2.265
 x_amplitude = -0.01
-y_offset = 2.442
+y_offset = 2.361
 y_amplitude = 1.149
 
 [channel_specs.638.kwds]

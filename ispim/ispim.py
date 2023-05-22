@@ -115,7 +115,7 @@ class Ispim(Spim):
 
         self.log.debug(f"Setting up lasers")
         for wl, specs in self.cfg.laser_specs.items():
-            if specs['kwds']['port'] == 'COMxx':
+            if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
                 self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
                 continue
             self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
@@ -496,12 +496,12 @@ class Ispim(Spim):
 
         self.log.info('Waiting for camera to finish')
         start = time()
-        if not self.simulated:
-            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-                sleep(.05)
-                if time() - start > 10:
-                    self.log.info('Task timed out')
-                    break
+        # if not self.simulated:
+        #     while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
+        #         sleep(.05)
+        #         if time() - start > 10:
+        #             self.log.info('Task timed out')
+        #             break
 
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
@@ -517,6 +517,8 @@ class Ispim(Spim):
             if self.latest_frame is not None:
                 yield self.latest_frame, self.cfg.imaging_wavelengths[self.latest_frame_layer %
                                                                       (len(self.cfg.imaging_wavelengths)) - 1]
+            else:
+                yield None      # yield so thread can quit
 
             sleep(1 / 17)
 
