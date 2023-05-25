@@ -23,8 +23,9 @@ from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 from laser_base import Laser
 import os
-from calliphlox import DeviceState
+from acquire import DeviceState
 import cv2
+import subprocess
 
 class Ispim(Spim):
 
@@ -382,20 +383,31 @@ class Ispim(Spim):
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
                         #   we still wait for prior process to finish.
-                        if transfer_processes is not None:
-                            self.log.info(f"Waiting for {filetype} transfer process "
-                                          "to complete.")
-                            for p in transfer_processes:
-                                p.join()
-                        if img_storage_dir is not None:
+                        # if transfer_processes is not None:
+                        #     self.log.info(f"Waiting for {filetype} transfer process "
+                        #                   "to complete.")
+                        #     for p in transfer_processes:
+                        #         p.join()
+                        # if img_storage_dir is not None:
+                        #     filepath_dests = [img_storage_dir / f for f in filenames]
+                        #     self.log.info("Starting transfer process for "
+                        #                   f"{filepath_dests}.")
+                            # transfer_processes = [DataTransfer(filepath_srcs[streams],
+                            #                                    filepath_dests[streams]) for streams in self.stream_ids]
+                            # for p in transfer_processes:
+                            #     p.start()
+
+                        if self.overview_process is None:
                             filepath_dests = [img_storage_dir / f for f in filenames]
-                            self.log.info("Starting transfer process for "
-                                          f"{filepath_dests}.")
-                            transfer_processes = [DataTransfer(filepath_srcs[streams],
-                                                               filepath_dests[streams]) for streams in self.stream_ids]
-                            for p in transfer_processes:
-                                p.start()
-                        # TODO, set speed of sample Z / tiger X axis to ~1
+                            parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
+                            print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
+                            cmd = subprocess.run(f'xcopy "{filepath_srcs[0]}" "{filepath_dests[0]}{parameters}')
+                            # Delete the old file so we don't run out of local storage.
+                            print(f"Deleting old file at {filepath_srcs[0]}.")
+
+                            os.remove(filepath_srcs[0])
+                            print(f"process finished.")
+                    # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
@@ -404,10 +416,10 @@ class Ispim(Spim):
             # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
-            if transfer_processes is not None:
-                self.log.info("Joining file transfer processes.")
-                for p in transfer_processes:
-                    p.join()
+            # if transfer_processes is not None:
+            #     self.log.info("Joining file transfer processes.")
+            #     for p in transfer_processes:
+            #         p.join()
             self.log.info(f"Closing NI tasks")
             self.ni.close() if not self.overview_set.is_set() else self.ni.stop()   # TODO: Should we just stop ni card anyways in case we want to image after?
             self.log.info(f"Closing camera")
@@ -468,7 +480,7 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-            sleep(0.05)
+            sleep(0.1)
         self.log.info('NI task completed')
         self.ni.stop()
         sleep(5)
@@ -485,8 +497,6 @@ class Ispim(Spim):
                 break
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
-        self.log.info('Stopping NI Card')
-        self.ni.stop()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -498,7 +508,9 @@ class Ispim(Spim):
                 wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1] if \
                     self.cfg.acquisition_style == 'interleaved' else self.active_lasers[0]
                 yield self.latest_frame, wl
-            sleep(1/17)
+            else:
+                yield None
+            sleep(.1)
 
 
 
@@ -539,7 +551,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_daq_cycle_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
+                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_period_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
         if self.overview_process != None:
@@ -563,10 +575,9 @@ class Ispim(Spim):
                 del self.image_overview[0]
 
         self.overview_set.clear()
-        #TODO: How to now overwrite?
-        cv2.imwrite(
-            fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
-            reshaped)  # Save overview
+        #date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = Path(f'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff')
+        cv2.imwrite(filename,reshaped)  # Save overview
         # Move back to start position
         self.sample_pose.move_absolute(x=self.start_pos['x'])
         self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
@@ -575,7 +586,7 @@ class Ispim(Spim):
         self.sample_pose.move_absolute(z=self.start_pos['z'])
         self.wait_to_stop('z', self.start_pos['z'])
         self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
-
+        self.overview_process = None
         self.start_pos = None   # Reset start position
 
         return reshaped, xtiles
@@ -585,12 +596,12 @@ class Ispim(Spim):
         """Create overview image from a stack"""
 
         self.stack = [i for i in self.stack if i is not None]           # Remove dropped tiles
-        self.stack = np.array(self.stack, dtype=object)
-        half_col = round(self.cfg.sensor_column_count/2)
-        # only use slitwidth pixels
-        slit_width = [x[:,half_col-self.cfg.slit_width_pix:half_col+self.cfg.slit_width_pix] for x in self.stack[0:-1]]
-        #downsampled = [x[0::10, 0::10] for x in slit_width]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
-        mipstack = [np.max(x, axis=1) for x in slit_width]             # Max projection
+        # half_col = round(self.cfg.sensor_column_count / 2)
+        # # only use slitwidth pixels
+        # slit_width = [x[:, half_col - self.cfg.slit_width_pix:half_col + self.cfg.slit_width_pix] for x in
+        #               self.stack[0:-1]]
+        downsampled = [x[0::10, 0::10] for x in self.stack]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
+        mipstack = [np.max(x, axis=1) for x in downsampled]             # Max projection
         mipstack = np.array(mipstack)
 
         # Reshape max
@@ -677,6 +688,7 @@ class Ispim(Spim):
 
         if self.cfg.acquisition_style == 'sequential':
             fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for getting wavelength
+            self.log.info(f"Setting filter wheel to index {fw_index}")
             self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
