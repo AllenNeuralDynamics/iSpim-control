@@ -21,7 +21,7 @@ from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
-from laser_base import Laser
+from vortran_laser import stradus
 import os
 from acquire import DeviceState
 import cv2
@@ -75,7 +75,7 @@ class Ispim(Spim):
         self.livestream_enabled = Event()
 
         self.latest_frame = None
-        self.latest_frame_layer = None
+        self.latest_frame_layer = 0
 
         # start position of scan
         self.start_pos = None
@@ -414,30 +414,30 @@ class Ispim(Spim):
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
                         #   we still wait for prior process to finish.
-                        # if transfer_processes is not None:
-                        #     self.log.info(f"Waiting for {filetype} transfer process "
-                        #                   "to complete.")
-                        #     for p in transfer_processes:
-                        #         p.join()
-                        # if img_storage_dir is not None:
-                        #     filepath_dests = [img_storage_dir / f for f in filenames]
-                        #     self.log.info("Starting transfer process for "
-                        #                   f"{filepath_dests}.")
-                            # transfer_processes = [DataTransfer(filepath_srcs[streams],
-                            #                                    filepath_dests[streams]) for streams in self.stream_ids]
-                            # for p in transfer_processes:
-                            #     p.start()
-
-                        if self.overview_process is None:
+                        if transfer_processes is not None:
+                            self.log.info(f"Waiting for {filetype} transfer process "
+                                          "to complete.")
+                            for p in transfer_processes:
+                                p.join()
+                        if img_storage_dir is not None:
                             filepath_dests = [img_storage_dir / f for f in filenames]
-                            parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
-                            print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
-                            cmd = subprocess.run(f'xcopy "{filepath_srcs[0]}" "{filepath_dests[0]}{parameters}')
-                            # Delete the old file so we don't run out of local storage.
-                            print(f"Deleting old file at {filepath_srcs[0]}.")
+                            self.log.info("Starting transfer process for "
+                                          f"{filepath_dests}.")
+                            transfer_processes = [DataTransfer(filepath_srcs[streams],
+                                                               filepath_dests[streams]) for streams in self.stream_ids]
+                            for p in transfer_processes:
+                                p.start()
 
-                            os.remove(filepath_srcs[0])
-                            print(f"process finished.")
+                        # if self.overview_process is None:
+                        #     filepath_dests = [img_storage_dir / f for f in filenames]
+                        #     parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
+                        #     print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
+                        #     cmd = subprocess.run(f'xcopy "{filepath_srcs[0]}" "{filepath_dests[0]}{parameters}')
+                        #     # Delete the old file so we don't run out of local storage.
+                        #     print(f"Deleting old file at {filepath_srcs[0]}.")
+                        #
+                        #     os.remove(filepath_srcs[0])
+                        #     print(f"process finished.")
                     # TODO, set speed of sample Z / tiger X axis to ~1
 
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
@@ -473,7 +473,7 @@ class Ispim(Spim):
                                                 slow_axis_start_position=slow_scan_axis_position,
                                                 slow_axis_stop_position=slow_scan_axis_position,
                                                 tile_count=tile_count, tile_interval_um=tile_spacing_um,
-                                                line_count=1)
+                                                line_count=1) if not self.simulated else print('Setting up tile scan')
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
 
@@ -494,14 +494,18 @@ class Ispim(Spim):
         self.frame_grabber.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
-        self.tigerbox.start_scan()
+        self.tigerbox.start_scan() if not self.simulated else print('Started')
 
         prev_frame_count = 0
         curr_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
             if self.simulated:
-                tifffile.imwrite(filepath_srcs, np.zeros((self.cfg.sensor_column_count,
-                                          self.cfg.sensor_row_count)), append = True)
+                # Writting dummy frame if in simulated mode
+                try:
+                    tifffile.imwrite(filepath_srcs[0], np.zeros((self.cfg.sensor_column_count,
+                                                                 self.cfg.sensor_row_count)), bigtiff=True, append=True)
+                except PermissionError:
+                    print('Droped frame :(')
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
             curr_frame_count += frame_count
@@ -511,21 +515,24 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-            sleep(0.1)      # TODO: Maybe make this a fraction of the stage speed?
+            sleep(0.1) if not self.simulated else sleep(.01)     # TODO: Maybe make this a fraction of the stage speed?
+
         self.log.info('NI task completed')
         self.ni.stop()
-        sleep(5)
+        self.__sim_counter_count =0
+
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
             self.overview_process.start()   # If doing an overview image, start down sampling and mips
 
         self.log.info('Waiting for camera to finish')
         start = time()
-        while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-            sleep(.05)
-            if time() - start > 10:
-                self.log.info('Task timed out')
-                break
+        if not self.simulated:
+            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
+                sleep(.05)
+                if time() - start > 10:
+                    self.log.info('Task timed out')
+                    break
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
         self.log.info('Stack complete')
@@ -543,9 +550,12 @@ class Ispim(Spim):
                 yield None
             sleep(.1)
 
-
-
     def framedata(self, stream):
+
+        if self.simulated:
+            self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
+            self.latest_frame_layer =+ 1
+            return 1
 
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
@@ -739,7 +749,6 @@ class Ispim(Spim):
 
     def close(self):
         """Safely close all open hardware connections."""
-        #self.tigerbox.ser.close()
         self.frame_grabber.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
