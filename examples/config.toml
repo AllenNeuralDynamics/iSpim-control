@@ -1,21 +1,21 @@
 [imaging_specs]
 local_storage_directory = "C:\\dispim_test"
 subject_id = "660433"
-tile_prefix = "660433"
+tile_prefix = "test"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
 z_step_size_um = 0.8
-volume_x_um = 8500.0
+volume_x_um = 2000.0
 volume_y_um = 300.0
-volume_z_um = 8000
-laser_wavelengths = [ 405,]
+volume_z_um = 2500
+laser_wavelengths = [ 405, 488, 561, 594, 638,]
 camera_streams = [ 0,]
 filetype = "Tiff"
 acquisition_style = "sequential"
 external_storage_directory = "Z:\\dispim_test"
 
 [experiment_specs]
-experimenters_name = "Micah Woodard"
+experimenters_name = "Lucas Suarez"
 immersion_medium = "PBS"
 immersion_medium_refractive_index = 1.33
 
@@ -79,7 +79,7 @@ galvo_right_y_axis = "D"
 
 [channel_specs.405]
 driver = "vortran_laser"
-laser = "stradus.StradusLaser"
+module_path = "stradus.StradusLaser"
 intensity_mode = "power"
 color = "purple"
 filter_index = 0
@@ -89,7 +89,7 @@ enable_voltage = 5.0
 
 [channel_specs.488]
 driver = "vortran_laser"
-laser = "stradus.StradusLaser"
+module_path = "stradus.StradusLaser"
 intensity_mode = "power"
 color = "blue"
 filter_index = 1
@@ -99,7 +99,7 @@ enable_voltage = 3.0
 
 [channel_specs.514]
 driver = "vortran_laser"
-laser = "stradus.StradusLaser"
+module_path = "stradus.StradusLaser"
 intensity_mode = "power"
 color = "green"
 filter_index = 2
@@ -109,7 +109,7 @@ enable_voltage = 5.0
 
 [channel_specs.594]
 driver = "obis_laser"
-laser = "ObisLS"
+module_path = "ObisLS"
 intensity_mode = "power"
 color = "orange"
 filter_index = 4
@@ -119,7 +119,7 @@ enable_voltage = 5.0
 
 [channel_specs.561]
 driver = "vortran_laser"
-laser = "stradus.StradusLaser"
+module_path = "stradus.StradusLaser"
 intensity_mode = "power"
 color = "yellowgreen"
 filter_index = 3
@@ -129,7 +129,7 @@ enable_voltage = 5.0
 
 [channel_specs.638]
 driver = "vortran_laser"
-laser = "stradus.StradusLaser"
+module_path = "stradus.StradusLaser"
 intensity_mode = "power"
 color = "red"
 filter_index = 5
@@ -142,46 +142,37 @@ x = "y"
 y = "z"
 z = "x"
 
-[channel_specs.405.setup]
-set_modulation_mode = "analog"
-set_laser_driver_control_mode = "power"
-set_external_control = true
-
 [channel_specs.405.etl]
 offset = 1.665
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.534
+x_offset = 2.527
 x_amplitude = 0.0
 y_offset = 2.502
 y_amplitude = 0.831
 
 [channel_specs.405.kwds]
 port = "COM9"
-
-[channel_specs.488.setup]
-set_modulation_mode = "digital"
-set_laser_driver_control_mode = "power"
-set_external_control = false
+modulation_mode = "analog"
+driver_control_mode = "power"
+external_control = true
 
 [channel_specs.488.etl]
 offset = 1.75
 amplitude = 0.0
 
 [channel_specs.488.galvo]
-x_offset = 2.545
+x_offset = 2.529
 x_amplitude = 0.0
 y_offset = 2.549
 y_amplitude = 0.811
 
 [channel_specs.488.kwds]
 port = "COM12"
-
-[channel_specs.514.setup]
-set_modulation_mode = "analog"
-set_laser_driver_control_mode = "power"
-set_external_control = true
+modulation_mode = "digital"
+driver_control_mode = "power"
+external_control = false
 
 [channel_specs.514.etl]
 offset = 1.459
@@ -195,27 +186,23 @@ y_amplitude = 0.835
 
 [channel_specs.514.kwds]
 port = "COMxx"
-
-[channel_specs.594.setup]
-set_analog_input_impedance = "AnalogInputImpedanceType.TWO_THOUSAND_OHM"
+modulation_mode = "analog"
+driver_control_mode = "power"
+external_control = true
 
 [channel_specs.594.etl]
 offset = 1.727
 amplitude = 0
 
 [channel_specs.594.galvo]
-x_offset = 2.543
-x_amplitude = -0.02
+x_offset = 2.546
+x_amplitude = 0.019
 y_offset = 2.544
 y_amplitude = 0.813
 
 [channel_specs.594.kwds]
 port = "COM13"
-
-[channel_specs.561.setup]
-set_modulation_mode = "analog"
-set_laser_driver_control_mode = "power"
-set_external_control = true
+analog_input_impedance = "AnalogInputImpedanceType.TWO_THOUSAND_OHM"
 
 [channel_specs.561.etl]
 offset = 1.691
@@ -229,11 +216,9 @@ y_amplitude = 0.836
 
 [channel_specs.561.kwds]
 port = "COM10"
-
-[channel_specs.638.setup]
-set_modulation_mode = "analog"
-set_laser_driver_control_mode = "power"
-set_external_control = true
+modulation_mode = "analog"
+driver_control_mode = "power"
+external_control = true
 
 [channel_specs.638.etl]
 offset = 1.738
@@ -247,3 +232,6 @@ y_amplitude = 0.861
 
 [channel_specs.638.kwds]
 port = "COM7"
+modulation_mode = "analog"
+driver_control_mode = "power"
+external_control = true

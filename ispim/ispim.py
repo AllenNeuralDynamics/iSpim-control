@@ -26,6 +26,7 @@ import os
 from acquire import DeviceState
 import cv2
 import subprocess
+import tifffile
 
 class Ispim(Spim):
 
@@ -43,7 +44,8 @@ class Ispim(Spim):
         self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
-            self.simulated else SimTiger(**self.cfg.tiger_obj_kwds)
+            self.simulated else SimTiger(**self.cfg.tiger_obj_kwds,
+                                         build_config={'Motor Axes': ['X', 'Y', 'Z', 'V', 'W', 'A', 'B', 'C', 'D']})
         self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
         self.filter_wheel = FilterWheel(self.tigerbox,
                                         **self.cfg.filter_wheel_kwds)
@@ -84,10 +86,15 @@ class Ispim(Spim):
         self.overview_process = None
         self.overview_set = Event()
 
+        self.__sim_counter_count = 0
+
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
         #TODO: Intialize offset for shape
+        if self.simulated:
+            self.frame_grabber.runtime = Mock()
+            # self.frame_grabber.runtime.get_state.return_value = 0
 
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
@@ -110,13 +117,28 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
+
         for wl, specs in self.cfg.laser_specs.items():
-            if specs['kwds']['port'] =='COMxx':
+            if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
                 self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
                 continue
-            self.lasers[wl] = Laser(specs) if not self.simulated else Mock(Laser)
-            self.log.debug(f"Successfully connected to {wl} laser")
-            self.lasers[wl].setup_control()
+
+            laser_class = __import__(specs['driver'])
+            laser_path = specs['module_path'].split('.')
+            for path in laser_path:
+                laser_class = getattr(laser_class, path)
+
+            kwds = dict(specs['kwds'])
+            for key, arg in kwds.items():
+                if type(arg) == str and '.' in arg:
+                    arg_path = arg.split('.')
+                    arg = __import__(specs['driver'])
+                    for step in arg_path:
+                        arg = getattr(arg, step)
+                    kwds[key] = arg
+
+            self.lasers[wl] = laser_class(**kwds)
+            self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
             self.log.debug(f"Successfully setup {wl} laser")
 
     def _setup_motion_stage(self):
@@ -143,6 +165,9 @@ class Ispim(Spim):
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
 
+        if self.simulated:
+            self.ni.counter_task = Mock()
+            self.ni.counter_task.read = self.__sim_counter_read
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
@@ -150,6 +175,11 @@ class Ispim(Spim):
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
         self.ni.assign_waveforms(voltages_t)
+
+    def __sim_counter_read(self):
+        count = self.__sim_counter_count
+        self.__sim_counter_count += 1
+        return count
 
     # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, dataset_size):
@@ -226,15 +256,16 @@ class Ispim(Spim):
         # TODO, test network speeds?
         # TODO, check that networked storage is visible?
         # Log relevant info about this imaging run.
-        self.schema_log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}')
-        self.schema_log.info(f'local_storage_directoru, {local_storage_dir}')
-        self.schema_log.info(f'external_storage_directory, {img_storage_dir}')
-        self.schema_log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}')
-        self.schema_log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}')
-        self.schema_log.info(f'instrument_id, iSpim 1')
-        self.schema_log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}')
-        self.schema_log.info(f'chamber_immersion_refractive_index, '
-                             f'{self.cfg.immersion_medium_refractive_index}')
+        self.log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
+                      extra={'tags': ['schema']})
+        self.log.info(f'local_storage_directory, {local_storage_dir}', extra={'tags': ['schema']})
+        self.log.info(f'external_storage_directory, {img_storage_dir}', extra={'tags': ['schema']})
+        self.log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
+        self.log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
+        self.log.info(f'instrument_id, iSpim 1')
+        self.log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}', extra={'tags': ['schema']})
+        self.log.info(f'chamber_immersion_refractive_index, '
+                      f'{self.cfg.immersion_medium_refractive_index}', extra={'tags': ['schema']})
 
         self.log.info(f"Total tiles: {self.total_tiles}.")
         self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
@@ -318,7 +349,7 @@ class Ispim(Spim):
                     for channel in channels:
                         self.schema_log.info(f'channel_name, {channel}')
                         self.schema_log.info(f'laser_wavelength, {channel} nanometers')
-                        intensity = self.lasers[str(channel)].get_intensity()
+                        intensity = self.lasers[str(channel)].get_setpoint()
                         laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(channel)]['intensity_mode'] \
                                                                    == 'power' else f'{intensity} percent'
                         self.schema_log.info(f'laser_power: {laser_power}')
@@ -332,7 +363,7 @@ class Ispim(Spim):
 
                     #Block comment here describing what's happening
 
-                    loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)     # Only loop through once if interleave
+                    loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)     # Only loop through once if interleaved
                     channel = [[channels]] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]    # Feed in whole list if interleaved
 
                     for k in range(0, loops):
@@ -453,14 +484,11 @@ class Ispim(Spim):
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-        #TODO: Why doesn't this work?
-        # while self.frame_grabber.runtime.get_state() != DeviceState.Armed:  # Check if camera is configured
-        #     sleep(.05)
 
         if self.overview_process is not None:   # If doing an overview image, wait till previous tile is done
             if self.overview_process.is_alive():
                 self.overview_process.join()
-        self.stack = None  # Clear stack buffer
+        self.stack = [None]
         self.stack = [None]*(tile_count)  # Create buffer the size of stacked image
 
         self.frame_grabber.start()
@@ -471,6 +499,9 @@ class Ispim(Spim):
         prev_frame_count = 0
         curr_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
+            if self.simulated:
+                tifffile.imwrite(filepath_srcs, np.zeros((self.cfg.sensor_column_count,
+                                          self.cfg.sensor_row_count)), append = True)
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
             curr_frame_count += frame_count
@@ -480,7 +511,7 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-            sleep(0.1)
+            sleep(0.1)      # TODO: Maybe make this a fraction of the stage speed?
         self.log.info('NI task completed')
         self.ni.stop()
         sleep(5)
@@ -576,8 +607,10 @@ class Ispim(Spim):
 
         self.overview_set.clear()
         #date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = Path(f'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff')
-        cv2.imwrite(filename,reshaped)  # Save overview
+        #filename = Path(f'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff')
+        cv2.imwrite(
+            fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
+                    reshaped)  # Save overview
         # Move back to start position
         self.sample_pose.move_absolute(x=self.start_pos['x'])
         self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
