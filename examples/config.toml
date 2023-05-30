@@ -4,18 +4,18 @@ subject_id = "test"
 tile_prefix = "test"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
-z_step_size_um = 0.209
-volume_x_um = 1500.0
+z_step_size_um = 0.809
+volume_x_um = 11000.0
 volume_y_um = 200.0
-volume_z_um = 500
-laser_wavelengths = [ 405, 488, 638,]
+volume_z_um = 10500
+laser_wavelengths = [ 488,]
 camera_streams = [ 0,]
 external_storage_directory = "Y:\\dispim_test\\test"
 filetype = "Tiff"
 acquisition_style = "interleaved"
 
 [experiment_specs]
-experimenters_name = "Micah Woodard"
+experimenters_name = "Kevin Cao"
 immersion_medium = "PBS"
 immersion_medium_refractive_index = 1.33
 
@@ -142,11 +142,11 @@ set_external_control = false
 0 = -57.515
 
 [channel_specs.405.etl]
-offset = 2.183
+offset = 2.733
 amplitude = 0
 
 [channel_specs.405.galvo]
-x_offset = 2.277
+x_offset = 2.265
 x_amplitude = -0.01
 y_offset = 2.335
 y_amplitude = 1.238
@@ -164,13 +164,13 @@ set_external_control = false
 0 = -35.09
 
 [channel_specs.488.etl]
-offset = 0.901
+offset = 1.439
 amplitude = 2.373
 
 [channel_specs.488.galvo]
-x_offset = 2.267
+x_offset = 2.255
 x_amplitude = -0.01
-y_offset = 2.351
+y_offset = 2.357
 y_amplitude = 1.244
 
 [channel_specs.488.kwds]
@@ -182,11 +182,11 @@ set_laser_driver_control_mode = "current"
 set_external_control = false
 
 [channel_specs.561.etl]
-offset = 3.012
+offset = 3.244
 amplitude = 0
 
 [channel_specs.561.galvo]
-x_offset = 2.315
+x_offset = 2.259
 x_amplitude = -0.02
 y_offset = 2.414
 y_amplitude = 1.212
@@ -204,11 +204,11 @@ set_external_control = false
 0 = -29.349
 
 [channel_specs.638.etl]
-offset = 3.344
+offset = 3.37
 amplitude = 0
 
 [channel_specs.638.galvo]
-x_offset = 2.265
+x_offset = 2.253
 x_amplitude = -0.01
 y_offset = 2.361
 y_amplitude = 1.149

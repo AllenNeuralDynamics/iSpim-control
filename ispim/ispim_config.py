@@ -178,7 +178,7 @@ class IspimConfig(SpimConfig):
     @property
     def scan_speed_mm_s(self):
         """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.02  # 10 ms jitter time for stage pulses
+        jitter_time_s = 0.03  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
         scan_speed_mm_s = (step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
         return scan_speed_mm_s

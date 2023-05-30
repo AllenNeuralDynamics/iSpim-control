@@ -24,7 +24,8 @@ from spim_core.devices.tiger_components import SamplePose
 from spim_core.processes.data_transfer import DataTransfer
 from laser_base import Laser
 import os
-from calliphlox import DeviceState
+#from calliphlox import DeviceState
+from acquire import DeviceState
 import cv2
 
 
@@ -172,15 +173,17 @@ class Ispim(Spim):
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
+
         while self.sample_pose.is_moving():
             pos = self.sample_pose.get_position()
             distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 1.0 or time() - start > 60:
+            if distance < 1.0 or time() - start > 1200:         # TODO: Make sure that's enough time
                 self.tigerbox.halt()
                 break
             else:
                 self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
                 sleep(0.1)
+
 
     def run_from_config(self):
 
@@ -489,6 +492,9 @@ class Ispim(Spim):
                 print('No new frames')
             sleep(0.05)
         self.log.info('NI task completed')
+        self.log.info('Stopping NI Card')
+        self.ni.stop()
+
 
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
@@ -496,17 +502,15 @@ class Ispim(Spim):
 
         self.log.info('Waiting for camera to finish')
         start = time()
-        # if not self.simulated:
-        #     while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-        #         sleep(.05)
-        #         if time() - start > 10:
-        #             self.log.info('Task timed out')
-        #             break
+        if not self.simulated:
+            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
+                sleep(.05)
+                if time() - start > 10:
+                    self.log.info('Task timed out')
+                    break
 
         self.log.info('Stopping camera')
         self.frame_grabber.runtime.abort()
-        self.log.info('Stopping NI Card')
-        self.ni.stop()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -560,11 +564,11 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10 / 1000) / (((
-                                                                                             self.cfg.get_period_time() + .005) * len(
+                                      ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
                                           self.cfg.imaging_wavelengths)) + 0.01)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir)
+
         if self.overview_process != None:
             self.overview_process.join()
 
@@ -593,15 +597,18 @@ class Ispim(Spim):
             fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
             reshaped)  # Save overview
         # Move back to start position
-        self.sample_pose.move_absolute(x=self.start_pos['x'])
-        self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-        self.sample_pose.move_absolute(y=self.start_pos['y'])
-        self.wait_to_stop('y', self.start_pos['y'])
-        self.sample_pose.move_absolute(z=self.start_pos['z'])
-        self.wait_to_stop('z', self.start_pos['z'])
-        self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
+        #TODO: Why isn't this working?
+        print(self.start_pos['x'])
+        # self.sample_pose.move_absolute(x=self.start_pos['x'])
+        # self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
+        # self.sample_pose.move_absolute(y=self.start_pos['y'])
+        # self.wait_to_stop('y', self.start_pos['y'])
+        # self.sample_pose.move_absolute(z=self.start_pos['z'])
+        # self.wait_to_stop('z', self.start_pos['z'])
+        # self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
 
         self.start_pos = None  # Reset start position
+        self.overview_process = None
 
         return reshaped, xtiles
 
@@ -610,13 +617,13 @@ class Ispim(Spim):
         """Create overview image from a stack"""
 
         self.stack = [i for i in self.stack if i is not None]  # Remove dropped tiles
-        self.stack = np.array(self.stack, dtype=object)
-        half_col = round(self.cfg.sensor_column_count / 2)
-        # only use slitwidth pixels
-        slit_width = [x[:, half_col - self.cfg.slit_width_pix:half_col + self.cfg.slit_width_pix] for x in
-                      self.stack[0:-1]]
-        # downsampled = [x[0::10, 0::10] for x in slit_width]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
-        mipstack = [np.max(x, axis=1) for x in slit_width]  # Max projection
+        # half_col = round(self.cfg.sensor_column_count / 2)
+        # # only use slitwidth pixels
+        # slit_width = [x[:, half_col - self.cfg.slit_width_pix:half_col + self.cfg.slit_width_pix] for x in
+        # self.stack[0:-1]]
+        downsampled = [x[0::10, 0::10] for x in
+                       self.stack]  # Down sample by 10, scikitimage downscale local mean, gpu downsample
+        mipstack = [np.max(x, axis=1) for x in downsampled]  # Max projection
         mipstack = np.array(mipstack)
 
         # Reshape max
