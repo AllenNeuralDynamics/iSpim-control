@@ -15,14 +15,15 @@ from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
+from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
 from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
-from vortran_laser import stradus
 import os
+#from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
 import subprocess
@@ -91,10 +92,9 @@ class Ispim(Spim):
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
-        #TODO: Intialize offset for shape
+
         if self.simulated:
             self.frame_grabber.runtime = Mock()
-            # self.frame_grabber.runtime.get_state.return_value = 0
 
         self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
                                           self.cfg.sensor_row_count))
@@ -112,7 +112,6 @@ class Ispim(Spim):
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
                                              cpx_line_interval[0])
-
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
@@ -218,7 +217,7 @@ class Ispim(Spim):
 
     def collect_volumetric_image(self, volume_x_um: float, volume_y_um: float,
                                  volume_z_um: float,
-                                 z_step_size_um : float,
+                                 z_step_size_um: float,
                                  channels: list,
                                  scan_speed_mm_s,
                                  tile_overlap_x_percent: float,
@@ -244,39 +243,8 @@ class Ispim(Spim):
                                                       volume_z_um)
 
         self.total_tiles = xtiles * ytiles * ztiles
-        # Check if we will violate storage directory limits with our
-        #   run. (Check local and external storage.)
-        gigabytes_per_image = self.cfg.bytes_per_image / (1024 ** 3)
-        dataset_gigabytes = self.total_tiles * gigabytes_per_image
-        try:  # Log errors if they occur.
-            self.check_ext_disk_space(dataset_gigabytes)
-        except AssertionError as e:
-            self.log.error(e)
-            raise
-        # TODO, test network speeds?
-        # TODO, check that networked storage is visible?
-        # Log relevant info about this imaging run.
-        self.log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
-                      extra={'tags': ['schema']})
-        self.log.info(f'local_storage_directory, {local_storage_dir}', extra={'tags': ['schema']})
-        self.log.info(f'external_storage_directory, {img_storage_dir}', extra={'tags': ['schema']})
-        self.log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
-        self.log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
-        self.log.info(f'instrument_id, iSpim 1')
-        self.log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}', extra={'tags': ['schema']})
-        self.log.info(f'chamber_immersion_refractive_index, '
-                      f'{self.cfg.immersion_medium_refractive_index}', extra={'tags': ['schema']})
 
         self.log.info(f"Total tiles: {self.total_tiles}.")
-        self.log.info(f"Total disk space: {dataset_gigabytes:.2f}[GB].")
-        run_time_days = self.total_tiles / (self.cfg.tiles_per_second * 3600. * 24.)
-        completion_date = datetime.now() + timedelta(days=run_time_days)
-        date_str = completion_date.strftime("%d %b, %Y at %H:%M %p")
-        weekday = calendar.day_name[completion_date.weekday()]
-        self.log.info(f"Time Esimate: {run_time_days:.2f} days. Imaging run "
-                      f"should finish after {weekday}, {date_str}.")
-        self.log.info(f"Desired dimensions: {volume_x_um:.1f}[um] x "
-                      f"{volume_y_um:.1f}[um] x {volume_z_um:.1f}[um]")
         actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles - 1) * x_grid_step_um
         actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles - 1) * y_grid_step_um
         actual_vol_z_um = z_step_size_um * ((ztiles - 1))
@@ -285,9 +253,7 @@ class Ispim(Spim):
         self.log.info(f"X grid step: {x_grid_step_um} [um]")
         self.log.info(f"Y grid step: {y_grid_step_um} [um]")
         self.log.info(f"Z grid step: {z_step_size_um} [um]")
-        self.log.info(f"Z grid step: {z_step_size_um} [um]")
         self.log.info(f'xtiles: {xtiles}, ytiles: {ytiles}, ztiles: {ztiles}')
-        # TODO, check if stage homing is necessary?
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -302,73 +268,85 @@ class Ispim(Spim):
             self.sample_pose.move_absolute(z=self.start_pos['z'])
             self.wait_to_stop('z', self.start_pos['z'])
             self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
-            # TODO: If reinstate self.sample_pose.zero_in_place() need to set start_pos back to None
         else:
             self.set_scan_start(self.sample_pose.get_position())
-
-        # Set the sample starting location as the origin.
-        # self.sample_pose.zero_in_place()
 
         transfer_processes = None  # Reference to external tiff transfer process.
         # Stage positions in SAMPLE POSE
         self.stage_x_pos, self.stage_y_pos, self.stage_z_pos = (self.start_pos['x'],
                                                                 self.start_pos['y'],
                                                                 self.start_pos['z'])
+
+        # Logging for JSON schema
+        self.log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
+                      extra={'tags': ['schema']})
+        self.log.info(f'local_storage_directory, {local_storage_dir}', extra={'tags': ['schema']})
+        self.log.info(f'external_storage_directory, {img_storage_dir}', extra={'tags': ['schema']})
+        self.log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
+        self.log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
+        self.log.info(f'instrument_id, iSpim 1')
+        self.log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}', extra={'tags': ['schema']})
+        self.log.info(f'chamber_immersion_refractive_index, '
+                      f'{self.cfg.immersion_medium_refractive_index}', extra={'tags': ['schema']})
+        self.log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers',
+                      extra={'tags': ['schema']})  # size of pixels
+        self.log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers', extra={'tags': ['schema']})
+        self.log.info(f'z_voxel_size, {z_step_size_um} micrometers', extra={'tags': ['schema']})
+        self.log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters',
+                      extra={'tags': ['schema']})
+        self.log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters',
+                      extra={'tags': ['schema']})
+        self.log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters',
+                      extra={'tags': ['schema']})
+        self.log.info(f'lightsheet_angle, 45 degrees', extra={'tags': ['schema']})
+
+        for laser in self.active_lasers:
+            laser = str(laser)
+            self.log.info(f'channel_name, {laser}', extra={'tags': ['schema']})
+            self.log.info(f'laser_wavelength, {laser} nanometers', extra={'tags': ['schema']})
+            intensity = self.lasers[str(laser)].get_intensity()
+            laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
+                                                       == 'power' else f'{intensity} percent'
+            laser_power = f'{self.lasers[laser].get_setpoint()}'
+            self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
+            self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}',
+                          extra={'tags': ['schema']})
+            # Every variable in calculate waveforms
+            for key in self.cfg.laser_specs[laser]['etl']:
+                self.log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts',
+                              extra={'tags': ['schema']})
+            for key in self.cfg.laser_specs[laser]['galvo']:
+                self.log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts',
+                              extra={'tags': ['schema']})
+
         try:
             for j in range(ytiles):
                 # move back to x=0 which maps to z=0
                 self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
-                # TODO: handle this through sample pose class, which remaps axes
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
                 self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
-                # TODO: handle this through sample pose class, which remaps axes
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_absolute(z=round(self.stage_y_pos))
                 self.wait_to_stop('y', self.stage_y_pos)  # wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
-                    # TODO: handle this through sample pose class, which remaps axes
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos))
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
-                    # Logging for JSON schema. More sprinkled throught acquisition loop
-                    self.schema_log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers')  # size of pixels
-                    self.schema_log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers')
-                    self.schema_log.info(f'z_voxel_size, {z_step_size_um} micrometers')
-                    self.schema_log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters')
-                    self.schema_log.info(f'lightsheet_angle, 45 degrees')
+                    # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
+                    # e.g. [[488],[561]]. Waveform generator is expecting list so give list of one wl if sequential.
+                    # If Interleaved, loop through once and send one list of all wavelengths
 
-                    for channel in channels:
-                        self.schema_log.info(f'channel_name, {channel}')
-                        self.schema_log.info(f'laser_wavelength, {channel} nanometers')
-                        intensity = self.lasers[str(channel)].get_setpoint()
-                        laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(channel)]['intensity_mode'] \
-                                                                   == 'power' else f'{intensity} percent'
-                        self.schema_log.info(f'laser_power: {laser_power}')
-                        self.schema_log.info(f'filter_wheel_index: {self.cfg.laser_specs[str(channel)]["filter_index"]}')
-                        # Every variable in calculate waveforms
-                        for key in self.cfg.laser_specs[str(channel)]['etl']:
-                            self.schema_log.info(f'daq etl {key}: {self.cfg.laser_specs[str(channel)]["etl"][key]} volts')
-                        for key in self.cfg.laser_specs[str(channel)]['galvo']:
-                            self.schema_log.info(
-                                f'daq galvo {key}: {self.cfg.laser_specs[str(channel)]["galvo"][key]} volts')
-
-                    #Block comment here describing what's happening
-
-                    loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)     # Only loop through once if interleaved
-                    channel = [[channels]] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]    # Feed in whole list if interleaved
+                    loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)
+                    channel = [[channels]] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]
 
                     for k in range(0, loops):
-
-                        # TODO: handle this through sample pose class, which remaps axes
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
                         self.tigerbox.set_speed(X=1.0)  # X maps to Z
@@ -384,18 +362,20 @@ class Ispim(Spim):
                         self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
 
                         self.log.info(f"Setting up lasers for active channels: {channel[k]}")
-                        self.setup_imaging_for_laser(channel[k])     # Not changing waveform generator so give a one channel list
+                        self.setup_imaging_for_laser(channel[k])
 
                         # Setup capture of next Z stack.
-                        filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'  # if filetype is trash, it'll be zarr but doesn't matter
+
+                        # if filetype is trash for overview, it'll be zarr but doesn't matter
+                        filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'
 
                         channel_string = '_'.join(map(str, self.active_lasers)) if \
                             self.cfg.acquisition_style == 'interleaved' else channel[k][0]
                         filenames = [
-                            f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}" #add all channel names
+                            f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
                             for
                             camera in self.stream_ids]
-                        self.schema_log.info(f'file_name, {filenames}')
+                        self.log.info(f'file_name, {filenames}', extra={'tags': ['schema']})
                         os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
                         self.log.info(f"Collecting tile stacks at "
@@ -447,12 +427,12 @@ class Ispim(Spim):
             # TODO, implement sample pose so below can be uncommented
             # self.log.info("Returning to start position.")
             # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
-            # if transfer_processes is not None:
-            #     self.log.info("Joining file transfer processes.")
-            #     for p in transfer_processes:
-            #         p.join()
+            if transfer_processes is not None:
+                self.log.info("Joining file transfer processes.")
+                for p in transfer_processes:
+                    p.join()
             self.log.info(f"Closing NI tasks")
-            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()   # TODO: Should we just stop ni card anyways in case we want to image after?
+            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()  # TODO: Should we just stop ni card anyways in case we want to image after?
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
@@ -485,7 +465,7 @@ class Ispim(Spim):
                                                frames,
                                                filetype)
 
-        if self.overview_process is not None:   # If doing an overview image, wait till previous tile is done
+        if self.overview_process is not None:  # If doing an overview image, wait till previous tile is done
             if self.overview_process.is_alive():
                 self.overview_process.join()
         self.stack = [None]
@@ -499,31 +479,26 @@ class Ispim(Spim):
         prev_frame_count = 0
         curr_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
-            if self.simulated:
-                # Writting dummy frame if in simulated mode
-                try:
-                    tifffile.imwrite(filepath_srcs[0], np.zeros((self.cfg.sensor_column_count,
-                                                                 self.cfg.sensor_row_count)), bigtiff=True, append=True)
-                except PermissionError:
-                    print('Droped frame :(')
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
             curr_frame_count += frame_count
             if curr_frame_count != prev_frame_count:
                 prev_frame_count = curr_frame_count
-                self.log.info(f'Total frames: {tile_count} '
+                self.log.info(f'Total frames: {tile_count * len(self.cfg.imaging_wavelengths)} '
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
             sleep(0.1) if not self.simulated else sleep(.01)     # TODO: Maybe make this a fraction of the stage speed?
 
         self.log.info('NI task completed')
+        self.log.info('Stopping NI Card')
         self.ni.stop()
-        self.__sim_counter_count =0
+
+        self.ni.stop() if not self.simulated else self.__sim_counter_count =0
 
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
-            self.overview_process.start()   # If doing an overview image, start down sampling and mips
+            self.overview_process.start()  # If doing an overview image, start down sampling and mips
 
         self.log.info('Waiting for camera to finish')
         start = time()
@@ -551,7 +526,6 @@ class Ispim(Spim):
             sleep(.1)
 
     def framedata(self, stream):
-
         if self.simulated:
             self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
             self.latest_frame_layer =+ 1
@@ -560,7 +534,7 @@ class Ispim(Spim):
         if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
             f = next(a.frames())
-            self.latest_frame= f.data().squeeze().copy()
+            self.latest_frame = f.data().squeeze().copy()
             self.latest_frame_layer = f.metadata().frame_id
 
             if self.overview_set.is_set():
@@ -580,44 +554,47 @@ class Ispim(Spim):
         """Quick overview scan function """
 
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
-                                                      self.cfg.tile_overlap_y_percent,
-                                                      self.cfg.z_step_size_um * 10,
-                                                      self.cfg.volume_x_um,
-                                                      self.cfg.volume_y_um,
-                                                      self.cfg.volume_z_um)
+                                                           self.cfg.tile_overlap_y_percent,
+                                                           self.cfg.z_step_size_um * 10,
+                                                           self.cfg.volume_x_um,
+                                                           self.cfg.volume_y_um,
+                                                           self.cfg.volume_z_um)
 
-        self.image_overview = None                                      # Clear previous image overview if any
-        self.image_overview = []                 # Create empty array size of tiles
+        self.image_overview = None  # Clear previous image overview if any
+        self.image_overview = []  # Create empty array size of tiles
         self.overview_set.set()
         self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
-                                      self.cfg.volume_z_um,self.cfg.z_step_size_um * 10,
+                                      self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10/1000) / (((self.cfg.get_period_time()+.005) * len(self.cfg.imaging_wavelengths)) +0.01 )),
+                                      ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
+                                          self.cfg.imaging_wavelengths)) + 0.01)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
-                                      self.cfg.tile_prefix,'Trash', self.cfg.local_storage_dir)
+                                      self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir)
+
         if self.overview_process != None:
             self.overview_process.join()
 
         # Create empty array size of overview image
         rows = np.shape(self.image_overview[0])[0]
         cols = self.image_overview[0].shape[1]
-        #total_columns = self.image_overview[x].shape[1]
+
         overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
         overlap_rows = rows - overlap
-        reshaped = np.zeros(((xtiles*rows)-(overlap*(xtiles-1)), ytiles*cols))
+        reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), ytiles * cols))
 
         for x in range(0, xtiles):
             for y in range(0, ytiles):
-                cols = self.image_overview[0].shape[1] # Account for lost frames
-                if x == xtiles-1:
-                    reshaped[x * overlap_rows:(x * overlap_rows)+rows, y * cols:(y + 1) * cols] = self.image_overview[0]
+                cols = self.image_overview[0].shape[1]  # Account for lost frames
+                if x == xtiles - 1:
+                    reshaped[x * overlap_rows:(x * overlap_rows) + rows, y * cols:(y + 1) * cols] = self.image_overview[
+                        0]
                 else:
-                    reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = self.image_overview[0][0:overlap_rows]
+                    reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = self.image_overview[0][
+                                                                                                 0:overlap_rows]
                 del self.image_overview[0]
 
         self.overview_set.clear()
-        #date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        #filename = Path(f'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff')
+        #TODO: How to now overwrite?
         cv2.imwrite(
             fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
                     reshaped)  # Save overview
@@ -639,10 +616,6 @@ class Ispim(Spim):
         """Create overview image from a stack"""
 
         self.stack = [i for i in self.stack if i is not None]           # Remove dropped tiles
-        # half_col = round(self.cfg.sensor_column_count / 2)
-        # # only use slitwidth pixels
-        # slit_width = [x[:, half_col - self.cfg.slit_width_pix:half_col + self.cfg.slit_width_pix] for x in
-        #               self.stack[0:-1]]
         downsampled = [x[0::10, 0::10] for x in self.stack]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
         mipstack = [np.max(x, axis=1) for x in downsampled]             # Max projection
         mipstack = np.array(mipstack)
@@ -653,7 +626,6 @@ class Ispim(Spim):
         reshaped = np.ones((self.ztiles, rows))
         reshaped[0:cols, :] = mipstack
         self.image_overview.append(np.rot90(np.array(reshaped)))
-
 
     def start_livestream(self, wavelength: list):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -678,7 +650,7 @@ class Ispim(Spim):
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
         self.livestream_enabled.clear()
-        self.frame_grabber.runtime.abort()      # Abort for livestream because total frames are never being met
+        self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
 
         self.ni.stop()
         self.ni.close()

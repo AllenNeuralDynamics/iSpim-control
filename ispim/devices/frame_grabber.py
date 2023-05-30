@@ -1,8 +1,11 @@
 import logging
 from mock import Mock
 from pprint import pprint
+
 import acquire
-from acquire import DeviceKind, Trigger, SampleType, Trigger, SignalIOKind, TriggerEdge, Direction
+from acquire import DeviceKind, Trigger, SampleType, Trigger, SignalIOKind, TriggerEdge, Direction, Runtime
+# import calliphlox
+# from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
 from pathlib import Path
 
 
@@ -10,7 +13,7 @@ class FrameGrabber:
 
     def __init__(self):
 
-        self.runtime = acquire.Runtime()
+        self.runtime = Runtime()
         dm = self.runtime.device_manager()
         self.p = self.runtime.get_configuration()
 
@@ -54,12 +57,12 @@ class FrameGrabber:
             self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
             self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
             self.p.video[stream_id].max_frame_count = frame_count
-            self.p.video[0].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=2, edge="Rising")
+            self.p.video[stream_id].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
             # acq_trigger = Trigger(enable='True',
-            #                          line=2,
-            #                          event='FrameStart',
-            #                          kind='Input',
-            #                          edge='Rising')
+            #                       line=2,
+            #                       event='FrameStart',
+            #                       kind='Input',
+            #                       edge='Rising')
             # # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
             # self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)

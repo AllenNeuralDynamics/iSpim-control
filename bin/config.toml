@@ -1,42 +1,51 @@
 [imaging_specs]
-local_storage_directory = "C:\\test"
+local_storage_directory = "."
 subject_id = "test"
-tile_prefix = "tile"
+tile_prefix = "584_d15_round2"
 tile_overlap_x_percent = 15
 tile_overlap_y_percent = 15
-z_step_size_um = 0.176
-volume_x_um = 100.0
-volume_y_um = 10.0
-volume_z_um = 100.0
-laser_wavelengths = [ 488,]
+z_step_size_um = 0.209
+volume_x_um = 11000.0
+volume_y_um = 200.0
+volume_z_um = 10
+laser_wavelengths = [ 488, 561, 638,]
 camera_streams = [ 0,]
-external_storage_directory = "Y:\\test"
+external_storage_directory = "."
+filetype = "Tiff"
+
+[experiment_specs]
+experimenters_name = "Lindsey"
+immersion_medium = "PBS"
+immersion_medium_refractive_index = 1.33
 
 [tile_specs]
-x_field_of_view_um = 405.504
-y_field_of_view_um = 405.504
+x_field_of_view_um = 686.592
+y_field_of_view_um = 686.592
 row_count_pixels = 2304
 column_count_pixels = 2304
 data_type = "uint16"
 
 [design_specs]
-slit_width_pixels = 400
+slit_width_pixels = 150
 
 [stage_specs]
 backlash_reset_distance_um = 4
 
 [waveform_specs]
-pre_buffer_time = 0.004
-post_buffer_time = 0.002
+delay_time = 0
 rest_time = 0.004
 exposure_time = 0.025
 line_time_us = 10.850694444444445
+pre_buffer_time_s = 0.001
+post_buffer_time_s = 0.001
+laser_pre_buffer_time_s = 0.001
+laser_post_buffer_time_s = 0.001
 
 [daq_ao_names_to_channels]
-galvo_y_right = 0
-galvo_x_right = 2
-etl_right = 5
-camera_left = 7
+galvo_y = 0
+galvo_x = 2
+etl = 4
+camera = 6
 
 [daq_driver_kwds]
 dev_name = "Dev2"
@@ -44,27 +53,20 @@ input_trigger_name = "PFI0"
 count_trigger_name = "PFI3"
 ao_counter_trigger_name = "PFI2"
 update_frequency_hz = 400000.0
-livestream_frequency_hz = 20
+livestream_frequency_hz = 30
 
 [tiger_controller_driver_kwds]
 com_port = "COM3"
 
-[filter_wheel_left_kwds]
-tiger_axis = 0
-
-[filter_wheel_right_kwds]
+[filter_wheel_kwds]
 tiger_axis = 1
 
 [estimates]
 tiles_per_second = 15
 
-[ni_controlled_tiger_axes]
-a = "a"
-b = "b"
-c = "c"
-d = "d"
-w = "w"
-v = "v"
+[camera_specs]
+scan_direction = "BACKWARD"
+shutter_mode = "LIGHTSHEET"
 
 [tiger_specs.axes]
 etl_left_axis = "V"
@@ -73,20 +75,6 @@ galvo_left_x_axis = "A"
 galvo_left_y_axis = "B"
 galvo_right_x_axis = "C"
 galvo_right_y_axis = "D"
-
-[camera_specs.camera_right]
-scan_direction = "BACKWARD"
-shutter_mode = "LIGHTSHEET"
-delay = 0.0
-camx = 2304
-camy = 2304
-
-[camera_specs.camera_left]
-scan_direction = "BACKWARD"
-shutter_mode = "LIGHTSHEET"
-delay = 0.0
-camx = 2304
-camy = 2304
 
 [channel_specs.405]
 driver = "Oxxius"
@@ -129,78 +117,66 @@ x = "y"
 y = "z"
 z = "x"
 
+[channel_specs.405.coeffecients]
+1 = 3.218
+0 = -57.515
+
 [channel_specs.405.etl]
-right_offset = 1.75
-left_amplitude = 0
-left_offset = 0.0
-right_amplitude = 0
+offset = 1.687
+amplitude = 0
 
 [channel_specs.405.galvo]
-x_left_offset = 0.0
-x_left_amplitude = 0.0
-x_right_offset = 2.565
-x_right_amplitude = -0.01
-y_left_offset = 0.0
-y_left_amplitude = 0.0
-y_right_offset = 2.4
-y_right_amplitude = 1.4
+x_offset = 2.34
+x_amplitude = -0.01
+y_offset = 2.42
+y_amplitude = 1.247
 
 [channel_specs.405.kwds]
 port = "COMxx"
 
+[channel_specs.488.coeffecients]
+1 = 2.3125
+0 = -35.09
+
 [channel_specs.488.etl]
-right_offset = 1.75
-left_amplitude = 0
-left_offset = 0.0
-right_amplitude = 0
+offset = 2.424
+amplitude = 2.373
 
 [channel_specs.488.galvo]
-x_left_offset = 0.0
-x_left_amplitude = 0.0
-x_right_offset = 2.565
-x_right_amplitude = -0.01
-y_left_offset = 0.0
-y_left_amplitude = 0.0
-y_right_offset = 2.4
-y_right_amplitude = 1.4
+x_offset = 2.344
+x_amplitude = -0.01
+y_offset = 2.457
+y_amplitude = 1.244
 
 [channel_specs.488.kwds]
 port = "COMxx"
 
 [channel_specs.561.etl]
-right_offset = 1.75
-left_amplitude = 0
-left_offset = 0.0
-right_amplitude = 0
+offset = 1.75
+amplitude = 0
 
 [channel_specs.561.galvo]
-x_left_offset = 0.0
-x_left_amplitude = 0.0
-x_right_offset = 2.56
-x_right_amplitude = -0.02
-y_left_offset = 0.0
-y_left_amplitude = 0.0
-y_right_offset = 2.3
-y_right_amplitude = 1.2
+x_offset = 2.323
+x_amplitude = -0.02
+y_offset = 2.414
+y_amplitude = 1.212
 
 [channel_specs.561.kwds]
 port = "COMxx"
 
+[channel_specs.638.coeffecients]
+1 = 2.237
+0 = -29.349
+
 [channel_specs.638.etl]
-right_offset = 1.75
-left_amplitude = 0
-left_offset = 0.0
-right_amplitude = 0
+offset = 2.021
+amplitude = 0
 
 [channel_specs.638.galvo]
-x_left_offset = 0.0
-x_left_amplitude = 0.0
-x_right_offset = 2.57
-x_right_amplitude = -0.01
-y_left_offset = 0.0
-y_left_amplitude = 0.0
-y_right_offset = 2.4
-y_right_amplitude = 1.4
+x_offset = 2.334
+x_amplitude = -0.01
+y_offset = 2.442
+y_amplitude = 1.149
 
 [channel_specs.638.kwds]
 port = "COMxx"

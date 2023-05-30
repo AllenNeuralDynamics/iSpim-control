@@ -23,7 +23,9 @@ class IspimConfig(SpimConfig):
         self.waveform_specs = self.cfg['waveform_specs']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
-        self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
+        # TODO: dispim has 2 filterwheels. We must set the location of both
+        #   programmatically.
+        # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
@@ -67,7 +69,7 @@ class IspimConfig(SpimConfig):
     def acquisition_style(self):
         """Returns whether acquisition will play interleaved waveforms at each tile
         or take sequential rounds of tiling"""
-        #TODO: Error if not interleaved or sequential?
+        # TODO: Error if not interleaved or sequential?
         return self.imaging_specs['acquisition_style']
 
     # TODO: consider putting this in the base class since literally every
@@ -176,7 +178,7 @@ class IspimConfig(SpimConfig):
     @property
     def scan_speed_mm_s(self):
         """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.02  # 10 ms jitter time for stage pulses
+        jitter_time_s = 0.03  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
         if self.acquisition_style == 'interleaved':
             scan_speed_mm_s = (
@@ -267,7 +269,7 @@ class IspimConfig(SpimConfig):
     def laser_wavelengths(self):
         """Returns set of all configured laser wavelengths.
         Note: this is NOT the subset of wavelengths used for imaging."""
-        return set([int(nm) for nm in self.cfg['channel_specs'].keys()])
+        return set([int(nm) for nm in self.cfg['channel_specs'].keys() if nm.isdigit()])
 
     @property
     def daq_used_channels(self):
