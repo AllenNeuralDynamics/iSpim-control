@@ -26,7 +26,6 @@ import os
 #from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
-from vortran_laser import stradus
 import subprocess
 import tifffile
 
@@ -343,7 +342,7 @@ class Ispim(Spim):
                     # If Interleaved, loop through once and send one list of all wavelengths
 
                     loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)
-                    channel = [[channels]] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]
+                    channel = [channels] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]
 
                     for k in range(0, loops):
                         # Move to specified Z position
