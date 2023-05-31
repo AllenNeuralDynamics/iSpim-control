@@ -107,8 +107,6 @@ class Ispim(Spim):
                                              self.cfg.sensor_row_count)
 
         # Initializing exposure time of both cameras
-        # TODO: This is assuming that the line_interval is set the same in
-        #  both cameras. Should have some fail safe in case not?
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
                                              cpx_line_interval[0])
@@ -493,8 +491,7 @@ class Ispim(Spim):
         self.log.info('NI task completed')
         self.log.info('Stopping NI Card')
         self.ni.stop()
-
-        self.ni.stop() if not self.simulated else self.__sim_counter_count =0
+        self.__sim_counter_count = 0
 
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
