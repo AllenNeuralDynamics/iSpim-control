@@ -26,6 +26,7 @@ import os
 #from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
+from vortran_laser import stradus
 import subprocess
 import tifffile
 
@@ -298,11 +299,11 @@ class Ispim(Spim):
                       extra={'tags': ['schema']})
         self.log.info(f'lightsheet_angle, 45 degrees', extra={'tags': ['schema']})
 
-        for laser in self.active_lasers:
+        for laser in channels:
             laser = str(laser)
             self.log.info(f'channel_name, {laser}', extra={'tags': ['schema']})
             self.log.info(f'laser_wavelength, {laser} nanometers', extra={'tags': ['schema']})
-            intensity = self.lasers[str(laser)].get_intensity()
+            intensity = self.lasers[str(laser)].get_setpoint()
             laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
                                                        == 'power' else f'{intensity} percent'
             laser_power = f'{self.lasers[laser].get_setpoint()}'
@@ -422,9 +423,6 @@ class Ispim(Spim):
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
 
         finally:
-            # TODO, implement sample pose so below can be uncommented
-            # self.log.info("Returning to start position.")
-            # self.sample_pose.move_absolute(x=0, y=0, z=0, wait=True)
             if transfer_processes is not None:
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
@@ -486,7 +484,7 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-            sleep(0.1) if not self.simulated else sleep(.01)     # TODO: Maybe make this a fraction of the stage speed?
+            sleep(self.cfg.get_period_time() + .04) if not self.simulated else sleep(.01)
 
         self.log.info('NI task completed')
         self.log.info('Stopping NI Card')

@@ -23,9 +23,7 @@ class IspimConfig(SpimConfig):
         self.waveform_specs = self.cfg['waveform_specs']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
-        # TODO: dispim has 2 filterwheels. We must set the location of both
-        #   programmatically.
-        # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
+        self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
