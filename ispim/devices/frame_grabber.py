@@ -41,8 +41,6 @@ class FrameGrabber:
             self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
             self.p.video[stream_id].frame_average_count = 0  # disables
             self.runtime.set_configuration(self.p)
-        # self.p.video[0].camera.settings.readout_direction = Direction.Forward
-        # self.p.video[1].camera.settings.readout_direction = Direction.Backward
 
 
     def setup_stack_capture(self, output_paths: list[Path], frame_count: int, filetype: str):
@@ -52,8 +50,7 @@ class FrameGrabber:
         :param frame_count: how many tiles to grab from camera
 
         """
-        # TODO: Should this be looped over so we can configure both cameras at the same time?
-        # is there ever a time where there would be different configurations for stack capture?
+
         dm = self.runtime.device_manager()
         for stream_id in range(0, len(self.cameras)):
             self.log.info(f"Configuring camera.")

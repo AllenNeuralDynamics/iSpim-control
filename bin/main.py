@@ -15,7 +15,7 @@ logging.getLogger().handlers.clear()
 
 class SpimLogFilter(logging.Filter):
     # Note: calliphlox lib is quite chatty.
-    VALID_LOGGER_BASES = {'spim_core', 'ispim','ispim', 'calliphlox'}#'tigerasi' }
+    VALID_LOGGER_BASES = {'spim_core', 'ispim','calliphlox','tigerasi' }
 
     def filter(self, record):
         return record.name.split('.')[0].lower() in \
@@ -67,6 +67,8 @@ def main():
     if os.name == 'nt' and args.color_console_output:
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+    args.config = r'C:\Users\hcr-fish\Projects\iSpim-control\examples\config.toml'
+    # FIXME: on windows, path strings need to be raw strings.
     instrument = Ispim(config_filepath=args.config, simulated=args.simulated)
     try:
         #from inpromptu import Inpromptu

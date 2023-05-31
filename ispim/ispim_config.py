@@ -23,9 +23,7 @@ class IspimConfig(SpimConfig):
         self.waveform_specs = self.cfg['waveform_specs']
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
-        # TODO: dispim has 2 filterwheels. We must set the location of both
-        #   programmatically.
-        # self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
+        self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
@@ -180,7 +178,12 @@ class IspimConfig(SpimConfig):
         """Return the volumetric scan speed of the stage."""
         jitter_time_s = 0.03  # 10 ms jitter time for stage pulses
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
-        scan_speed_mm_s = (step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
+        if self.acquisition_style == 'interleaved':
+            scan_speed_mm_s = (
+                        step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
+        elif self.acquisition_style == 'sequential':
+            scan_speed_mm_s = (step_size_mm / ((self.get_period_time()) + jitter_time_s))
+        # TODO: Error if niether one?
         return scan_speed_mm_s
 
     # TODO: consider putting this in the parent class.

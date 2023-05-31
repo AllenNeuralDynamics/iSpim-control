@@ -28,6 +28,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     active_wavelengths.sort()
 
     for ch in active_wavelengths:
+
         # Create wavelength-dependent constants
         active_laser_specs = cfg.laser_specs[str(ch)]
         etl_offset = active_laser_specs['etl']['offset']
