@@ -52,10 +52,6 @@ class WaveformHardware:
             samps_per_chan=sample_count*channel_num)
         # Takes into account the number of channels in ao task
         self.ao_task.triggers.start_trigger.retriggerable = True
-        self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
-            trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
-            trigger_edge=Slope.RISING)
-        #TODO: I think we're overwriting this so do we need it?
 
         if live:
             self.counter_task = nidaqmx.Task("counter_task")

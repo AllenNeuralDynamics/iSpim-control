@@ -598,14 +598,13 @@ class Ispim(Spim):
             reshaped)  # Save overview
         # Move back to start position
         #TODO: Why isn't this working?
-        print(self.start_pos['x'])
-        # self.sample_pose.move_absolute(x=self.start_pos['x'])
-        # self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-        # self.sample_pose.move_absolute(y=self.start_pos['y'])
-        # self.wait_to_stop('y', self.start_pos['y'])
-        # self.sample_pose.move_absolute(z=self.start_pos['z'])
-        # self.wait_to_stop('z', self.start_pos['z'])
-        # self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
+        self.sample_pose.move_absolute(x=self.start_pos['x'])
+        self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
+        self.sample_pose.move_absolute(y=self.start_pos['y'])
+        self.wait_to_stop('y', self.start_pos['y'])
+        self.sample_pose.move_absolute(z=self.start_pos['z'])
+        self.wait_to_stop('z', self.start_pos['z'])
+        self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
 
         self.start_pos = None  # Reset start position
         self.overview_process = None
