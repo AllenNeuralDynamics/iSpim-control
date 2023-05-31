@@ -461,6 +461,10 @@ class Ispim(Spim):
         prev_frame_count = 0
         curr_frame_count = 0
         while self.ni.counter_task.read() < tile_count:
+            if self.simulated:
+                tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
+                                                           self.cfg.sensor_row_count)), append=True, bigtiff = True)
+            
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
             curr_frame_count += frame_count
