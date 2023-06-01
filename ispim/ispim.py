@@ -15,7 +15,6 @@ from ispim.ispim_config import IspimConfig
 from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
-from serial import Serial
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
 from tigerasi.device_codes import PiezoControlMode, TTLIn0Mode
 from tigerasi.sim_tiger_controller import SimTigerController as SimTiger
@@ -26,7 +25,6 @@ import os
 #from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
-import subprocess
 import tifffile
 
 class Ispim(Spim):
