@@ -26,6 +26,8 @@ import os
 from acquire import DeviceState
 import cv2
 import tifffile
+import shutil
+from vortran_laser import stradus
 
 class Ispim(Spim):
 
@@ -177,8 +179,51 @@ class Ispim(Spim):
         return count
 
     # TODO: this should be a base class thing.s
-    def check_ext_disk_space(self, dataset_size):
-        self.log.warning("Checking disk space not implemented.")
+    def check_ext_disk_space(self, xtiles, ytiles, ztiles):
+        """Checks ext disk space before scan to see if disk has enough space scan"""
+        # One tile (tiff) is ~10368 kb
+        if self.cfg.imaging_specs['filetype'] == 'tiff':
+            est_stack_filesize = self.cfg.bytes_per_image * ztiles
+            est_scan_filesize = est_stack_filesize*xtiles*ytiles
+            if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
+                self.log.error("Not enough space in external directory")
+                raise
+        elif self.cfg.imaging_specs['filetype'] != 'tiff':
+            self.log.warning("Checking disk space not implemented. "
+                             "Proceed at your own risk")
+
+    def check_local_disk_space(self, z_tiles):
+        """Checks local disk space before scan to see if disk has enough space for two stacks"""
+
+        #One tile (tiff) is ~10368 kb
+        if self.cfg.imaging_specs['filetype'] == 'Tiff':
+            est_filesize = self.cfg.bytes_per_image*z_tiles
+            if est_filesize*2 >= shutil.disk_usage(self.cfg.local_storage_dir).free:
+                self.log.error("Not enough space on disk. Is the recycle bin empty?")
+                raise
+        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
+            self.log.warning("Checking disk space not implemented. "
+                             "Proceed at your own risk")
+
+    def acquisition_time(self, xtiles, ytiles, ztiles):
+
+        x_y_tiles = xtiles*ytiles
+        stack_time_s = (self.cfg.get_period_time() + self.cfg.jitter_time_s) * ztiles
+
+        est_filesize = self.cfg.bytes_per_image * ztiles
+        transfer_speed_s = self.cfg['estimates']['network_speed_Bps']
+        file_transfer_time_s = est_filesize/transfer_speed_s
+
+        if file_transfer_time_s > stack_time_s:
+            #TODO: Account for tile on end?
+            total_time_s = ((file_transfer_time_s - stack_time_s)*x_y_tiles) + (stack_time_s*x_y_tiles)
+        else:
+            total_time_s = stack_time_s*x_y_tiles
+
+        return total_time_s / 86400
+
+
+
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
@@ -250,6 +295,13 @@ class Ispim(Spim):
         self.log.info(f"Y grid step: {y_grid_step_um} [um]")
         self.log.info(f"Z grid step: {z_step_size_um} [um]")
         self.log.info(f'xtiles: {xtiles}, ytiles: {ytiles}, ztiles: {ztiles}')
+
+        # Check to see if disk has enough space for two tiles
+        frames = (ztiles * len(self.cfg.imaging_wavelengths)) if self.cfg.acquisition_style == 'interleaved' else ztiles
+        self.check_local_disk_space(frames)
+
+        #Check if external disk has enough space
+        self.check_ext_disk_space(xtiles, ytiles, frames)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -472,7 +524,7 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-            sleep(self.cfg.get_period_time() + .04) if not self.simulated else sleep(.01)
+            sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
 
         self.log.info('NI task completed')
         self.log.info('Stopping NI Card')

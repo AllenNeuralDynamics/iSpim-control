@@ -174,15 +174,25 @@ class IspimConfig(SpimConfig):
         self.cfg['imaging_specs']['z_step_size_um'] = um
 
     @property
+    def jitter_time_s(self):
+        """jitter time for stage
+        :unit s"""
+        return self.stage_specs['jitter_time_s']
+
+    @jitter_time_s.setter
+    def jitter_speed_s(self, seconds: float):
+        self.stage_specs['jitter_time_s'] = seconds
+
+    @property
     def scan_speed_mm_s(self):
         """Return the volumetric scan speed of the stage."""
-        jitter_time_s = 0.03  # 10 ms jitter time for stage pulses
+
         step_size_mm = self.imaging_specs['z_step_size_um'] / 1000.0
         if self.acquisition_style == 'interleaved':
             scan_speed_mm_s = (
-                        step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + jitter_time_s))
+                        step_size_mm / ((self.get_period_time() * len(self.imaging_wavelengths)) + self.jitter_time_s))
         elif self.acquisition_style == 'sequential':
-            scan_speed_mm_s = (step_size_mm / ((self.get_period_time()) + jitter_time_s))
+            scan_speed_mm_s = (step_size_mm / ((self.get_period_time()) + self.jitter_time_s))
         # TODO: Error if niether one?
         return scan_speed_mm_s
 
