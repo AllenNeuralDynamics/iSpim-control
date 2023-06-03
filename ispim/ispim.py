@@ -488,7 +488,7 @@ class Ispim(Spim):
                                                 line_count=1) if not self.simulated else print('Setting up tile scan')
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
-
+        print('collect stacked tiff', tile_count)
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if self.cfg.acquisition_style == 'interleaved' else tile_count
 
         self.log.info(f"Configuring framegrabber")
@@ -520,7 +520,7 @@ class Ispim(Spim):
             curr_frame_count += frame_count
             if curr_frame_count != prev_frame_count:
                 prev_frame_count = curr_frame_count
-                self.log.info(f'Total frames: {tile_count * len(self.cfg.imaging_wavelengths)} '
+                self.log.info(f'Total frames: {frames} '
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
