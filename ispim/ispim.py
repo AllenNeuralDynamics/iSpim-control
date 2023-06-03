@@ -27,7 +27,7 @@ from acquire import DeviceState
 import cv2
 import tifffile
 import shutil
-from vortran_laser import stradus
+#from vortran_laser import stradus
 
 class Ispim(Spim):
 
@@ -182,7 +182,7 @@ class Ispim(Spim):
     def check_ext_disk_space(self, xtiles, ytiles, ztiles):
         """Checks ext disk space before scan to see if disk has enough space scan"""
         # One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'tiff':
+        if self.cfg.imaging_specs['filetype'] == 'Tiff':
             est_stack_filesize = self.cfg.bytes_per_image * ztiles
             est_scan_filesize = est_stack_filesize*xtiles*ytiles
             if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
@@ -211,16 +211,22 @@ class Ispim(Spim):
         stack_time_s = (self.cfg.get_period_time() + self.cfg.jitter_time_s) * ztiles
 
         est_filesize = self.cfg.bytes_per_image * ztiles
-        transfer_speed_s = self.cfg['estimates']['network_speed_Bps']
+        transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
 
         if file_transfer_time_s > stack_time_s:
-            #TODO: Account for tile on end?
-            total_time_s = ((file_transfer_time_s - stack_time_s)*x_y_tiles) + (stack_time_s*x_y_tiles)
+            total_time_s = file_transfer_time_s *x_y_tiles
         else:
-            total_time_s = stack_time_s*x_y_tiles
-
-        return total_time_s / 86400
+            total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
+            # Add one file_transfer_time to account for last tile 
+        total_time_day = total_time_s / 86400
+        self.log.info(f"Scan will take approximately {total_time_day}")
+        completion_date = datetime.now() + timedelta(days=total_time_day)
+        date_str = completion_date.strftime("%d %b, %Y at %H:%M %p")
+        weekday = calendar.day_name[completion_date.weekday()]
+        self.log.info(f"Time Esimate: {total_time_day:.2f} days. Imaging run "
+                      f"should finish after {weekday}, {date_str}.")
+        return total_time_day
 
 
 
@@ -302,6 +308,9 @@ class Ispim(Spim):
 
         #Check if external disk has enough space
         self.check_ext_disk_space(xtiles, ytiles, frames)
+
+        # Est time scan will finish
+        time = self.acquisition_time(xtiles, ytiles, frames)
 
         # Move sample to preset starting position
         if self.start_pos is not None:

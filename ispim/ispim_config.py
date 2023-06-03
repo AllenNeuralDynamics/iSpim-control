@@ -24,6 +24,7 @@ class IspimConfig(SpimConfig):
         self.tiger_obj_kwds = self.cfg['tiger_controller_driver_kwds']
         self.daq_obj_kwds = self.cfg['daq_driver_kwds']
         self.filter_wheel_kwds = self.cfg['filter_wheel_kwds']
+        self.estimates = self.cfg['estimates']
 
     # Getters. These must be functions since values depend on the laser
     # wavelength. Otherwise, we would need to make @properties *per laser*.
