@@ -55,7 +55,12 @@ class Ispim(Spim):
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
-        self.total_tiles = 0  # tiles to be captured.
+        self.start_time = None
+        self.total_tiles = None  # tiles to be captured.
+        self.x_y_tiles = None    # tiles in x and y to be captured
+        self.tiles_acquired = 0
+        self.tile_time_s = 0
+        self.est_run_time = None
         self.stage_x_pos = None
         self.stage_y_pos = None
 
@@ -134,7 +139,7 @@ class Ispim(Spim):
                         arg = getattr(arg, step)
                     kwds[key] = arg
 
-            self.lasers[wl] = laser_class(**kwds)
+            self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
             self.log.debug(f"Successfully setup {wl} laser")
 
@@ -290,7 +295,7 @@ class Ispim(Spim):
                                                       volume_z_um)
 
         self.total_tiles = xtiles * ytiles * ztiles
-
+        self.x_y_tiles = xtiles * ytiles
         self.log.info(f"Total tiles: {self.total_tiles}.")
         actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles - 1) * x_grid_step_um
         actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles - 1) * y_grid_step_um
@@ -310,7 +315,8 @@ class Ispim(Spim):
         self.check_ext_disk_space(xtiles, ytiles, frames)
 
         # Est time scan will finish
-        time = self.acquisition_time(xtiles, ytiles, frames)
+        self.start_time = datetime.now()
+        self.est_run_time = self.acquisition_time(xtiles, ytiles, frames)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -404,6 +410,7 @@ class Ispim(Spim):
                     channel = [channels] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]
 
                     for k in range(0, loops):
+                        tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
                         self.tigerbox.set_speed(X=1.0)  # X maps to Z
@@ -464,6 +471,9 @@ class Ispim(Spim):
                                                                filepath_dests[streams]) for streams in self.stream_ids]
                             for p in transfer_processes:
                                 p.start()
+
+                        self.tiles_acquired += 1
+                        self.tile_time_s = time() - tile_start
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
 
@@ -479,7 +489,12 @@ class Ispim(Spim):
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
+            # Reset values used in scan
             self.active_lasers = None
+            self.total_tiles = None
+            self.x_y_tiles = None
+            self.tiles_acquired = 0
+            self.tile_time_s = 0
             self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
@@ -497,7 +512,6 @@ class Ispim(Spim):
                                                 line_count=1) if not self.simulated else print('Setting up tile scan')
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
-        print('collect stacked tiff', tile_count)
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if self.cfg.acquisition_style == 'interleaved' else tile_count
 
         self.log.info(f"Configuring framegrabber")
@@ -519,10 +533,11 @@ class Ispim(Spim):
 
         prev_frame_count = 0
         curr_frame_count = 0
+        self.latest_frame_layer = 0
         while self.ni.counter_task.read() < tile_count:
             if self.simulated:
                 tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
-                                                           self.cfg.sensor_row_count)), append=True, bigtiff = True)
+                                                           self.cfg.sensor_row_count)), append=True, bigtiff=True)
             
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
