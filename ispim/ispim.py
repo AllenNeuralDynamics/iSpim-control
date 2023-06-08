@@ -656,7 +656,6 @@ class Ispim(Spim):
         split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
         for wl in self.cfg.imaging_wavelengths:
-            print(wl)
             index = self.cfg.imaging_wavelengths.index(wl)
             # Split list of all overview images into seperate channels
             split_image_overview= self.image_overview[index::len(self.cfg.imaging_wavelengths)]
