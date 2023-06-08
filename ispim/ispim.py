@@ -27,7 +27,8 @@ from acquire import DeviceState
 import cv2
 import tifffile
 import shutil
-#from vortran_laser import stradus
+from vortran_laser import stradus
+import subprocess
 
 class Ispim(Spim):
 
@@ -147,9 +148,6 @@ class Ispim(Spim):
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
-        # TODO, think about where to store this mapping in config
-        # TODO, merge ispim commands in tigerasi
-        # TODO, how to call this? via tigerbox?
         externally_controlled_axes = \
             {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
              self.cfg.tiger_specs['axes'].values()}
@@ -178,7 +176,6 @@ class Ispim(Spim):
         self.__sim_counter_count += 1
         return count
 
-    # TODO: this should be a base class thing.s
     def check_ext_disk_space(self, xtiles, ytiles, ztiles):
         """Checks ext disk space before scan to see if disk has enough space scan"""
         # One tile (tiff) is ~10368 kb
@@ -188,7 +185,7 @@ class Ispim(Spim):
             if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
                 self.log.error("Not enough space in external directory")
                 raise
-        elif self.cfg.imaging_specs['filetype'] != 'tiff':
+        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
             self.log.warning("Checking disk space not implemented. "
                              "Proceed at your own risk")
 
@@ -214,11 +211,13 @@ class Ispim(Spim):
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
 
-        if file_transfer_time_s > stack_time_s:
-            total_time_s = file_transfer_time_s *x_y_tiles
-        else:
-            total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
-            # Add one file_transfer_time to account for last tile 
+        # if file_transfer_time_s > stack_time_s:
+        #     total_time_s = file_transfer_time_s *x_y_tiles
+        # else:
+        #     total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
+        #     # Add one file_transfer_time to account for last tile
+
+        total_time_s = (file_transfer_time_s * x_y_tiles) + (stack_time_s*x_y_tiles)
         total_time_day = total_time_s / 86400
         self.log.info(f"Scan will take approximately {total_time_day}")
         completion_date = datetime.now() + timedelta(days=total_time_day)
@@ -226,10 +225,7 @@ class Ispim(Spim):
         weekday = calendar.day_name[completion_date.weekday()]
         self.log.info(f"Time Esimate: {total_time_day:.2f} days. Imaging run "
                       f"should finish after {weekday}, {date_str}.")
-        return total_time_day
-
-
-
+        return total_time_s
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
@@ -310,7 +306,7 @@ class Ispim(Spim):
         self.check_ext_disk_space(xtiles, ytiles, frames)
 
         # Est time scan will finish
-        time = self.acquisition_time(xtiles, ytiles, frames)
+        total_time_s = self.acquisition_time(xtiles, ytiles, frames)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -451,19 +447,29 @@ class Ispim(Spim):
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
                         #   we still wait for prior process to finish.
-                        if transfer_processes is not None:
-                            self.log.info(f"Waiting for {filetype} transfer process "
-                                          "to complete.")
-                            for p in transfer_processes:
-                                p.join()
-                        if img_storage_dir is not None:
+                        # if transfer_processes is not None:
+                        #     self.log.info(f"Waiting for {filetype} transfer process "
+                        #                   "to complete.")
+                        #     for p in transfer_processes:
+                        #         p.join()
+                        # if img_storage_dir is not None:
+                        #     filepath_dests = [img_storage_dir / f for f in filenames]
+                        #     self.log.info("Starting transfer process for "
+                        #                   f"{filepath_dests}.")
+                        #     transfer_processes = [DataTransfer(filepath_srcs[streams],
+                        #                                        filepath_dests[streams]) for streams in self.stream_ids]
+                        #     for p in transfer_processes:
+                        #         p.start()
+                        if self.overview_process is None:
                             filepath_dests = [img_storage_dir / f for f in filenames]
-                            self.log.info("Starting transfer process for "
-                                          f"{filepath_dests}.")
-                            transfer_processes = [DataTransfer(filepath_srcs[streams],
-                                                               filepath_dests[streams]) for streams in self.stream_ids]
-                            for p in transfer_processes:
-                                p.start()
+                            parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
+                            print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
+                            cmd = subprocess.run(f'xcopy "{filepath_srcs[0]}" "{filepath_dests[0]}{parameters}')
+                            # Delete the old file so we don't run out of local storage.
+                            print(f"Deleting old file at {filepath_srcs[0]}.")
+
+                            os.remove(filepath_srcs[0])
+                            print(f"process finished.")
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
 
@@ -607,7 +613,7 @@ class Ispim(Spim):
         self.image_overview = None  # Clear previous image overview if any
         self.image_overview = []  # Create empty array size of tiles
         self.overview_set.set()
-        self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
+        self.collect_volumetric_image(self.cfg.volume_x_um, 300,
                                       self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
                                       ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
