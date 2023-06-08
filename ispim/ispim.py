@@ -219,8 +219,8 @@ class Ispim(Spim):
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
 
-        if file_transfer_time_s > stack_time_s:
-            total_time_s = file_transfer_time_s *x_y_tiles
+        if file_transfer_time_s > stack_time_s and not self.overview_set.is_set():
+            total_time_s = file_transfer_time_s*x_y_tiles
         else:
             total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
             # Add one file_transfer_time to account for last tile 
@@ -324,11 +324,11 @@ class Ispim(Spim):
             self.log.info(f'Moving to starting position at {self.start_pos["x"]}, '
                           f'{self.start_pos["y"]}, '
                           f'{self.start_pos["z"]}')
-            self.sample_pose.move_absolute(x=self.start_pos['x'])
+            self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
             self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-            self.sample_pose.move_absolute(y=self.start_pos['y'])
+            self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
             self.wait_to_stop('y', self.start_pos['y'])
-            self.sample_pose.move_absolute(z=self.start_pos['z'])
+            self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
             self.wait_to_stop('z', self.start_pos['z'])
             self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
         else:
@@ -391,7 +391,7 @@ class Ispim(Spim):
                 self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos))
+                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
@@ -399,7 +399,7 @@ class Ispim(Spim):
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos))
+                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -418,7 +418,7 @@ class Ispim(Spim):
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos)
+                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
@@ -608,7 +608,7 @@ class Ispim(Spim):
             return packet
         return 0
 
-    def quick_scan(self):
+    def overview_scan(self):
 
         """Quick overview scan function """
 
@@ -657,11 +657,11 @@ class Ispim(Spim):
             fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
             reshaped)  # Save overview
         # Move back to start position
-        self.sample_pose.move_absolute(x=self.start_pos['x'])
+        self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
         self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-        self.sample_pose.move_absolute(y=self.start_pos['y'])
+        self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
         self.wait_to_stop('y', self.start_pos['y'])
-        self.sample_pose.move_absolute(z=self.start_pos['z'])
+        self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
         self.wait_to_stop('z', self.start_pos['z'])
         self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
         self.overview_process = None
