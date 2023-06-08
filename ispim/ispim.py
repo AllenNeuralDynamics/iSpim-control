@@ -56,7 +56,12 @@ class Ispim(Spim):
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
-        self.total_tiles = 0  # tiles to be captured.
+        self.start_time = None
+        self.total_tiles = None  # tiles to be captured.
+        self.x_y_tiles = None    # tiles in x and y to be captured
+        self.tiles_acquired = 0
+        self.tile_time_s = 0
+        self.est_run_time = None
         self.stage_x_pos = None
         self.stage_y_pos = None
 
@@ -135,7 +140,7 @@ class Ispim(Spim):
                         arg = getattr(arg, step)
                     kwds[key] = arg
 
-            self.lasers[wl] = laser_class(**kwds)
+            self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
             self.log.debug(f"Successfully setup {wl} laser")
 
@@ -225,7 +230,10 @@ class Ispim(Spim):
         weekday = calendar.day_name[completion_date.weekday()]
         self.log.info(f"Time Esimate: {total_time_day:.2f} days. Imaging run "
                       f"should finish after {weekday}, {date_str}.")
-        return total_time_s
+        return total_time_day
+
+
+
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
@@ -256,7 +264,8 @@ class Ispim(Spim):
                                       self.cfg.imaging_specs['filetype'],
                                       self.cfg.local_storage_dir,
                                       self.img_storage_dir,
-                                      self.deriv_storage_dir)
+                                      self.deriv_storage_dir,
+                                      self.cfg.acquisition_style)
 
     def collect_volumetric_image(self, volume_x_um: float, volume_y_um: float,
                                  volume_z_um: float,
@@ -269,7 +278,8 @@ class Ispim(Spim):
                                  filetype: str,
                                  local_storage_dir: Path = Path("."),
                                  img_storage_dir: Path = None,
-                                 deriv_storage_dir: Path = None, ):
+                                 deriv_storage_dir: Path = None,
+                                 acquisition_style: str = 'sequential'):
         """Collect a tiled volumetric image with specified size/overlap specs.
         """
 
@@ -286,7 +296,7 @@ class Ispim(Spim):
                                                       volume_z_um)
 
         self.total_tiles = xtiles * ytiles * ztiles
-
+        self.x_y_tiles = xtiles * ytiles
         self.log.info(f"Total tiles: {self.total_tiles}.")
         actual_vol_x_um = self.cfg.tile_size_x_um + (xtiles - 1) * x_grid_step_um
         actual_vol_y_um = self.cfg.tile_size_y_um + (ytiles - 1) * y_grid_step_um
@@ -299,14 +309,15 @@ class Ispim(Spim):
         self.log.info(f'xtiles: {xtiles}, ytiles: {ytiles}, ztiles: {ztiles}')
 
         # Check to see if disk has enough space for two tiles
-        frames = (ztiles * len(self.cfg.imaging_wavelengths)) if self.cfg.acquisition_style == 'interleaved' else ztiles
+        frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
 
         #Check if external disk has enough space
         self.check_ext_disk_space(xtiles, ytiles, frames)
 
         # Est time scan will finish
-        total_time_s = self.acquisition_time(xtiles, ytiles, frames)
+        self.start_time = datetime.now()
+        self.est_run_time = self.acquisition_time(xtiles, ytiles, frames)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -314,11 +325,11 @@ class Ispim(Spim):
             self.log.info(f'Moving to starting position at {self.start_pos["x"]}, '
                           f'{self.start_pos["y"]}, '
                           f'{self.start_pos["z"]}')
-            self.sample_pose.move_absolute(x=self.start_pos['x'])
+            self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
             self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-            self.sample_pose.move_absolute(y=self.start_pos['y'])
+            self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
             self.wait_to_stop('y', self.start_pos['y'])
-            self.sample_pose.move_absolute(z=self.start_pos['z'])
+            self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
             self.wait_to_stop('z', self.start_pos['z'])
             self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
         else:
@@ -381,7 +392,7 @@ class Ispim(Spim):
                 self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos))
+                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
@@ -389,17 +400,18 @@ class Ispim(Spim):
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos))
+                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
                     # e.g. [[488],[561]]. Waveform generator is expecting list so give list of one wl if sequential.
                     # If Interleaved, loop through once and send one list of all wavelengths
 
-                    loops = 1 if self.cfg.acquisition_style == 'interleaved' else len(channels)
-                    channel = [channels] if self.cfg.acquisition_style == 'interleaved' else [[wl] for wl in channels]
+                    loops = 1 if acquisition_style == 'interleaved' else len(channels)
+                    channel = [channels] if acquisition_style == 'interleaved' else [[wl] for wl in channels]
 
                     for k in range(0, loops):
+                        tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
                         self.tigerbox.set_speed(X=1.0)  # X maps to Z
@@ -407,7 +419,7 @@ class Ispim(Spim):
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos)
+                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
@@ -423,7 +435,7 @@ class Ispim(Spim):
                         filetype_suffix = 'tiff' if filetype == 'Tiff' else 'zarr'
 
                         channel_string = '_'.join(map(str, self.active_lasers)) if \
-                            self.cfg.acquisition_style == 'interleaved' else channel[k][0]
+                            acquisition_style == 'interleaved' else channel[k][0]
                         filenames = [
                             f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
                             for
@@ -442,7 +454,8 @@ class Ispim(Spim):
                                                    ztiles,
                                                    z_step_size_um,
                                                    filepath_srcs,
-                                                   filetype)
+                                                   filetype,
+                                                   acquisition_style)
 
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
@@ -470,6 +483,8 @@ class Ispim(Spim):
 
                             os.remove(filepath_srcs[0])
                             print(f"process finished.")
+                        self.tiles_acquired += 1
+                        self.tile_time_s = time() - tile_start
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
 
@@ -485,13 +500,19 @@ class Ispim(Spim):
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
+            # Reset values used in scan
             self.active_lasers = None
+            self.total_tiles = None
+            self.x_y_tiles = None
+            self.tiles_acquired = 0
+            self.tile_time_s = 0
             self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path],
-                              filetype: str):
+                              filetype: str,
+                              acquisition_style: str = 'interleaved'):
 
         self.log.info(f"Configuring stage scan parameters")
         self.log.info(f"Starting scan at Z = {self.stage_z_pos / STEPS_PER_UM / 1000} mm")
@@ -503,8 +524,7 @@ class Ispim(Spim):
                                                 line_count=1) if not self.simulated else print('Setting up tile scan')
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
-        print('collect stacked tiff', tile_count)
-        frames = (tile_count * len(self.cfg.imaging_wavelengths)) if self.cfg.acquisition_style == 'interleaved' else tile_count
+        frames = (tile_count * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else tile_count
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
@@ -525,10 +545,11 @@ class Ispim(Spim):
 
         prev_frame_count = 0
         curr_frame_count = 0
+        self.latest_frame_layer = 0
         while self.ni.counter_task.read() < tile_count:
             if self.simulated:
                 tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
-                                                           self.cfg.sensor_row_count)), append=True, bigtiff = True)
+                                                           self.cfg.sensor_row_count)), append=True, bigtiff=True)
             
             for streams in self.stream_ids:
                 frame_count = self.framedata(streams)
@@ -545,6 +566,7 @@ class Ispim(Spim):
         self.log.info('Stopping NI Card')
         self.ni.stop()
         self.__sim_counter_count = 0
+        self.latest_frame_layer = 0     # Resetting frame number to 0 for progress bar in UI
 
         if self.overview_set.is_set():
             self.overview_process = Thread(target=self.create_overview)
@@ -568,8 +590,10 @@ class Ispim(Spim):
 
         while True:
             if self.latest_frame is not None and self.active_lasers is not None:
-                wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1] if \
-                    self.cfg.acquisition_style == 'interleaved' else self.active_lasers[0]
+                if self.cfg.acquisition_style == 'interleaved' and not self.overview_set.is_set():
+                    wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1]
+                else:
+                    wl = self.active_lasers[0]
                 yield self.latest_frame, wl
             else:
                 yield None
@@ -599,7 +623,7 @@ class Ispim(Spim):
             return packet
         return 0
 
-    def quick_scan(self):
+    def overview_scan(self):
 
         """Quick overview scan function """
 
@@ -613,52 +637,68 @@ class Ispim(Spim):
         self.image_overview = None  # Clear previous image overview if any
         self.image_overview = []  # Create empty array size of tiles
         self.overview_set.set()
+        # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
                                       self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
                                       ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
                                           self.cfg.imaging_wavelengths)) + 0.01)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
-                                      self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir)
+                                      self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
+                                      acquisition_style='sequential')
 
         if self.overview_process != None:
             self.overview_process.join()
 
-        # Create empty array size of overview image
-        rows = np.shape(self.image_overview[0])[0]
-        cols = self.image_overview[0].shape[1]
-        overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
-        overlap_rows = rows - overlap
-        reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), ytiles * cols))
-
-        for x in range(0, xtiles):
-            for y in range(0, ytiles):
-                cols = self.image_overview[0].shape[1]  # Account for lost frames
-                if x == xtiles - 1:
-                    reshaped[x * overlap_rows:(x * overlap_rows) + rows, y * cols:(y + 1) * cols] = self.image_overview[
-                        0]
-                else:
-                    reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = self.image_overview[0][
-                                                                                                 0:overlap_rows]
-                del self.image_overview[0]
-
-        self.overview_set.clear()
-        #TODO: How to now overwrite?
-        cv2.imwrite(
-            fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
-            reshaped)  # Save overview
         # Move back to start position
-        self.sample_pose.move_absolute(x=self.start_pos['x'])
+        self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
         self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-        self.sample_pose.move_absolute(y=self.start_pos['y'])
+        self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
         self.wait_to_stop('y', self.start_pos['y'])
-        self.sample_pose.move_absolute(z=self.start_pos['z'])
+        self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
         self.wait_to_stop('z', self.start_pos['z'])
         self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
         self.overview_process = None
-        self.start_pos = None   # Reset start position
+        self.start_pos = None  # Reset start position
 
-        return reshaped, xtiles
+        split_image_overview = {}
+        reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
+        for wl in self.cfg.imaging_wavelengths:
+            print(wl)
+            index = self.cfg.imaging_wavelengths.index(wl)
+            # Split list of all overview images into seperate channels
+            split_image_overview= self.image_overview[index::len(self.cfg.imaging_wavelengths)]
+
+            # Create empty array size of overview image
+            rows = np.shape(split_image_overview[0])[0]
+            cols = split_image_overview[0].shape[1]
+            overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
+            overlap_rows = rows - overlap
+            reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), ytiles * cols))
+
+            for x in range(0, xtiles):
+                for y in range(0, ytiles):
+                    cols = split_image_overview[0].shape[1]  # Account for lost frames
+                    if x == xtiles - 1:
+                        reshaped[x * overlap_rows:(x * overlap_rows) + rows, y * cols:(y + 1) * cols] = \
+                        split_image_overview[
+                            0]
+                    else:
+                        reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = \
+                        split_image_overview[0][
+                        0:overlap_rows]
+                    del split_image_overview[0]
+
+            reshaped_array[index] = reshaped
+
+        #TODO: How to now overwrite?
+        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
+                         reshaped_array)
+
+        self.overview_set.clear()
+
+
+        return reshaped_array, xtiles
 
     def create_overview(self):
 
