@@ -222,7 +222,7 @@ class Ispim(Spim):
         if file_transfer_time_s > stack_time_s and not self.overview_set.is_set():
             total_time_s = file_transfer_time_s*x_y_tiles
         else:
-            total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
+            total_time_s = (stack_time_s*x_y_tiles*len(self.cfg.imaging_wavelengths)) + file_transfer_time_s
             # Add one file_transfer_time to account for last tile 
         total_time_day = total_time_s / 86400
         self.log.info(f"Scan will take approximately {total_time_day}")
