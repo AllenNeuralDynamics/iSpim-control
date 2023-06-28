@@ -239,15 +239,19 @@ class Ispim(Spim):
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
-        while self.sample_pose.is_moving():
-            pos = self.sample_pose.get_position()
-            distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 1.0 or time()-start > 60:
-                self.tigerbox.halt()
-                break
-            else:
-                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                sleep(0.1)
+        try:
+            yield               # To stop thread worker
+            while self.sample_pose.is_moving():
+                pos = self.sample_pose.get_position()
+                distance = abs(pos[axis.lower()] - desired_position)
+                if distance < 1.0 or time()-start > 20:
+                    self.tigerbox.halt()
+                    break
+                else:
+                    self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
+                    sleep(0.1)
+        except RuntimeError:
+            self.wait_to_stop(axis, desired_position)
 
     def run_from_config(self):
 
@@ -552,6 +556,7 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
+
             sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
 
         self.log.info('NI task completed')
@@ -623,7 +628,7 @@ class Ispim(Spim):
                                                            self.cfg.tile_overlap_y_percent,
                                                            self.cfg.z_step_size_um * 10,
                                                            self.cfg.volume_x_um,
-                                                           self.cfg.volume_y_um,
+                                                           300,
                                                            self.cfg.volume_z_um)
 
         self.image_overview = None  # Clear previous image overview if any
@@ -633,8 +638,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
                                       self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
-                                          self.cfg.imaging_wavelengths)) + 0.01)),
+                                      (self.cfg.z_step_size_um * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
@@ -763,8 +767,7 @@ class Ispim(Spim):
                 im = f.data().squeeze().copy()
                 f = None
                 packet = None
-                sleep((1 / self.cfg.daq_obj_kwds[
-                    'livestream_frequency_hz']) * .1)
+                sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
                 yield im, self.active_lasers[layer_num + 1]
 
