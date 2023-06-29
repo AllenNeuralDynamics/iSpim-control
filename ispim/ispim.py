@@ -22,12 +22,11 @@ from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
-#from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
 import tifffile
 import shutil
-#from vortran_laser import stradus
+from vortran_laser import stradus
 
 class Ispim(Spim):
 
@@ -749,6 +748,9 @@ class Ispim(Spim):
 
         self.frame_grabber.start()
         self.ni.start()
+        if self.scout_mode:
+            sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']) * 2)
+            self.ni.stop()
         self.active_lasers.sort()
 
         while self.livestream_enabled.is_set():
@@ -769,9 +771,10 @@ class Ispim(Spim):
                 im = f.data().squeeze().copy()
                 f = None
                 packet = None
-                sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
-
                 yield im, self.active_lasers[layer_num + 1]
+
+            sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
+            #yield
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
