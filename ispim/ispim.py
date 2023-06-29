@@ -238,15 +238,18 @@ class Ispim(Spim):
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
-        while self.sample_pose.is_moving():
-            pos = self.sample_pose.get_position()
-            distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 1.0 or time()-start > 60:
-                self.tigerbox.halt()
-                break
-            else:
-                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                sleep(0.1)
+        try:
+            while self.sample_pose.is_moving():
+                pos = self.sample_pose.get_position()
+                distance = abs(pos[axis.lower()] - desired_position)
+                if distance < 1.0 or time()-start > 60:
+                    self.tigerbox.halt()
+                    break
+                else:
+                    self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
+                    sleep(0.1)
+        except RuntimeError:
+            self.wait_to_stop(axis, desired_position)
 
     def run_from_config(self):
 
@@ -372,17 +375,17 @@ class Ispim(Spim):
             laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
                                                        == 'power' else f'{intensity} percent'
             laser_power = f'{self.lasers[laser].get_setpoint()}'
-            self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
-            self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}',
+            self.log.info(f'laser_power, {laser_power}', extra={'tags': ['schema']})
+            self.log.info(f'filter_wheel_index, {self.cfg.laser_specs[laser]["filter_index"]}',
                           extra={'tags': ['schema']})
             # Every variable in calculate waveforms
             for key in self.cfg.laser_specs[laser]['etl']:
-                self.log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts',
+                self.log.info(f'daq etl {key}, {self.cfg.laser_specs[laser]["etl"][key]} volts',
                               extra={'tags': ['schema']})
             for key in self.cfg.laser_specs[laser]['galvo']:
-                self.log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts',
+                self.log.info(f'daq galvo {key}, {self.cfg.laser_specs[laser]["galvo"][key]} volts',
                               extra={'tags': ['schema']})
-
+        #TODO: add in schema log position
         try:
             for j in range(ytiles):
                 # move back to x=0 which maps to z=0
@@ -399,7 +402,7 @@ class Ispim(Spim):
                     # Move to specified X position
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
-                    self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
+                    self.log.info(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
@@ -440,6 +443,9 @@ class Ispim(Spim):
                             f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
                             for
                             camera in self.stream_ids]
+                        self.log.info(f'{filenames} starting position,  x = {self.stage_x_pos / STEPS_PER_UM}, '
+                                      f'y = {self.stage_y_pos / STEPS_PER_UM}, '
+                                      f'z ={self.stage_z_pos / STEPS_PER_UM}  um', extra={'tags': ['schema']})
                         self.log.info(f'file_name, {filenames}', extra={'tags': ['schema']})
                         os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
@@ -631,7 +637,7 @@ class Ispim(Spim):
                                                            self.cfg.tile_overlap_y_percent,
                                                            self.cfg.z_step_size_um * 10,
                                                            self.cfg.volume_x_um,
-                                                           self.cfg.volume_y_um,
+                                                           300,
                                                            self.cfg.volume_z_um)
 
         self.image_overview = None  # Clear previous image overview if any
@@ -641,8 +647,7 @@ class Ispim(Spim):
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
                                       self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
                                       self.cfg.imaging_wavelengths,
-                                      ((self.cfg.z_step_size_um * 10 / 1000) / (((self.cfg.get_period_time() + .005) * len(
-                                          self.cfg.imaging_wavelengths)) + 0.01)),
+                                      (self.cfg.z_step_size_um * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
@@ -664,7 +669,6 @@ class Ispim(Spim):
         split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
         for wl in self.cfg.imaging_wavelengths:
-            print(wl)
             index = self.cfg.imaging_wavelengths.index(wl)
             # Split list of all overview images into seperate channels
             split_image_overview= self.image_overview[index::len(self.cfg.imaging_wavelengths)]
@@ -773,7 +777,7 @@ class Ispim(Spim):
                 f = None
                 packet = None
                 sleep((1 / self.cfg.daq_obj_kwds[
-                    'livestream_frequency_hz']) * .1)
+                    'livestream_frequency_hz']))
 
                 yield im, self.active_lasers[layer_num + 1]
 
