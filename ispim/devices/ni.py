@@ -67,6 +67,7 @@ class WaveformHardware:
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
 
+
         else:
 
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(

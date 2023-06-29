@@ -711,7 +711,7 @@ class Ispim(Spim):
         reshaped[0:cols, :] = mipstack
         self.image_overview.append(np.rot90(np.array(reshaped)))
 
-    def start_livestream(self, wavelength: list):
+    def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
 
         # Bail early if it's started.
@@ -720,7 +720,8 @@ class Ispim(Spim):
             return
         self.log.debug("Starting livestream.")
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
-        self.setup_imaging_for_laser(wavelength, live=True)
+        self.scout_mode = scout_mode
+        self.setup_imaging_for_laser(wavelength, True)
         self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
@@ -741,6 +742,7 @@ class Ispim(Spim):
 
         for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
+        self.scout_mode = False
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
