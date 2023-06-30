@@ -240,11 +240,10 @@ class Ispim(Spim):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
         try:
-            yield               # To stop thread worker
             while self.sample_pose.is_moving():
                 pos = self.sample_pose.get_position()
                 distance = abs(pos[axis.lower()] - desired_position)
-                if distance < 1.0 or time()-start > 20:
+                if distance < 1.0 or time()-start > 60:
                     self.tigerbox.halt()
                     break
                 else:
@@ -626,7 +625,7 @@ class Ispim(Spim):
 
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
-                                                           self.cfg.z_step_size_um * 10,
+                                                           .8 * 10,
                                                            self.cfg.volume_x_um,
                                                            300,
                                                            self.cfg.volume_z_um)
@@ -636,13 +635,13 @@ class Ispim(Spim):
         self.overview_set.set()
         # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
-                                      self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
+                                      self.cfg.volume_z_um, .8 * 10,
                                       self.cfg.imaging_wavelengths,
-                                      (self.cfg.z_step_size_um * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
+                                      (.8 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
-
+                                    #self.cfg.z_step_size_um
         if self.overview_process != None:
             self.overview_process.join()
 
