@@ -164,7 +164,7 @@ class Ispim(Spim):
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
 
-    def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
+    def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
         if self.simulated:
             self.ni.counter_task = Mock()
@@ -175,7 +175,7 @@ class Ispim(Spim):
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
-        self.ni.assign_waveforms(voltages_t)
+        self.ni.assign_waveforms(voltages_t, scout_mode)
 
     def __sim_counter_read(self):
         count = self.__sim_counter_count
@@ -239,7 +239,6 @@ class Ispim(Spim):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
         try:
-            yield               # To stop thread worker
             while self.sample_pose.is_moving():
                 pos = self.sample_pose.get_position()
                 distance = abs(pos[axis.lower()] - desired_position)
@@ -749,7 +748,7 @@ class Ispim(Spim):
         self.frame_grabber.start()
         self.ni.start()
         if self.scout_mode:
-            sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']) * 2)
+            sleep(self.cfg.get_period_time())
             self.ni.stop()
         self.active_lasers.sort()
 

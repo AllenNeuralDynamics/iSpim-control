@@ -86,7 +86,7 @@ class WaveformHardware:
             self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
 
-    def assign_waveforms(self, voltages_t):
+    def assign_waveforms(self, voltages_t, scout_mode: bool = False):
         """Write analog and digital waveforms to device.
         Order is driven by the TOML config file.
         """
@@ -96,9 +96,12 @@ class WaveformHardware:
         assert type(voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
-        self.ao_task.control(TaskMode.TASK_UNRESERVE)   # Unreserve buffer?
+        if scout_mode:
+            self.ao_task.control(TaskMode.TASK_UNRESERVE)   # Unreserve buffer
+            self.ao_task.out_stream.output_buf_size = len(voltages_t[0])  # Sets buffer to length of voltages
+            self.ao_task.control(TaskMode.TASK_COMMIT)
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
-        #self.ao_task.update()
+
 
     def start(self):
         """start tasks."""
