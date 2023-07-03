@@ -67,6 +67,7 @@ class WaveformHardware:
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
 
+
         else:
 
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
@@ -85,7 +86,7 @@ class WaveformHardware:
             self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
 
-    def assign_waveforms(self, voltages_t):
+    def assign_waveforms(self, voltages_t, scout_mode: bool = False):
         """Write analog and digital waveforms to device.
         Order is driven by the TOML config file.
         """
@@ -95,7 +96,12 @@ class WaveformHardware:
         assert type(voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
+        if scout_mode:
+            self.ao_task.control(TaskMode.TASK_UNRESERVE)   # Unreserve buffer
+            self.ao_task.out_stream.output_buf_size = len(voltages_t[0])  # Sets buffer to length of voltages
+            self.ao_task.control(TaskMode.TASK_COMMIT)
         self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
+
 
     def start(self):
         """start tasks."""
@@ -112,7 +118,7 @@ class WaveformHardware:
         # Check if ao task is finished
         return self.ao_task.wait_until_done(timeout)
 
-    def stop(self):
+    def stop(self, wait = 1):
         """Stop the tasks"""
         # For tasks in continuous mode, we need to write all zeros before
         # closing to ensure the waveforms exit in known state.
@@ -125,7 +131,7 @@ class WaveformHardware:
         self.log.debug("Issuing a task stop.")
         self.counter_task.stop()
         self.counter_task.wait_until_done(1)
-        sleep(1)
+        sleep(wait)         # Sleep so ao task can finish
         self.ao_task.stop()
 
     def restart(self):
