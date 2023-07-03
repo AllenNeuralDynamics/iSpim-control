@@ -22,7 +22,6 @@ from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
-#from calliphlox import DeviceState
 from acquire import DeviceState
 import cv2
 import tifffile
@@ -163,7 +162,7 @@ class Ispim(Spim):
         self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
                                         card_address=31)
 
-    def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False):
+    def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
         if self.simulated:
             self.ni.counter_task = Mock()
@@ -174,7 +173,7 @@ class Ispim(Spim):
         self.log.info("Generating waveforms.")
         _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
-        self.ni.assign_waveforms(voltages_t)
+        self.ni.assign_waveforms(voltages_t, scout_mode)
 
     def __sim_counter_read(self):
         count = self.__sim_counter_count
@@ -375,17 +374,17 @@ class Ispim(Spim):
             laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
                                                        == 'power' else f'{intensity} percent'
             laser_power = f'{self.lasers[laser].get_setpoint()}'
-            self.log.info(f'laser_power, {laser_power}', extra={'tags': ['schema']})
-            self.log.info(f'filter_wheel_index, {self.cfg.laser_specs[laser]["filter_index"]}',
+            self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
+            self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}',
                           extra={'tags': ['schema']})
             # Every variable in calculate waveforms
             for key in self.cfg.laser_specs[laser]['etl']:
-                self.log.info(f'daq etl {key}, {self.cfg.laser_specs[laser]["etl"][key]} volts',
+                self.log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts',
                               extra={'tags': ['schema']})
             for key in self.cfg.laser_specs[laser]['galvo']:
-                self.log.info(f'daq galvo {key}, {self.cfg.laser_specs[laser]["galvo"][key]} volts',
+                self.log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts',
                               extra={'tags': ['schema']})
-        #TODO: add in schema log position
+
         try:
             for j in range(ytiles):
                 # move back to x=0 which maps to z=0
@@ -720,7 +719,7 @@ class Ispim(Spim):
         reshaped[0:cols, :] = mipstack
         self.image_overview.append(np.rot90(np.array(reshaped)))
 
-    def start_livestream(self, wavelength: list):
+    def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
 
         # Bail early if it's started.
@@ -729,7 +728,8 @@ class Ispim(Spim):
             return
         self.log.debug("Starting livestream.")
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
-        self.setup_imaging_for_laser(wavelength, live=True)
+        self.scout_mode = scout_mode
+        self.setup_imaging_for_laser(wavelength, True)
         self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
@@ -750,12 +750,16 @@ class Ispim(Spim):
 
         for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
+        self.scout_mode = False
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
 
         self.frame_grabber.start()
         self.ni.start()
+        if self.scout_mode:
+            sleep(self.cfg.get_period_time())
+            self.ni.stop()
         self.active_lasers.sort()
 
         while self.livestream_enabled.is_set():
@@ -776,10 +780,10 @@ class Ispim(Spim):
                 im = f.data().squeeze().copy()
                 f = None
                 packet = None
-                sleep((1 / self.cfg.daq_obj_kwds[
-                    'livestream_frequency_hz']))
 
                 yield im, self.active_lasers[layer_num + 1]
+
+            sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
