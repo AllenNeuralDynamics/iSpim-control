@@ -118,7 +118,7 @@ class WaveformHardware:
         # Check if ao task is finished
         return self.ao_task.wait_until_done(timeout)
 
-    def stop(self):
+    def stop(self, wait = 1):
         """Stop the tasks"""
         # For tasks in continuous mode, we need to write all zeros before
         # closing to ensure the waveforms exit in known state.
@@ -131,7 +131,7 @@ class WaveformHardware:
         self.log.debug("Issuing a task stop.")
         self.counter_task.stop()
         self.counter_task.wait_until_done(1)
-        sleep(1)
+        sleep(wait)         # Sleep so ao task can finish
         self.ao_task.stop()
 
     def restart(self):
