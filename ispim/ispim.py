@@ -26,7 +26,8 @@ from acquire import DeviceState
 import cv2
 import tifffile
 import shutil
-from vortran_laser import stradus
+#from vortran_laser import stradus
+from operations import normalized_dct_shannon_entropy
 
 class Ispim(Spim):
 
@@ -805,6 +806,10 @@ class Ispim(Spim):
 
         self.start_pos = start
         self.log.info(f'Scan start position set to {self.start_pos}')
+
+    def calculate_normalized_dct_shannon_entropy(self, image):
+        cPSFSupportDiameter = 3
+        return normalized_dct_shannon_entropy.compute(image, cPSFSupportDiameter)
 
     def close(self):
         """Safely close all open hardware connections."""
