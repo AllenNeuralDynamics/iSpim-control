@@ -27,7 +27,7 @@ import cv2
 import tifffile
 import shutil
 #from vortran_laser import stradus
-from operations import normalized_dct_shannon_entropy
+from ispim.operations import normalized_dct_shannon_entropy
 
 class Ispim(Spim):
 
@@ -63,7 +63,7 @@ class Ispim(Spim):
         self.est_run_time = None
         self.stage_x_pos = None
         self.stage_y_pos = None
-
+        self.scout_mode = False
         # camera streams filled in with framegrabber.cameras
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
 
@@ -213,7 +213,7 @@ class Ispim(Spim):
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
         x_y_tiles = xtiles*ytiles
-        stack_time_s = (self.cfg.get_period_time() + self.cfg.jitter_time_s) * ztiles
+        stack_time_s = (self.cfg.get_period_time() * ztiles) + self.cfg.jitter_time_s
 
         est_filesize = self.cfg.bytes_per_image * ztiles
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
@@ -249,7 +249,7 @@ class Ispim(Spim):
                 else:
                     self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
                     sleep(0.1)
-        except RuntimeError:
+        except RuntimeError or ValueError:
             self.wait_to_stop(axis, desired_position)
 
     def run_from_config(self):
@@ -591,8 +591,8 @@ class Ispim(Spim):
                 else:
                     wl = self.active_lasers[0]
                 yield self.latest_frame, wl
-            else:
-                yield None
+
+            yield
             sleep(.1)
 
     def framedata(self, stream):
@@ -686,7 +686,8 @@ class Ispim(Spim):
             reshaped_array[index] = reshaped
 
         #TODO: How to now overwrite?
-        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
+        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
+                         fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff',
                          reshaped_array)
 
         self.overview_set.clear()
@@ -768,10 +769,10 @@ class Ispim(Spim):
 
                 # TODO: Why does this work?
                 layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-                im = f.data().squeeze().copy()
+                self.im = f.data().squeeze().copy()
                 f = None
                 packet = None
-                yield im, self.active_lasers[layer_num + 1]
+                yield self.im, self.active_lasers[layer_num + 1]
 
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
             #yield
