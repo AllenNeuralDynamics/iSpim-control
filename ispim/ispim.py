@@ -1,8 +1,4 @@
 """Abstraction of the ispim Instrument."""
-
-# FIXME: this should live in the napari gui side, and the function
-#   we want to launch in a napari thread should exist as a standalone
-#   option here.
 from datetime import timedelta, datetime
 import calendar
 import logging
@@ -23,7 +19,6 @@ from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
 from acquire import DeviceState
-import cv2
 import tifffile
 import shutil
 #from vortran_laser import stradus
@@ -212,9 +207,11 @@ class Ispim(Spim):
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
-        x_y_tiles = xtiles*ytiles
-        stack_time_s = (self.cfg.get_period_time() * ztiles) + self.cfg.jitter_time_s
+        """Calculate acquisition time based on xtiles, ytiles, and ztiles.
+        ztiles should be not interleaved """
 
+        x_y_tiles = xtiles*ytiles
+        stack_time_s = ((self.cfg.get_period_time() * len(self.cfg.imaging_wavelengths)) + self.cfg.jitter_time_s) * ztiles
         est_filesize = self.cfg.bytes_per_image * ztiles
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
@@ -222,7 +219,7 @@ class Ispim(Spim):
         if file_transfer_time_s > stack_time_s and not self.overview_set.is_set():
             total_time_s = file_transfer_time_s*x_y_tiles
         else:
-            total_time_s = (stack_time_s*x_y_tiles*len(self.cfg.imaging_wavelengths)) + file_transfer_time_s
+            total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
             # Add one file_transfer_time to account for last tile 
         total_time_day = total_time_s / 86400
         self.log.info(f"Scan will take approximately {total_time_day}")
@@ -321,7 +318,7 @@ class Ispim(Spim):
 
         # Est time scan will finish
         self.start_time = datetime.now()
-        self.est_run_time = self.acquisition_time(xtiles, ytiles, frames)
+        self.est_run_time = self.acquisition_time(xtiles, ytiles, ztiles)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -489,7 +486,7 @@ class Ispim(Spim):
                 for p in transfer_processes:
                     p.join()
             self.log.info(f"Closing NI tasks")
-            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()  # TODO: Should we just stop ni card anyways in case we want to image after?
+            self.ni.stop()
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
@@ -641,7 +638,7 @@ class Ispim(Spim):
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
-                                    #self.cfg.z_step_size_um
+
         if self.overview_process != None:
             self.overview_process.join()
 
