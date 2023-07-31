@@ -1,8 +1,5 @@
 """Abstraction of the ispim Instrument."""
 
-# FIXME: this should live in the napari gui side, and the function
-#   we want to launch in a napari thread should exist as a standalone
-#   option here.
 from datetime import timedelta, datetime
 import calendar
 import logging
@@ -23,9 +20,9 @@ from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
 from acquire import DeviceState
-import cv2
 import tifffile
 import shutil
+from ispim.operations import normalized_dct_shannon_entropy
 from vortran_laser import stradus
 import subprocess
 
@@ -63,7 +60,7 @@ class Ispim(Spim):
         self.est_run_time = None
         self.stage_x_pos = None
         self.stage_y_pos = None
-
+        self.scout_mode = False
         # camera streams filled in with framegrabber.cameras
         self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
 
@@ -208,9 +205,11 @@ class Ispim(Spim):
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
-        x_y_tiles = xtiles*ytiles
-        stack_time_s = (self.cfg.get_period_time() + self.cfg.jitter_time_s) * ztiles
+        """Calculate acquisition time based on xtiles, ytiles, and ztiles.
+        ztiles should be not interleaved """
 
+        x_y_tiles = xtiles*ytiles
+        stack_time_s = ((self.cfg.get_period_time() * len(self.cfg.imaging_wavelengths)) + self.cfg.jitter_time_s) * ztiles
         est_filesize = self.cfg.bytes_per_image * ztiles
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
@@ -247,7 +246,7 @@ class Ispim(Spim):
                 else:
                     self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
                     sleep(0.1)
-        except RuntimeError:
+        except RuntimeError or ValueError:
             self.wait_to_stop(axis, desired_position)
 
     def run_from_config(self):
@@ -319,7 +318,7 @@ class Ispim(Spim):
 
         # Est time scan will finish
         self.start_time = datetime.now()
-        self.est_run_time = self.acquisition_time(xtiles, ytiles, frames)
+        self.est_run_time = self.acquisition_time(xtiles, ytiles, ztiles)
 
         # Move sample to preset starting position
         if self.start_pos is not None:
@@ -401,7 +400,7 @@ class Ispim(Spim):
                     # Move to specified X position
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
-                    self.log.info(f"Moving to X = {round(self.stage_x_pos)}.")
+                    self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
                     self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
@@ -499,7 +498,7 @@ class Ispim(Spim):
                 for p in transfer_processes:
                     p.join()
             self.log.info(f"Closing NI tasks")
-            self.ni.close() if not self.overview_set.is_set() else self.ni.stop()  # TODO: Should we just stop ni card anyways in case we want to image after?
+            self.ni.stop()
             self.log.info(f"Closing camera")
             self.frame_grabber.runtime.abort()
             for wl, specs in self.cfg.laser_specs.items():
@@ -600,8 +599,8 @@ class Ispim(Spim):
                 else:
                     wl = self.active_lasers[0]
                 yield self.latest_frame, wl
-            else:
-                yield None
+
+            yield
             sleep(.1)
 
     def framedata(self, stream):
@@ -634,7 +633,7 @@ class Ispim(Spim):
 
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
-                                                           self.cfg.z_step_size_um * 10,
+                                                           .8 * 10,
                                                            self.cfg.volume_x_um,
                                                            300,
                                                            self.cfg.volume_z_um)
@@ -644,9 +643,9 @@ class Ispim(Spim):
         self.overview_set.set()
         # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
-                                      self.cfg.volume_z_um, self.cfg.z_step_size_um * 10,
+                                      self.cfg.volume_z_um, .8 * 10,
                                       self.cfg.imaging_wavelengths,
-                                      (self.cfg.z_step_size_um * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
+                                      (.8 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
@@ -695,7 +694,8 @@ class Ispim(Spim):
             reshaped_array[index] = reshaped
 
         #TODO: How to now overwrite?
-        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}.tiff',
+        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
+                         fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff',
                          reshaped_array)
 
         self.overview_set.clear()
@@ -777,11 +777,10 @@ class Ispim(Spim):
 
                 # TODO: Why does this work?
                 layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-                im = f.data().squeeze().copy()
+                self.im = f.data().squeeze().copy()
                 f = None
                 packet = None
-
-                yield im, self.active_lasers[layer_num + 1]
+                yield self.im, self.active_lasers[layer_num + 1]
 
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
@@ -815,6 +814,10 @@ class Ispim(Spim):
 
         self.start_pos = start
         self.log.info(f'Scan start position set to {self.start_pos}')
+
+    def calculate_normalized_dct_shannon_entropy(self, image):
+        cPSFSupportDiameter = 3
+        return normalized_dct_shannon_entropy.compute(image, cPSFSupportDiameter)
 
     def close(self):
         """Safely close all open hardware connections."""
