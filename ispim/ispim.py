@@ -393,7 +393,7 @@ class Ispim(Spim):
                 self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=True)
+                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
@@ -401,7 +401,7 @@ class Ispim(Spim):
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
                     self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=True)
+                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -420,7 +420,7 @@ class Ispim(Spim):
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
                         self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=True)
+                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
