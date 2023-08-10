@@ -47,6 +47,7 @@ class Ispim(Spim):
                                         **self.cfg.filter_wheel_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
+        self.channel_gene = {}  # dictionary containing labeled gene for each channel
 
         # Extra Internal State attributes for the current image capture
         # sequence. These really only need to persist for logging purposes.
@@ -188,7 +189,7 @@ class Ispim(Spim):
             if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
                 self.log.error("Not enough space in external directory")
                 raise
-        elif self.cfg.imaging_specs['filetype'] != 'tiff':
+        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
             self.log.warning("Checking disk space not implemented. "
                              "Proceed at your own risk")
 
@@ -230,9 +231,6 @@ class Ispim(Spim):
                       f"should finish after {weekday}, {date_str}.")
         return total_time_day
 
-
-
-
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
@@ -245,9 +243,49 @@ class Ispim(Spim):
                     break
                 else:
                     self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                    sleep(0.1)
+                    sleep(0.5)
         except RuntimeError or ValueError:
             self.wait_to_stop(axis, desired_position)
+
+    def log_stack_acquisition_params(self, curr_tile_index, stack_name,
+                                     z_step_size_um):
+        """helper function in main acquisition loop to log the current state
+        before capturing a stack of images per channel."""
+        for laser in self.active_lasers:
+            laser = str(laser)
+            tile_schema_params = \
+                {
+                    'tile_number': curr_tile_index,
+                    'file_name': stack_name,
+                    'channel_name': f'{laser}',
+                    'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
+                    'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
+                    'z_voxel_size': z_step_size_um,
+                    'voxel_size_units': 'micrometers',
+                    'tile_x_position': self.stage_x_pos * 0.001,
+                    'tile_y_position': self.stage_y_pos * 0.001,
+                    'tile_z_position': self.stage_z_pos * 0.001,
+                    'tile_position_units': 'millimeters',
+                    'lightsheet_angle': 45,
+                    'lightsheet_angle_units': 'degrees',
+                    'laser_wavelength': laser,
+                    'laser_wavelength_units': "nanometers",
+                    'laser_gene_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
+                    'laser_power': self.lasers[laser].get_setpoint(),
+                    'laser_power_units': 'milliwatts' if self.cfg.laser_specs[laser]['intensity_mode'] == 'power' else 'percent',
+                    'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"],
+                    'tags': ['schema']
+                }
+            self.log.info('tile data', extra=tile_schema_params)
+            settings_schema_data = \
+                {'tags': ['schema']}
+            # Every variable in calculate waveforms
+            for key in self.cfg.laser_specs[laser]['etl']:
+                settings_schema_data[f'daq_etl {key}'] = self.cfg.laser_specs[laser]["etl"][key]
+            for key in self.cfg.laser_specs[laser]['galvo']:
+                settings_schema_data['daq galvo {key}'] = self.cfg.laser_specs[laser]["galvo"][key]
+            self.log.info(f'laser channel {laser} acquisition settings',
+                          extra=settings_schema_data)
 
     def run_from_config(self):
 
@@ -263,7 +301,7 @@ class Ispim(Spim):
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
                                       self.cfg.imaging_specs['filetype'],
-                                      self.cfg.local_storage_dir,
+                                      self.local_storage_dir,
                                       self.img_storage_dir,
                                       self.deriv_storage_dir,
                                       self.cfg.acquisition_style)
@@ -343,46 +381,16 @@ class Ispim(Spim):
                                                                 self.start_pos['z'])
 
         # Logging for JSON schema
-        self.log.info(f'session_start_time, {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
-                      extra={'tags': ['schema']})
-        self.log.info(f'local_storage_directory, {local_storage_dir}', extra={'tags': ['schema']})
-        self.log.info(f'external_storage_directory, {img_storage_dir}', extra={'tags': ['schema']})
-        self.log.info(f'specimen_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
-        self.log.info(f'subject_id,{self.cfg.imaging_specs["subject_id"]}', extra={'tags': ['schema']})
-        self.log.info(f'instrument_id, iSpim 1')
-        self.log.info(f'chamber_immersion_medium, {self.cfg.immersion_medium}', extra={'tags': ['schema']})
-        self.log.info(f'chamber_immersion_refractive_index, '
-                      f'{self.cfg.immersion_medium_refractive_index}', extra={'tags': ['schema']})
-        self.log.info(f'x_voxel_size, {self.cfg.tile_size_x_um} micrometers',
-                      extra={'tags': ['schema']})  # size of pixels
-        self.log.info(f'y_voxel_size, {self.cfg.tile_size_y_um} micrometers', extra={'tags': ['schema']})
-        self.log.info(f'z_voxel_size, {z_step_size_um} micrometers', extra={'tags': ['schema']})
-        self.log.info(f'tile_x_position, {self.stage_x_pos * 0.0001} millimeters',
-                      extra={'tags': ['schema']})
-        self.log.info(f'tile_y_position, {self.stage_y_pos * 0.0001} millimeters',
-                      extra={'tags': ['schema']})
-        self.log.info(f'tile_z_positione, {self.stage_z_pos * 0.0001} millimeters',
-                      extra={'tags': ['schema']})
-        self.log.info(f'lightsheet_angle, 45 degrees', extra={'tags': ['schema']})
-
-        for laser in channels:
-            laser = str(laser)
-            self.log.info(f'channel_name, {laser}', extra={'tags': ['schema']})
-            self.log.info(f'laser_wavelength, {laser} nanometers', extra={'tags': ['schema']})
-            intensity = self.lasers[str(laser)].get_setpoint()
-            laser_power = f'{intensity} milliwatts' if self.cfg.laser_specs[str(laser)]['intensity_mode'] \
-                                                       == 'power' else f'{intensity} percent'
-            laser_power = f'{self.lasers[laser].get_setpoint()}'
-            self.log.info(f'laser_power: {laser_power}', extra={'tags': ['schema']})
-            self.log.info(f'filter_wheel_index: {self.cfg.laser_specs[laser]["filter_index"]}',
-                          extra={'tags': ['schema']})
-            # Every variable in calculate waveforms
-            for key in self.cfg.laser_specs[laser]['etl']:
-                self.log.info(f'daq etl {key}: {self.cfg.laser_specs[laser]["etl"][key]} volts',
-                              extra={'tags': ['schema']})
-            for key in self.cfg.laser_specs[laser]['galvo']:
-                self.log.info(f'daq galvo {key}: {self.cfg.laser_specs[laser]["galvo"][key]} volts',
-                              extra={'tags': ['schema']})
+        acquisition_params = {'session_start_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                              'local_storage_directory': local_storage_dir,
+                              'external_storage_directory': img_storage_dir,
+                              'specimen_id': self.cfg.imaging_specs["subject_id"],
+                              'subject_id': self.cfg.imaging_specs['subject_id'],
+                              'chamber_immersion_medium': self.cfg.immersion_medium,
+                              'instrument_id': 'iSpim 1',
+                              'chamber_immersion_refractive_index': self.cfg.immersion_medium_refractive_index,
+                              'tags': ['schema']}
+        self.log.info("acquisition parameters", extra=acquisition_params)
 
         try:
             for j in range(ytiles):
@@ -444,11 +452,14 @@ class Ispim(Spim):
                         self.log.info(f'file_name, {filenames}', extra={'tags': ['schema']})
                         os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
+
                         self.log.info(f"Collecting tile stacks at "
                                       f"({self.stage_x_pos / STEPS_PER_UM}, "
                                       f"{self.stage_y_pos / STEPS_PER_UM}) [um] "
                                       f"for channels {channel[k]} and saving to: {filepath_srcs}")
-
+                        self.log_stack_acquisition_params(self.tiles_acquired,
+                                                          filenames,
+                                                          z_step_size_um)
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
                         self._collect_stacked_tiff(slow_scan_axis_position,
