@@ -84,9 +84,10 @@ class Ispim(Spim):
         self.im = None
 
         self.stack = []
-        self.image_overview = None
+        self.overview_stack = None
         self.overview_process = None
         self.overview_set = Event()
+        self.overview_imgs = []
 
         self.__sim_counter_count = 0
 
@@ -283,7 +284,7 @@ class Ispim(Spim):
             for key in self.cfg.laser_specs[laser]['etl']:
                 settings_schema_data[f'daq_etl {key}'] = self.cfg.laser_specs[laser]["etl"][key]
             for key in self.cfg.laser_specs[laser]['galvo']:
-                settings_schema_data['daq galvo {key}'] = self.cfg.laser_specs[laser]["galvo"][key]
+                settings_schema_data[f'daq galvo {key}'] = self.cfg.laser_specs[laser]["galvo"][key]
             self.log.info(f'laser channel {laser} acquisition settings',
                           extra=settings_schema_data)
 
@@ -352,7 +353,8 @@ class Ispim(Spim):
         self.check_local_disk_space(frames)
 
         #Check if external disk has enough space
-        self.check_ext_disk_space(xtiles, ytiles, frames)
+        if not self.overview_set.is_set():
+            self.check_ext_disk_space(xtiles, ytiles, frames)
 
         # Est time scan will finish
         self.start_time = datetime.now()
@@ -496,6 +498,11 @@ class Ispim(Spim):
                 self.log.info("Joining file transfer processes.")
                 for p in transfer_processes:
                     p.join()
+            if not self.overview_set.is_set():
+                dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
+                for img in self.overview_imgs:
+                    DataTransfer(Path(img), Path(dest[:dest.find('\micr')]+img[img.find('\overview_img_'):])).start()
+
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
@@ -638,8 +645,8 @@ class Ispim(Spim):
                                                            300,
                                                            self.cfg.volume_z_um)
 
-        self.image_overview = None  # Clear previous image overview if any
-        self.image_overview = []  # Create empty array size of tiles
+        self.overview_stack = None  # Clear previous image overview if any
+        self.overview_stack = []  # Create empty array size of tiles
         self.overview_set.set()
         # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
@@ -661,15 +668,13 @@ class Ispim(Spim):
         self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
         self.wait_to_stop('z', self.start_pos['z'])
         self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
-        self.overview_process = None
-        self.start_pos = None  # Reset start position
 
         split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
         for wl in self.cfg.imaging_wavelengths:
             index = self.cfg.imaging_wavelengths.index(wl)
             # Split list of all overview images into seperate channels
-            split_image_overview= self.image_overview[index::len(self.cfg.imaging_wavelengths)]
+            split_image_overview= self.overview_stack[index::len(self.cfg.imaging_wavelengths)]
 
             # Create empty array size of overview image
             rows = np.shape(split_image_overview[0])[0]
@@ -693,12 +698,17 @@ class Ispim(Spim):
 
             reshaped_array[index] = reshaped
 
-        #TODO: How to now overwrite?
-        tifffile.imwrite(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
-                         fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff',
-                         reshaped_array)
+        self.overview_imgs.append(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
+                         fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
+        tifffile.imwrite(self.overview_imgs[-1],
+                         reshaped_array,
+                         metadata={'position': {'z': self.start_pos['z'], 'x': self.start_pos['x'], 'y': self.start_pos['y']},
+                                    'volume':{'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um, 'y': 300},
+                                    'tile':{'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
 
         self.overview_set.clear()
+        self.overview_process = None
+        self.start_pos = None  # Reset start position
 
 
         return reshaped_array, xtiles
@@ -717,7 +727,7 @@ class Ispim(Spim):
         cols = mipstack.shape[0]
         reshaped = np.ones((self.ztiles, rows))
         reshaped[0:cols, :] = mipstack
-        self.image_overview.append(np.rot90(np.array(reshaped)))
+        self.overview_stack.append(np.rot90(np.array(reshaped)))
 
     def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
