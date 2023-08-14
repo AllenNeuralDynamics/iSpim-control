@@ -387,7 +387,7 @@ class Ispim(Spim):
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
                               'chamber_immersion_medium': self.cfg.immersion_medium,
-                              'instrument_id': 'iSpim 1',
+                              'instrument_id': 'iSpim 2',
                               'chamber_immersion_refractive_index': self.cfg.immersion_medium_refractive_index,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
@@ -488,7 +488,7 @@ class Ispim(Spim):
                         #                                        filepath_dests[streams]) for streams in self.stream_ids]
                         #     for p in transfer_processes:
                         #         p.start()
-                        if self.overview_process is None:
+                        if self.overview_process is None and img_storage_dir != None:
                             filepath_dests = [img_storage_dir / f for f in filenames]
                             parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
                             print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
