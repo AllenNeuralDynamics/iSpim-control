@@ -23,6 +23,7 @@ import tifffile
 import shutil
 #from vortran_laser import stradus
 from ispim.operations import normalized_dct_shannon_entropy
+import threading
 
 class Ispim(Spim):
 
@@ -90,6 +91,8 @@ class Ispim(Spim):
         self.overview_imgs = []
 
         self.__sim_counter_count = 0
+
+        self.stage_query_lock = threading.Lock()
 
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
@@ -235,18 +238,15 @@ class Ispim(Spim):
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
         start = time()
-        try:
-            while self.sample_pose.is_moving():
-                pos = self.sample_pose.get_position()
-                distance = abs(pos[axis.lower()] - desired_position)
-                if distance < 1.0 or time()-start > 60:
-                    self.tigerbox.halt()
-                    break
-                else:
-                    self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                    sleep(0.5)
-        except RuntimeError or ValueError:
-            self.wait_to_stop(axis, desired_position)
+        while self.sample_pose.is_moving():
+            pos = self.sample_pose.get_position()
+            distance = abs(pos[axis.lower()] - desired_position)
+            if distance < 2.0 or time()-start > 60:
+                self.tigerbox.halt()
+                break
+            else:
+                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
+                sleep(0.5)
 
     def log_stack_acquisition_params(self, curr_tile_index, stack_name,
                                      z_step_size_um):
@@ -510,7 +510,18 @@ class Ispim(Spim):
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
+
+            # Move back to start position
+            self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
+            self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
+            self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
+            self.wait_to_stop('y', self.start_pos['y'])
+            self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
+            self.wait_to_stop('z', self.start_pos['z'])
+            self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
+
             # Reset values used in scan
+            self.start_pos = None
             self.active_lasers = None
             self.total_tiles = None
             self.x_y_tiles = None
@@ -606,9 +617,9 @@ class Ispim(Spim):
                 else:
                     wl = self.active_lasers[0]
                 yield self.latest_frame, wl
-
-            yield
             sleep(.1)
+            yield
+
 
     def framedata(self, stream):
         if self.simulated:
@@ -640,7 +651,7 @@ class Ispim(Spim):
 
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
-                                                           .8 * 10,
+                                                           .2 * 10,
                                                            self.cfg.volume_x_um,
                                                            300,
                                                            self.cfg.volume_z_um)
@@ -650,24 +661,15 @@ class Ispim(Spim):
         self.overview_set.set()
         # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
-                                      self.cfg.volume_z_um, .8 * 10,
+                                      self.cfg.volume_z_um, .2 * 10,
                                       self.cfg.imaging_wavelengths,
-                                      (.8 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
+                                      (.2 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
 
         if self.overview_process != None:
             self.overview_process.join()
-
-        # Move back to start position
-        self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
-        self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
-        self.sample_pose.move_absolute(y=self.start_pos['y'], wait=False)
-        self.wait_to_stop('y', self.start_pos['y'])
-        self.sample_pose.move_absolute(z=self.start_pos['z'], wait=False)
-        self.wait_to_stop('z', self.start_pos['z'])
-        self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
 
         split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
@@ -700,9 +702,10 @@ class Ispim(Spim):
 
         self.overview_imgs.append(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
                          fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
+        pos = self.sample_pose.get_position()
         tifffile.imwrite(self.overview_imgs[-1],
                          reshaped_array,
-                         metadata={'position': {'z': self.start_pos['z'], 'x': self.start_pos['x'], 'y': self.start_pos['y']},
+                         metadata={'position': {'z': pos['z'], 'x': pos['x'], 'y': pos['y']},
                                     'volume':{'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um, 'y': 300},
                                     'tile':{'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
 
@@ -746,13 +749,11 @@ class Ispim(Spim):
 
     def stop_livestream(self, wait: bool = False):
         # Bail early if it's already stopped.
-
         if not self.livestream_enabled.is_set():
             self.log.warning("Not starting. Livestream is already stopped.")
             return
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
-        self.livestream_enabled.clear()
         self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
 
         self.ni.stop()
@@ -761,6 +762,7 @@ class Ispim(Spim):
         for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
         self.scout_mode = False
+        self.livestream_enabled.clear()
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
@@ -793,7 +795,7 @@ class Ispim(Spim):
                 yield self.im, self.active_lasers[layer_num + 1]
 
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
-            #yield
+            yield
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
