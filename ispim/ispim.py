@@ -617,9 +617,9 @@ class Ispim(Spim):
                 else:
                     wl = self.active_lasers[0]
                 yield self.latest_frame, wl
+            else:
+                yield
             sleep(.1)
-            yield
-
 
     def framedata(self, stream):
         if self.simulated:
@@ -651,7 +651,7 @@ class Ispim(Spim):
 
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
-                                                           .2 * 10,
+                                                           .8 * 10,
                                                            self.cfg.volume_x_um,
                                                            300,
                                                            self.cfg.volume_z_um)
@@ -661,9 +661,9 @@ class Ispim(Spim):
         self.overview_set.set()
         # Y volume is always 1 tile
         self.collect_volumetric_image(self.cfg.volume_x_um, 300,
-                                      self.cfg.volume_z_um, .2 * 10,
+                                      self.cfg.volume_z_um, .8 * 10,
                                       self.cfg.imaging_wavelengths,
-                                      (.2 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
+                                      (.8 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
@@ -793,9 +793,9 @@ class Ispim(Spim):
                 f = None
                 packet = None
                 yield self.im, self.active_lasers[layer_num + 1]
-
+            else:
+                yield   # yield for thread
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
-            yield
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
         """Configure system to image with the desired laser wavelength.
@@ -820,10 +820,10 @@ class Ispim(Spim):
         self.active_lasers = wavelength
         for laser in self.active_lasers: self.lasers[str(laser)].enable()
 
-    def set_scan_start(self, start):
+    def set_scan_start(self, start: dict):
 
         """Set start position of scan in sample pose.
-        :param start: start position of scan"""
+        :param start: start position of scan in 1/10 um"""
 
         self.start_pos = start
         self.log.info(f'Scan start position set to {self.start_pos}')
