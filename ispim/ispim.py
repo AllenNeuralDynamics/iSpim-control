@@ -76,6 +76,7 @@ class Ispim(Spim):
 
         self.livestream_worker = None  # captures images during livestream
         self.livestream_enabled = Event()
+        self.setting_up_livestream = False
 
         self.latest_frame = None
         self.latest_frame_layer = 0
@@ -383,12 +384,13 @@ class Ispim(Spim):
 
         # Logging for JSON schema
         acquisition_params = {'session_start_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                              'local_storage_directory': local_storage_dir,
+                              'local_storage_directory': str(local_storage_dir),
                               'external_storage_directory': img_storage_dir,
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
-                              'chamber_immersion_medium': self.cfg.immersion_medium,
-                              'instrument_id': 'iSpim 1',
+                              'chamber_immersion': self.cfg.immersion_medium,
+                              'instrument_id': 'iSpim 2',
+                              'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema
                               'chamber_immersion_refractive_index': self.cfg.immersion_medium_refractive_index,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
@@ -450,7 +452,7 @@ class Ispim(Spim):
                             f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
                             for
                             camera in self.stream_ids]
-                        self.log.info(f'file_name, {filenames}', extra={'tags': ['schema']})
+
                         os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
 
@@ -510,6 +512,13 @@ class Ispim(Spim):
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
 
+            # Reset values used in scan
+            self.active_lasers = None
+            self.total_tiles = None
+            self.x_y_tiles = None
+            self.tiles_acquired = 0
+            self.tile_time_s = 0
+
             # Move back to start position
             self.sample_pose.move_absolute(x=self.start_pos['x'], wait=False)
             self.wait_to_stop('x', self.start_pos['x'])  # wait_to_stop uses SAMPLE POSE
@@ -519,14 +528,10 @@ class Ispim(Spim):
             self.wait_to_stop('z', self.start_pos['z'])
             self.log.info(f'Stage moved to {self.sample_pose.get_position()}')
 
-            # Reset values used in scan
             self.start_pos = None
-            self.active_lasers = None
-            self.total_tiles = None
-            self.x_y_tiles = None
-            self.tiles_acquired = 0
-            self.tile_time_s = 0
-            self.schema_log.info(f'Ending time: {datetime.now().strftime("%Y,%m,%d,%H,%M,%S")}')
+            acquisition_params = {'session_end_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                                  'tags': ['schema']}
+            self.log.info("acquisition parameters", extra=acquisition_params)
 
     def _collect_stacked_tiff(self, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
@@ -580,7 +585,6 @@ class Ispim(Spim):
                               f'-> Frames collected: {curr_frame_count}')
             else:
                 print('No new frames')
-
             sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
 
         self.log.info('NI task completed')
@@ -617,7 +621,7 @@ class Ispim(Spim):
                     wl = self.active_lasers[0]
                 yield self.latest_frame, wl
             else:
-                yield
+                yield # yield so thread can quit
             sleep(.1)
 
     def framedata(self, stream):
@@ -675,7 +679,8 @@ class Ispim(Spim):
         for wl in self.cfg.imaging_wavelengths:
             index = self.cfg.imaging_wavelengths.index(wl)
             # Split list of all overview images into seperate channels
-            split_image_overview= self.overview_stack[index::len(self.cfg.imaging_wavelengths)]
+            split_image_overview= self.overview_stack[index::len(self.cfg.imaging_wavelengths)] if \
+                len(self.cfg.imaging_wavelengths) != 1 else self.overview_stack
 
             # Create empty array size of overview image
             rows = np.shape(split_image_overview[0])[0]
@@ -734,6 +739,7 @@ class Ispim(Spim):
     def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
 
+        self.setting_up_livestream = True
         # Bail early if it's started.
         if self.livestream_enabled.is_set():
             self.log.warning("Not starting. Livestream is already running.")
@@ -745,8 +751,11 @@ class Ispim(Spim):
         self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
+        self.setting_up_livestream = False
 
     def stop_livestream(self, wait: bool = False):
+
+        self.setting_up_livestream = True
         # Bail early if it's already stopped.
         if not self.livestream_enabled.is_set():
             self.log.warning("Not starting. Livestream is already stopped.")
@@ -762,6 +771,7 @@ class Ispim(Spim):
         self.active_lasers = None
         self.scout_mode = False
         self.livestream_enabled.clear()
+        self.setting_up_livestream = False
 
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
@@ -812,7 +822,8 @@ class Ispim(Spim):
         if self.cfg.acquisition_style == 'sequential':
             fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for getting wavelength
             self.log.info(f"Setting filter wheel to index {fw_index}")
-            self.filter_wheel.set_index(fw_index)
+            with self.stage_query_lock:
+                self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
         self._setup_waveform_hardware(wavelength, live)
