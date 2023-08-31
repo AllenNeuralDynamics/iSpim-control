@@ -124,7 +124,6 @@ class Ispim(Spim):
             if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
                 self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
                 continue
-
             laser_class = __import__(specs['driver'])
             laser_path = specs['module_path'].split('.')
             for path in laser_path:
