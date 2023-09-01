@@ -252,12 +252,26 @@ class Ispim(Spim):
                                      z_step_size_um):
         """helper function in main acquisition loop to log the current state
         before capturing a stack of images per channel."""
+
         for laser in self.active_lasers:
             laser = str(laser)
             tile_schema_params = \
                 {
                     'tile_number': curr_tile_index,
-                    'file_name': stack_name,
+                    'file_name': stack_name[0],
+                    'coordinate_transformations': [
+                        {'Scale3dTransform': {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
+                                                        self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
+                                                        z_step_size_um]}},
+                        {'Translation3dTransform': {'translation':[self.stage_x_pos * 0.001,
+                                                                   self.stage_y_pos * 0.001,
+                                                                   self.stage_z_pos * 0.001]}}
+                    ],
+                    'channel' : {'Channel': {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
+                                             'laser_wavelength': laser,
+                                             'laser_power': self.lasers[laser].get_setpoint(),
+                                             'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"]
+                                                }},
                     'channel_name': f'{laser}',
                     'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
                     'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
@@ -382,16 +396,17 @@ class Ispim(Spim):
                                                                 self.start_pos['y'],
                                                                 self.start_pos['z'])
 
+
         # Logging for JSON schema
         acquisition_params = {'session_start_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                               'local_storage_directory': str(local_storage_dir),
                               'external_storage_directory': img_storage_dir,
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
-                              'chamber_immersion': self.cfg.immersion_medium,
-                              'instrument_id': 'iSpim 2',
-                              'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema
-                              'chamber_immersion_refractive_index': self.cfg.immersion_medium_refractive_index,
+                              'chamber_immersion': {'Immersion':{'medium': self.cfg.immersion_medium,
+                                                                 'refractive_index': self.cfg.immersion_medium_refractive_index}},
+                              'instrument_id': 'iSpim 1',
+                              'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
 
