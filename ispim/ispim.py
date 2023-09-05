@@ -260,18 +260,18 @@ class Ispim(Spim):
                     'tile_number': curr_tile_index,
                     'file_name': stack_name[0],
                     'coordinate_transformations': [
-                        {'Scale3dTransform': {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
+                        {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
                                                         self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
-                                                        z_step_size_um]}},
-                        {'Translation3dTransform': {'translation':[self.stage_x_pos * 0.001,
+                                                        z_step_size_um]},
+                        {'translation':[self.stage_x_pos * 0.001,
                                                                    self.stage_y_pos * 0.001,
-                                                                   self.stage_z_pos * 0.001]}}
+                                                                   self.stage_z_pos * 0.001]}
                     ],
-                    'channel' : {'Channel': {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
+                    'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
                                              'laser_wavelength': laser,
                                              'laser_power': self.lasers[laser].get_setpoint(),
                                              'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"]
-                                                }},
+                                                },
                     'channel_name': f'{laser}',
                     'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
                     'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
@@ -403,8 +403,8 @@ class Ispim(Spim):
                               'external_storage_directory': img_storage_dir,
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
-                              'chamber_immersion': {'Immersion':{'medium': self.cfg.immersion_medium,
-                                                                 'refractive_index': self.cfg.immersion_medium_refractive_index}},
+                              'chamber_immersion': {'medium': self.cfg.immersion_medium,
+                                                                 'refractive_index': self.cfg.immersion_medium_refractive_index},
                               'instrument_id': 'iSpim 1',
                               'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
