@@ -24,7 +24,7 @@ import shutil
 #from vortran_laser import stradus
 from ispim.operations import normalized_dct_shannon_entropy
 import threading
-
+import sys
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -120,24 +120,19 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
-
         for wl, specs in self.cfg.laser_specs.items():
             if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
                 self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
                 continue
-            laser_class = __import__(specs['driver'])
-            laser_path = specs['module_path'].split('.')
-            for path in laser_path:
-                laser_class = getattr(laser_class, path)
-
+            __import__(specs['driver'])
+            laser_class = getattr(sys.modules[specs['driver']], specs['module'])
             kwds = dict(specs['kwds'])
-            for key, arg in kwds.items():
-                if type(arg) == str and '.' in arg:
-                    arg_path = arg.split('.')
-                    arg = __import__(specs['driver'])
-                    for step in arg_path:
-                        arg = getattr(arg, step)
-                    kwds[key] = arg
+            for k, v in kwds.items():
+                if str(v).split('.')[0] in dir(sys.modules[specs['driver']]):
+                    arg_class = getattr(sys.modules[specs['driver']], v.split('.')[0])
+                    kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
+                else:
+                    kwds[k] = eval(v) if '.' in str(v) else v
 
             self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
@@ -400,7 +395,7 @@ class Ispim(Spim):
         # Logging for JSON schema
         acquisition_params = {'session_start_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                               'local_storage_directory': str(local_storage_dir),
-                              'external_storage_directory': img_storage_dir,
+                              'external_storage_directory': str(img_storage_dir),
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
                               'chamber_immersion': {'medium': self.cfg.immersion_medium,
