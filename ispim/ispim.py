@@ -567,11 +567,11 @@ class Ispim(Spim):
                                                frames,
                                                filetype)
 
-        if self.overview_process is not None:  # If doing an overview image, wait till previous tile is done
-            if self.overview_process.is_alive():
-                self.overview_process.join()
-        self.stack = None  # Clear stack buffer
-        self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
+        if self.overview_set.is_set():
+            print('setting stack size')
+            self.stack = None  # Clear stack buffer
+            self.stack = [None] * (frames)  # Create buffer the size of stacked image
+            print('stack size', len(self.stack))
 
         self.frame_grabber.start()
         self.ni.start()
@@ -604,8 +604,7 @@ class Ispim(Spim):
         self.latest_frame_layer = 0     # Resetting frame number to 0 for progress bar in UI
 
         if self.overview_set.is_set():
-            self.overview_process = Thread(target=self.create_overview)
-            self.overview_process.start()  # If doing an overview image, start down sampling and mips
+            self.create_overview()
 
         self.log.info('Waiting for camera to finish')
         start = time()
@@ -680,9 +679,6 @@ class Ispim(Spim):
                                       self.cfg.tile_overlap_x_percent, self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
-
-        if self.overview_process != None:
-            self.overview_process.join()
 
         split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
