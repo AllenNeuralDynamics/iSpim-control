@@ -263,10 +263,12 @@ class Ispim(Spim):
                                                                    self.stage_y_pos * 0.001,
                                                                    self.stage_z_pos * 0.001]}
                     ],
-                    'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
-                                             'laser_wavelength': laser,
-                                             'laser_power': self.lasers[laser].get_setpoint(),
-                                             'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"]
+                    'channel' : {'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
+                                             'excitation_wavelength': laser,
+                                             'excitation_power': self.lasers[laser].get_setpoint(),
+                                             'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"],
+                                             'filter_names': [],
+                                             'detector_name' : ''
                                                 },
                     'channel_name': f'{laser}',
                     'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
@@ -412,18 +414,18 @@ class Ispim(Spim):
                 self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
-                self.sample_pose.set_speed(Y=1.0)  # Z maps to Y
+                self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.sample_pose.move_absolute(y=round(self.stage_y_pos), wait=False)
+                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
-                    self.sample_pose.set_speed(X=1.0)  # Y maps to X
+                    self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.sample_pose.move_absolute(x=round(self.stage_x_pos), wait=False)
+                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -437,17 +439,17 @@ class Ispim(Spim):
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.sample_pose.set_speed(Z=1.0)  # X maps to Z
+                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                        self.sample_pose.move_absolute(z=round(z_backup_pos))
+                        self.tigerbox.move_absolute(x=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.sample_pose.move_absolute(z=self.stage_z_pos, wait=False)
+                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
-                        self.sample_pose.set_speed(Z=scan_speed_mm_s)
-                        self.log.info(f"Actual speed {self.sample_pose.get_speed('z')}mm/sec.")
+                        self.tigerbox.set_speed(X=scan_speed_mm_s)
+                        self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
 
                         self.log.info(f"Setting up lasers for active channels: {channel[k]}")
                         self.setup_imaging_for_laser(channel[k])
@@ -527,6 +529,7 @@ class Ispim(Spim):
             self.active_lasers = None
             self.total_tiles = None
             self.x_y_tiles = None
+            self.est_run_time = None
             self.tiles_acquired = 0
             self.tile_time_s = 0
 
