@@ -157,8 +157,9 @@ class Ispim(Spim):
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
-        self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
-                                        card_address=31)
+        (self.tigerbox
+         .set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
+                                        card_address=31))
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
@@ -411,18 +412,18 @@ class Ispim(Spim):
                 self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
                 self.log.info("Setting speed in Y to 1.0 mm/sec")
-                self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
+                self.sample_pose.set_speed(Y=1.0)  # Z maps to Y
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
+                self.sample_pose.move_absolute(y=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
                     self.log.debug("Setting speed in X to 1.0 mm/sec")
-                    self.tigerbox.set_speed(Y=1.0)  # Y maps to X
+                    self.sample_pose.set_speed(X=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
+                    self.sample_pose.move_absolute(x=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -436,17 +437,17 @@ class Ispim(Spim):
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
+                        self.sample_pose.set_speed(Z=1.0)  # X maps to Z
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_absolute(x=round(z_backup_pos))
+                        self.sample_pose.move_absolute(z=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
+                        self.sample_pose.move_absolute(z=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
-                        self.tigerbox.set_speed(X=scan_speed_mm_s)
-                        self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
+                        self.sample_pose.set_speed(Z=scan_speed_mm_s)
+                        self.log.info(f"Actual speed {self.sample_pose.get_speed('z')}mm/sec.")
 
                         self.log.info(f"Setting up lasers for active channels: {channel[k]}")
                         self.setup_imaging_for_laser(channel[k])
@@ -560,19 +561,14 @@ class Ispim(Spim):
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else tile_count
+        if self.overview_set.is_set():
+            self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-
-        if self.overview_process is not None:  # If doing an overview image, wait till previous tile is done
-            if self.overview_process.is_alive():
-                self.overview_process.join()
-        self.stack = None  # Clear stack buffer
-        self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
-
         self.frame_grabber.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
@@ -604,8 +600,9 @@ class Ispim(Spim):
         self.latest_frame_layer = 0     # Resetting frame number to 0 for progress bar in UI
 
         if self.overview_set.is_set():
-            self.overview_process = Thread(target=self.create_overview)
-            self.overview_process.start()  # If doing an overview image, start down sampling and mips
+            self.create_overview() # If doing an overview image, start down sampling and mips
+            self.stack = None  # Clear stack buffer
+
 
         self.log.info('Waiting for camera to finish')
         start = time()
@@ -681,10 +678,6 @@ class Ispim(Spim):
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
 
-        if self.overview_process != None:
-            self.overview_process.join()
-
-        split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
         for wl in self.cfg.imaging_wavelengths:
             index = self.cfg.imaging_wavelengths.index(wl)
