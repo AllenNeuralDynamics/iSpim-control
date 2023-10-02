@@ -263,7 +263,8 @@ class Ispim(Spim):
                                                                    self.stage_y_pos * 0.001,
                                                                    self.stage_z_pos * 0.001]}
                     ],
-                    'channel' : {'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else None,
+                    'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
+                                     'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
                                              'excitation_wavelength': laser,
                                              'excitation_power': self.lasers[laser].get_setpoint(),
                                              'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"],
