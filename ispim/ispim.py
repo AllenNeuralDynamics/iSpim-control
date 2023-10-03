@@ -8,7 +8,6 @@ from time import perf_counter, sleep, time
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
 from ispim.ispim_config import IspimConfig
-from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
@@ -36,8 +35,6 @@ class Ispim(Spim):
 
         self.cfg = IspimConfig(config_filepath)
         # Instantiate hardware devices
-        self.frame_grabber = FrameGrabber() if not self.simulated else \
-            Mock(FrameGrabber)
         self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
@@ -46,7 +43,7 @@ class Ispim(Spim):
         self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
         self.filter_wheel = FilterWheel(self.tigerbox,
                                         **self.cfg.filter_wheel_kwds)
-
+        self.camera = None
         self.lasers = {}  # populated in _setup_lasers.
         self.channel_gene = {}  # dictionary containing labeled gene for each channel
 
@@ -61,8 +58,6 @@ class Ispim(Spim):
         self.stage_x_pos = None
         self.stage_y_pos = None
         self.scout_mode = False
-        # camera streams filled in with framegrabber.cameras
-        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -98,24 +93,20 @@ class Ispim(Spim):
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
+        self.log.debug(f"Setting up camera")
+        for camera, specs in self.cfg.camera_specs.items():
+            __import__(specs['driver'])
+            camera_class = getattr(sys.modules[specs['driver']], specs['module'])
+            kwds = dict(specs['kwds'])
+            for k, v in kwds.items():
+                if str(v).split('.')[0] in dir(sys.modules[specs['driver']]):
+                    arg_class = getattr(sys.modules[specs['driver']], v.split('.')[0])
+                    kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
+                else:
+                    kwds[k] = eval(v) if '.' in str(v) else v
+            self.camera = camera_class(**kwds) if not self.simulated else Mock()
+            self.camera.configure(**specs['configure'])
 
-        if self.simulated:
-            self.frame_grabber.runtime = Mock()
-
-        self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
-                                          self.cfg.sensor_row_count))
-
-        # Initializing readout direction of camera(s)
-        self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction)
-
-        # Initializing line interval of both cameras
-        self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
-                                             self.cfg.sensor_row_count)
-
-        # Initializing exposure time of both cameras
-        cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
-        self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
-                                             cpx_line_interval[0])
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
@@ -462,10 +453,8 @@ class Ispim(Spim):
 
                         channel_string = '_'.join(map(str, self.active_lasers)) if \
                             acquisition_style == 'interleaved' else channel[k][0]
-                        filenames = [
-                            f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
-                            for
-                            camera in self.stream_ids]
+                        filenames = [f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"]
+
 
                         os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
@@ -498,8 +487,8 @@ class Ispim(Spim):
                             filepath_dests = [img_storage_dir / f for f in filenames]
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dests}.")
-                            transfer_processes = [DataTransfer(filepath_srcs[streams],
-                                                               filepath_dests[streams]) for streams in self.stream_ids]
+                            transfer_processes = [DataTransfer(srcs,dests) for srcs, dests in
+                                                  zip(filepath_srcs, filepath_dests)]
                             for p in transfer_processes:
                                 p.start()
 
@@ -521,7 +510,7 @@ class Ispim(Spim):
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
-            self.frame_grabber.runtime.abort()
+            self.camera.stop()
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
@@ -568,31 +557,24 @@ class Ispim(Spim):
         if self.overview_set.is_set():
             self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
 
-        self.log.info(f"Configuring framegrabber")
-        self._setup_camera()
-        self.frame_grabber.setup_stack_capture(filepath_srcs,
-                                               frames,
-                                               filetype)
-        self.frame_grabber.start()
+        self.log.info(f"Configuring Camera")
+        self.camera.setup_stack_capture(filepath_srcs,frames,filetype)
+        self.camera.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
 
         prev_frame_count = 0
-        curr_frame_count = 0
         self.latest_frame_layer = 0
         while self.ni.counter_task.read() < tile_count:
             if self.simulated:
                 tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
                                                            self.cfg.sensor_row_count)), append=True, bigtiff=True)
-            
-            for streams in self.stream_ids:
-                frame_count = self.framedata(streams)
-            curr_frame_count += frame_count
-            if curr_frame_count != prev_frame_count:
-                prev_frame_count = curr_frame_count
+            self.frame = self.camera.grab_frame()
+            if self.camera.grab_frame_count() != prev_frame_count:
+                prev_frame_count = self.camera.grab_frame_count()
                 self.log.info(f'Total frames: {frames} '
-                              f'-> Frames collected: {curr_frame_count}')
+                              f'-> Frames collected: {self.camera.grab_frame_count()}')
             else:
                 print('No new frames')
             sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
@@ -607,17 +589,8 @@ class Ispim(Spim):
             self.create_overview() # If doing an overview image, start down sampling and mips
             self.stack = None  # Clear stack buffer
 
-
-        self.log.info('Waiting for camera to finish')
-        start = time()
-        if not self.simulated:
-            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-                sleep(.05)
-                if time() - start > 10:
-                    self.log.info('Task timed out')
-                    break
         self.log.info('Stopping camera')
-        self.frame_grabber.runtime.abort()
+        self.camera.stop()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -634,30 +607,6 @@ class Ispim(Spim):
             else:
                 yield # yield so thread can quit
             sleep(.1)
-
-    def framedata(self, stream):
-        if self.simulated:
-            self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
-            self.latest_frame_layer =+ 1
-            return 1
-
-        if a := self.frame_grabber.runtime.get_available_data(stream):
-            packet = a.get_frame_count()
-            f = next(a.frames())
-            self.latest_frame = f.data().squeeze().copy()
-            self.latest_frame_layer = f.metadata().frame_id
-
-            if self.overview_set.is_set():
-                for f in a.frames():
-                    self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
-
-            f = None  # <-- fails to get the last frames if this is held?
-            a = None  # <-- fails to get the last frames if this is held?
-            logging.debug(
-                f"Frames in packet: {packet}"
-            )
-            return packet
-        return 0
 
     def overview_scan(self):
 
@@ -755,7 +704,7 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.scout_mode = scout_mode
         self.setup_imaging_for_laser(wavelength, True)
-        self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
+        self.camera.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
         self.setting_up_livestream = False
@@ -769,7 +718,7 @@ class Ispim(Spim):
             return
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
-        self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
+        self.camera.stop()
 
         self.ni.stop()
         self.ni.close()
@@ -783,7 +732,7 @@ class Ispim(Spim):
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
 
-        self.frame_grabber.start()
+        self.camera.start()
         self.ni.start()
         if self.scout_mode:
             sleep(self.cfg.get_period_time())
@@ -799,18 +748,11 @@ class Ispim(Spim):
                 noise = np.random.normal(0, .1, blank.shape)
                 yield noise + blank, 1
 
-            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
-                f = next(packet.frames())
-                metadata = f.metadata()
-
-                # TODO: Why does this work?
-                layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-                self.im = f.data().squeeze().copy()
-                f = None
-                packet = None
-                yield self.im, self.active_lasers[layer_num + 1]
             else:
-                yield   # yield for thread
+                layer_num =self.camera.grab_frame_count() % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 \
+                    else -1
+                yield self.camera.grab_frame(), self.active_lasers[layer_num + 1]
+
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
@@ -851,7 +793,7 @@ class Ispim(Spim):
 
     def close(self):
         """Safely close all open hardware connections."""
-        self.frame_grabber.close()
+        self.camera.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
