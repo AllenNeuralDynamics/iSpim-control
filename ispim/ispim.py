@@ -558,7 +558,7 @@ class Ispim(Spim):
             self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring Camera")
-        self.camera.setup_stack_capture(filepath_srcs,frames,filetype)
+        self.camera.setup_stack_capture(filepath_srcs[0],frames,filetype)   #FIXME: Don't be a filepath list
         self.camera.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
@@ -571,6 +571,7 @@ class Ispim(Spim):
                 tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
                                                            self.cfg.sensor_row_count)), append=True, bigtiff=True)
             self.frame = self.camera.grab_frame()
+            self.latest_frame_layer = self.camera.grab_frame_count()
             if self.camera.grab_frame_count() != prev_frame_count:
                 prev_frame_count = self.camera.grab_frame_count()
                 self.log.info(f'Total frames: {frames} '
@@ -598,12 +599,12 @@ class Ispim(Spim):
         """Worker yielding the latest frame and frame id during acquisition"""
 
         while True:
-            if self.latest_frame is not None and self.active_lasers is not None:
+            if self.frame is not None and self.active_lasers is not None:
                 if self.cfg.acquisition_style == 'interleaved' and not self.overview_set.is_set():
                     wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1]
                 else:
                     wl = self.active_lasers[0]
-                yield self.latest_frame, wl
+                yield self.frame, wl
             else:
                 yield # yield so thread can quit
             sleep(.1)
@@ -704,7 +705,7 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.scout_mode = scout_mode
         self.setup_imaging_for_laser(wavelength, True)
-        self.camera.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
+        self.camera.setup_stack_capture(self.cfg.local_storage_dir, 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
         self.setting_up_livestream = False
@@ -738,7 +739,6 @@ class Ispim(Spim):
             sleep(self.cfg.get_period_time())
             self.ni.stop()
         self.active_lasers.sort()
-
         while self.livestream_enabled.is_set():
             if self.simulated:
                 sleep(1 / 16)
@@ -749,9 +749,12 @@ class Ispim(Spim):
                 yield noise + blank, 1
 
             else:
-                layer_num =self.camera.grab_frame_count() % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 \
-                    else -1
-                yield self.camera.grab_frame(), self.active_lasers[layer_num + 1]
+                try:
+                    layer_num =self.camera.grab_frame_count() % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 \
+                        else -1
+                    yield self.camera.grab_frame(), self.active_lasers[layer_num + 1]
+                except:
+                    yield
 
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
