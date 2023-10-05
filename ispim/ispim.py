@@ -391,7 +391,7 @@ class Ispim(Spim):
                               'subject_id': self.cfg.imaging_specs['subject_id'],
                               'chamber_immersion': {'medium': self.cfg.immersion_medium,
                                                                  'refractive_index': self.cfg.immersion_medium_refractive_index},
-                              'instrument_id': 'iSpim 1',
+                              'instrument_id': self.cfg.imaging_specs['instrument_id'],
                               'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
