@@ -192,32 +192,6 @@ class Ispim(Spim):
         self.__sim_counter_count += 1
         return count
 
-    # TODO: this should be a base class thing.s
-    def check_ext_disk_space(self, xtiles, ytiles, ztiles):
-        """Checks ext disk space before scan to see if disk has enough space scan"""
-        # One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_stack_filesize = self.cfg.bytes_per_image * ztiles
-            est_scan_filesize = est_stack_filesize*xtiles*ytiles
-            if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
-                self.log.error("Not enough space in external directory")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
-
-    def check_local_disk_space(self, z_tiles):
-        """Checks local disk space before scan to see if disk has enough space for two stacks"""
-
-        #One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_filesize = self.cfg.bytes_per_image*z_tiles
-            if est_filesize*2 >= shutil.disk_usage(self.cfg.local_storage_dir).free:
-                self.log.error("Not enough space on disk. Is the recycle bin empty?")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
