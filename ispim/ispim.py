@@ -25,6 +25,8 @@ import shutil
 from ispim.operations import normalized_dct_shannon_entropy
 import threading
 import sys
+import serial
+
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -120,10 +122,19 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
+        if 'laser_hub' in self.cfg.laser_specs.keys():
+            shared_laser_ports = {}
+            for hub in self.cfg.laser_specs['laser_hub']:
+                shared_laser_ports[hub] = serial.Serial(**self.cfg.laser_specs['laser_hub'][hub])
+
         for wl, specs in self.cfg.laser_specs.items():
-            if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
-                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
+
+            if wl == 'laser_hub':
                 continue
+            elif 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
+                self.log.warning(f'Skipping setup for laser {wl}')
+                continue
+
             __import__(specs['driver'])
             laser_class = getattr(sys.modules[specs['driver']], specs['module'])
             kwds = dict(specs['kwds'])
@@ -133,6 +144,8 @@ class Ispim(Spim):
                     kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
                 else:
                     kwds[k] = eval(v) if '.' in str(v) else v
+            if 'laser_hub' in specs.keys():
+                kwds['port'] = shared_laser_ports[specs['laser_hub']]
 
             self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
