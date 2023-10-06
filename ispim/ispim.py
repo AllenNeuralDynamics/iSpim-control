@@ -351,10 +351,12 @@ class Ispim(Spim):
         # Check to see if disk has enough space for two tiles
         frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
-
+        self.check_read_write_speeds(self.cfg.local_storage_dir)
         #Check if external disk has enough space
-        if not self.overview_set.is_set():
+        if not self.overview_set.is_set() and self.cfg.ext_storage_dir != self.cfg.local_storage_dir:
             self.check_ext_disk_space(xtiles, ytiles, frames)
+            self.check_read_write_speeds(self.cfg.ext_storage_dir)
+
 
         # Est time scan will finish
         self.start_time = datetime.now()
