@@ -42,7 +42,8 @@ class Ispim(Spim):
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds,
                                          build_config={'Motor Axes': ['X', 'Y', 'Z', 'V', 'W', 'A', 'B', 'C', 'D']})
-        self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
+        self.sample_pose = SamplePose(self.tigerbox, **{'axis_map':{a:specs['mapped_scan_axis'] for a, specs in
+                                                    self.cfg.tiger_specs.items() if 'mapped_scan_axis' in specs.keys()}})
         self.filter_wheel = FilterWheel(self.tigerbox,
                                         **self.cfg.filter_wheel_kwds)
         self.camera = None
@@ -144,24 +145,21 @@ class Ispim(Spim):
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
-        self.log.info("Setting backlash in Z to 0")
-        self.sample_pose.set_axis_backlash(Z=0.0)
-        self.log.info("Setting speeds to 1.0 mm/sec")
-        self.tigerbox.set_speed(X=self.cfg.tiger_specs['x']['speed_mm_s'],
-                                Y=self.cfg.tiger_specs['y']['speed_mm_s'],
-                                Z=self.cfg.tiger_specs['z']['speed_mm_s'])
-        # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
-        #   This axis remapping is handled upon SamplePose __init__.
-        # loop over axes and verify in external mode
 
-        external_control_settings = \
-            {a.lower(): PiezoControlMode(str(self.cfg.tiger_specs[a]['external_control_mode'])) for a in
-             self.cfg.tiger_specs.keys() if a.upper() in self.tigerbox.ordered_axes}
-        self.tigerbox.set_axis_control_mode(**external_control_settings)
+        self.log.info(f"Setting stage backlash")
+        self.sample_pose.set_axis_backlash(**{a.lower(): specs['backlash_mm']
+                                              for a, specs in self.cfg.tiger_specs.items() if 'backlash_mm' in specs})
+        self.log.info("Setting stage speeds")
+        self.sample_pose.set_speed(**{a.lower(): specs['speed_mm_s'] for a, specs in self.cfg.tiger_specs.items()
+                                   if 'speed_mm_s' in specs.keys()})
+        self.log.info("Setting axis control mode")
+        self.sample_pose.set_axis_control_mode(**{a.lower(): PiezoControlMode(str(specs['external_control_mode']))
+                                               for a, specs in self.cfg.tiger_specs.items() if a.upper() in
+                                               self.tigerbox.ordered_axes})
 
-        for a, settings in self.cfg.tiger_specs.items():
-            if 'ttl_mode' in settings.keys():
-                self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode(settings['ttl_mode']),
+        for a, specs in self.cfg.tiger_specs.items():
+            if 'ttl_mode' in specs.keys():
+                self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode(specs['ttl_mode']),
                                                 card_address=self.tigerbox.axis_to_card[a.upper()])
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
@@ -393,19 +391,14 @@ class Ispim(Spim):
                 # move back to x=0 which maps to z=0
                 self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
-                self.log.info("Setting speed in Y to 1.0 mm/sec")
-                self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
-
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
+                self.sample_pose.move_absolute(y=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
-                    self.log.debug("Setting speed in X to 1.0 mm/sec")
-                    self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
+                    self.sample_pose.move_absolute(x=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -419,17 +412,16 @@ class Ispim(Spim):
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_absolute(x=round(z_backup_pos))
+                        self.sample_pose.move_absolute(z=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
+                        self.sample_pose.move_absolute(z=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
-                        self.tigerbox.set_speed(X=scan_speed_mm_s)
-                        self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
+                        self.sample_pose.set_speed(X=scan_speed_mm_s)
+                        self.log.info(f"Actual speed {self.sample_pose.get_speed('x')}mm/sec.")
 
                         self.log.info(f"Setting up lasers for active channels: {channel[k]}")
                         self.setup_imaging_for_laser(channel[k])
