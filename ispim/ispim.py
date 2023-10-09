@@ -156,23 +156,22 @@ class Ispim(Spim):
         self.log.info("Setting backlash in Z to 0")
         self.sample_pose.set_axis_backlash(Z=0.0)
         self.log.info("Setting speeds to 1.0 mm/sec")
-        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
+        self.tigerbox.set_speed(X=self.cfg.tiger_specs['x']['speed_mm_s'],
+                                Y=self.cfg.tiger_specs['y']['speed_mm_s'],
+                                Z=self.cfg.tiger_specs['z']['speed_mm_s'])
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
-        # TODO, think about where to store this mapping in config
-        # TODO, merge ispim commands in tigerasi
-        # TODO, how to call this? via tigerbox?
-        externally_controlled_axes = \
-            {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.tiger_specs['axes'].values()}
-        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
-        # TODO, this needs to be buried somewhere else
-        # TODO, how to store card # mappings, in config?
-        (self.tigerbox
-         .set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
-                                        card_address=31))
+        external_control_settings = \
+            {a.lower(): PiezoControlMode(str(self.cfg.tiger_specs[a]['external_control_mode'])) for a in
+             self.cfg.tiger_specs.keys() if a.upper() in self.tigerbox.ordered_axes}
+        self.tigerbox.set_axis_control_mode(**external_control_settings)
+
+        for a, settings in self.cfg.tiger_specs.items():
+            if 'ttl_mode' in settings.keys():
+                self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode(settings['ttl_mode']),
+                                                card_address=self.tigerbox.axis_to_card[a.upper()])
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
