@@ -24,6 +24,8 @@ import shutil
 from ispim.operations import normalized_dct_shannon_entropy
 import threading
 import sys
+import serial
+
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -111,10 +113,19 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
+        if 'laser_hub' in self.cfg.laser_specs.keys():
+            shared_laser_ports = {}
+            for hub in self.cfg.laser_specs['laser_hub']:
+                shared_laser_ports[hub] = serial.Serial(**self.cfg.laser_specs['laser_hub'][hub])
+
         for wl, specs in self.cfg.laser_specs.items():
-            if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
-                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
+
+            if wl == 'laser_hub':
                 continue
+            elif 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
+                self.log.warning(f'Skipping setup for laser {wl}')
+                continue
+
             __import__(specs['driver'])
             laser_class = getattr(sys.modules[specs['driver']], specs['module'])
             kwds = dict(specs['kwds'])
@@ -124,6 +135,8 @@ class Ispim(Spim):
                     kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
                 else:
                     kwds[k] = eval(v) if '.' in str(v) else v
+            if 'laser_hub' in specs.keys():
+                kwds['port'] = shared_laser_ports[specs['laser_hub']]
 
             self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
@@ -134,23 +147,22 @@ class Ispim(Spim):
         self.log.info("Setting backlash in Z to 0")
         self.sample_pose.set_axis_backlash(Z=0.0)
         self.log.info("Setting speeds to 1.0 mm/sec")
-        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
+        self.tigerbox.set_speed(X=self.cfg.tiger_specs['x']['speed_mm_s'],
+                                Y=self.cfg.tiger_specs['y']['speed_mm_s'],
+                                Z=self.cfg.tiger_specs['z']['speed_mm_s'])
         # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
         #   This axis remapping is handled upon SamplePose __init__.
         # loop over axes and verify in external mode
-        # TODO, think about where to store this mapping in config
-        # TODO, merge ispim commands in tigerasi
-        # TODO, how to call this? via tigerbox?
-        externally_controlled_axes = \
-            {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.tiger_specs['axes'].values()}
-        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
-        # TODO, this needs to be buried somewhere else
-        # TODO, how to store card # mappings, in config?
-        (self.tigerbox
-         .set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
-                                        card_address=31))
+        external_control_settings = \
+            {a.lower(): PiezoControlMode(str(self.cfg.tiger_specs[a]['external_control_mode'])) for a in
+             self.cfg.tiger_specs.keys() if a.upper() in self.tigerbox.ordered_axes}
+        self.tigerbox.set_axis_control_mode(**external_control_settings)
+
+        for a, settings in self.cfg.tiger_specs.items():
+            if 'ttl_mode' in settings.keys():
+                self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode(settings['ttl_mode']),
+                                                card_address=self.tigerbox.axis_to_card[a.upper()])
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
@@ -170,32 +182,6 @@ class Ispim(Spim):
         self.__sim_counter_count += 1
         return count
 
-    # TODO: this should be a base class thing.s
-    def check_ext_disk_space(self, xtiles, ytiles, ztiles):
-        """Checks ext disk space before scan to see if disk has enough space scan"""
-        # One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_stack_filesize = self.cfg.bytes_per_image * ztiles
-            est_scan_filesize = est_stack_filesize*xtiles*ytiles
-            if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
-                self.log.error("Not enough space in external directory")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
-
-    def check_local_disk_space(self, z_tiles):
-        """Checks local disk space before scan to see if disk has enough space for two stacks"""
-
-        #One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_filesize = self.cfg.bytes_per_image*z_tiles
-            if est_filesize*2 >= shutil.disk_usage(self.cfg.local_storage_dir).free:
-                self.log.error("Not enough space on disk. Is the recycle bin empty?")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
@@ -355,10 +341,12 @@ class Ispim(Spim):
         # Check to see if disk has enough space for two tiles
         frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
-
+        self.check_read_write_speeds(self.cfg.local_storage_dir)
         #Check if external disk has enough space
-        if not self.overview_set.is_set():
+        if not self.overview_set.is_set() and self.cfg.ext_storage_dir != self.cfg.local_storage_dir:
             self.check_ext_disk_space(xtiles, ytiles, frames)
+            self.check_read_write_speeds(self.cfg.ext_storage_dir)
+
 
         # Est time scan will finish
         self.start_time = datetime.now()
@@ -395,7 +383,7 @@ class Ispim(Spim):
                               'subject_id': self.cfg.imaging_specs['subject_id'],
                               'chamber_immersion': {'medium': self.cfg.immersion_medium,
                                                                  'refractive_index': self.cfg.immersion_medium_refractive_index},
-                              'instrument_id': 'iSpim 1',
+                              'instrument_id': self.cfg.imaging_specs['instrument_id'],
                               'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
