@@ -1,5 +1,4 @@
 """Abstraction of the ispim Instrument."""
-
 from datetime import timedelta, datetime
 import calendar
 import logging
@@ -22,10 +21,11 @@ import os
 from acquire import DeviceState
 import tifffile
 import shutil
+#from vortran_laser import stradus
 from ispim.operations import normalized_dct_shannon_entropy
-from vortran_laser import stradus
-import subprocess
 import threading
+import sys
+import serial
 
 class Ispim(Spim):
 
@@ -122,25 +122,30 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
+        if 'laser_hub' in self.cfg.laser_specs.keys():
+            shared_laser_ports = {}
+            for hub in self.cfg.laser_specs['laser_hub']:
+                shared_laser_ports[hub] = serial.Serial(**self.cfg.laser_specs['laser_hub'][hub])
 
         for wl, specs in self.cfg.laser_specs.items():
-            if 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
-                self.log.warning(f'Skipping setup for laser {wl} due to no COM port specified')
+
+            if wl == 'laser_hub':
+                continue
+            elif 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
+                self.log.warning(f'Skipping setup for laser {wl}')
                 continue
 
-            laser_class = __import__(specs['driver'])
-            laser_path = specs['module_path'].split('.')
-            for path in laser_path:
-                laser_class = getattr(laser_class, path)
-
+            __import__(specs['driver'])
+            laser_class = getattr(sys.modules[specs['driver']], specs['module'])
             kwds = dict(specs['kwds'])
-            for key, arg in kwds.items():
-                if type(arg) == str and '.' in arg:
-                    arg_path = arg.split('.')
-                    arg = __import__(specs['driver'])
-                    for step in arg_path:
-                        arg = getattr(arg, step)
-                    kwds[key] = arg
+            for k, v in kwds.items():
+                if str(v).split('.')[0] in dir(sys.modules[specs['driver']]):
+                    arg_class = getattr(sys.modules[specs['driver']], v.split('.')[0])
+                    kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
+                else:
+                    kwds[k] = eval(v) if '.' in str(v) else v
+            if 'laser_hub' in specs.keys():
+                kwds['port'] = shared_laser_ports[specs['laser_hub']]
 
             self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
             self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
@@ -165,8 +170,9 @@ class Ispim(Spim):
 
         # TODO, this needs to be buried somewhere else
         # TODO, how to store card # mappings, in config?
-        self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
-                                        card_address=31)
+        (self.tigerbox
+         .set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
+                                        card_address=31))
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
@@ -186,31 +192,6 @@ class Ispim(Spim):
         self.__sim_counter_count += 1
         return count
 
-    def check_ext_disk_space(self, xtiles, ytiles, ztiles):
-        """Checks ext disk space before scan to see if disk has enough space scan"""
-        # One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_stack_filesize = self.cfg.bytes_per_image * ztiles
-            est_scan_filesize = est_stack_filesize*xtiles*ytiles
-            if est_scan_filesize >= shutil.disk_usage(self.cfg.ext_storage_dir).free:
-                self.log.error("Not enough space in external directory")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
-
-    def check_local_disk_space(self, z_tiles):
-        """Checks local disk space before scan to see if disk has enough space for two stacks"""
-
-        #One tile (tiff) is ~10368 kb
-        if self.cfg.imaging_specs['filetype'] == 'Tiff':
-            est_filesize = self.cfg.bytes_per_image*z_tiles
-            if est_filesize*2 >= shutil.disk_usage(self.cfg.local_storage_dir).free:
-                self.log.error("Not enough space on disk. Is the recycle bin empty?")
-                raise
-        elif self.cfg.imaging_specs['filetype'] != 'Tiff':
-            self.log.warning("Checking disk space not implemented. "
-                             "Proceed at your own risk")
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
@@ -223,13 +204,11 @@ class Ispim(Spim):
         transfer_speed_s = self.cfg.estimates['network_speed_Bps']
         file_transfer_time_s = est_filesize/transfer_speed_s
 
-        # if file_transfer_time_s > stack_time_s:
-        #     total_time_s = file_transfer_time_s *x_y_tiles
-        # else:
-        #     total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
-        #     # Add one file_transfer_time to account for last tile
-
-        total_time_s = (file_transfer_time_s * x_y_tiles) + (stack_time_s*x_y_tiles)
+        if file_transfer_time_s > stack_time_s and not self.overview_set.is_set():
+            total_time_s = file_transfer_time_s*x_y_tiles
+        else:
+            total_time_s = (stack_time_s*x_y_tiles) + file_transfer_time_s
+            # Add one file_transfer_time to account for last tile 
         total_time_day = total_time_s / 86400
         self.log.info(f"Scan will take approximately {total_time_day}")
         completion_date = datetime.now() + timedelta(days=total_time_day)
@@ -256,20 +235,37 @@ class Ispim(Spim):
                                      z_step_size_um):
         """helper function in main acquisition loop to log the current state
         before capturing a stack of images per channel."""
+
         for laser in self.active_lasers:
             laser = str(laser)
             tile_schema_params = \
                 {
                     'tile_number': curr_tile_index,
-                    'file_name': stack_name,
+                    'file_name': stack_name[0],
+                    'coordinate_transformations': [
+                        {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
+                                                        self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
+                                                        z_step_size_um]},
+                        {'translation':[self.stage_x_pos * 0.0001,
+                                                                   self.stage_y_pos * 0.0001,
+                                                                   self.stage_z_pos * 0.0001]}
+                    ],
+                    'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
+                                'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
+                                             'excitation_wavelength': laser,
+                                             'excitation_power': self.lasers[laser].get_setpoint(),
+                                             'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"],
+                                             'filter_names': [],
+                                             'detector_name' : ''
+                                                },
                     'channel_name': f'{laser}',
                     'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
                     'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
                     'z_voxel_size': z_step_size_um,
                     'voxel_size_units': 'micrometers',
-                    'tile_x_position': self.stage_x_pos * 0.001,
-                    'tile_y_position': self.stage_y_pos * 0.001,
-                    'tile_z_position': self.stage_z_pos * 0.001,
+                    'tile_x_position': self.stage_x_pos * 0.0001,
+                    'tile_y_position': self.stage_y_pos * 0.0001,
+                    'tile_z_position': self.stage_z_pos * 0.0001,
                     'tile_position_units': 'millimeters',
                     'lightsheet_angle': 45,
                     'lightsheet_angle_units': 'degrees',
@@ -306,7 +302,7 @@ class Ispim(Spim):
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
                                       self.cfg.imaging_specs['filetype'],
-                                      self.local_storage_dir,
+                                      self.cache_storage_dir,
                                       self.img_storage_dir,
                                       self.deriv_storage_dir,
                                       self.cfg.acquisition_style)
@@ -355,10 +351,12 @@ class Ispim(Spim):
         # Check to see if disk has enough space for two tiles
         frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
-
+        self.check_read_write_speeds(self.cfg.local_storage_dir)
         #Check if external disk has enough space
-        if not self.overview_set.is_set():
+        if not self.overview_set.is_set() and self.cfg.ext_storage_dir != self.cfg.local_storage_dir:
             self.check_ext_disk_space(xtiles, ytiles, frames)
+            self.check_read_write_speeds(self.cfg.ext_storage_dir)
+
 
         # Est time scan will finish
         self.start_time = datetime.now()
@@ -386,16 +384,17 @@ class Ispim(Spim):
                                                                 self.start_pos['y'],
                                                                 self.start_pos['z'])
 
+
         # Logging for JSON schema
         acquisition_params = {'session_start_time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                               'local_storage_directory': str(local_storage_dir),
-                              'external_storage_directory': img_storage_dir,
+                              'external_storage_directory': str(img_storage_dir),
                               'specimen_id': self.cfg.imaging_specs["subject_id"],
                               'subject_id': self.cfg.imaging_specs['subject_id'],
-                              'chamber_immersion': self.cfg.immersion_medium,
-                              'instrument_id': 'iSpim 2',
-                              'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema
-                              'chamber_immersion_refractive_index': self.cfg.immersion_medium_refractive_index,
+                              'chamber_immersion': {'medium': self.cfg.immersion_medium,
+                                                                 'refractive_index': self.cfg.immersion_medium_refractive_index},
+                              'instrument_id': f"{self.cfg.design_specs['instrument_type']} {self.cfg.design_specs['instrument_num']}",
+                              'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
 
@@ -409,7 +408,7 @@ class Ispim(Spim):
 
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
                 self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
-                self.wait_to_stop('y', self.stage_y_pos)  # wait_to_stop uses SAMPLE POSE
+                self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
@@ -457,7 +456,6 @@ class Ispim(Spim):
                             for
                             camera in self.stream_ids]
 
-                        os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
 
                         self.log.info(f"Collecting tile stacks at "
@@ -479,29 +477,21 @@ class Ispim(Spim):
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
                         #   we still wait for prior process to finish.
-                        # if transfer_processes is not None:
-                        #     self.log.info(f"Waiting for {filetype} transfer process "
-                        #                   "to complete.")
-                        #     for p in transfer_processes:
-                        #         p.join()
-                        # if img_storage_dir is not None:
-                        #     filepath_dests = [img_storage_dir / f for f in filenames]
-                        #     self.log.info("Starting transfer process for "
-                        #                   f"{filepath_dests}.")
-                        #     transfer_processes = [DataTransfer(filepath_srcs[streams],
-                        #                                        filepath_dests[streams]) for streams in self.stream_ids]
-                        #     for p in transfer_processes:
-                        #         p.start()
-                        if self.overview_process is None and img_storage_dir != None:
-                            filepath_dests = [img_storage_dir / f for f in filenames]
-                            parameters = '" /q /y /i /j /s /e' if os.path.isdir(filepath_srcs[0]) else '*" /y /i /j'
-                            print(f"xcopy {filepath_srcs[0]} {filepath_dests[0]}{parameters}")
-                            cmd = subprocess.run(f'xcopy "{filepath_srcs[0]}" "{filepath_dests[0]}{parameters}')
-                            # Delete the old file so we don't run out of local storage.
-                            print(f"Deleting old file at {filepath_srcs[0]}.")
+                        if transfer_processes is not None:
+                            self.log.info(f"Waiting for {filetype} transfer process "
+                                          "to complete.")
+                            for p in transfer_processes:
+                                p.join()
 
-                            os.remove(filepath_srcs[0])
-                            print(f"process finished.")
+                        if img_storage_dir is not None and img_storage_dir != local_storage_dir:
+                            filepath_dests = [img_storage_dir / f for f in filenames]
+                            self.log.info("Starting transfer process for "
+                                          f"{filepath_dests}.")
+                            transfer_processes = [DataTransfer(filepath_srcs[streams],
+                                                               filepath_dests[streams]) for streams in self.stream_ids]
+                            for p in transfer_processes:
+                                p.start()
+
                         self.tiles_acquired += 1
                         self.tile_time_s = time() - tile_start
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
@@ -515,8 +505,7 @@ class Ispim(Spim):
             if not self.overview_set.is_set():
                 dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
                 for img in self.overview_imgs:
-                    DataTransfer(Path(img), Path(dest[:dest.find('\micr')]+img[img.find('\overview_img_'):])).start()
-
+                    DataTransfer(Path(img), Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('\overview_img_'):])).start()
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
@@ -529,6 +518,7 @@ class Ispim(Spim):
             self.active_lasers = None
             self.total_tiles = None
             self.x_y_tiles = None
+            self.est_run_time = None
             self.tiles_acquired = 0
             self.tile_time_s = 0
 
@@ -563,19 +553,14 @@ class Ispim(Spim):
         # tile_spacing_um = 0.0055 um (property of stage) x ticks
         # Specify fast axis = Tiger x, slow axis = Tiger y,
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else tile_count
+        if self.overview_set.is_set():
+            self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-
-        if self.overview_process is not None:  # If doing an overview image, wait till previous tile is done
-            if self.overview_process.is_alive():
-                self.overview_process.join()
-        self.stack = None  # Clear stack buffer
-        self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
-
         self.frame_grabber.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
@@ -607,8 +592,9 @@ class Ispim(Spim):
         self.latest_frame_layer = 0     # Resetting frame number to 0 for progress bar in UI
 
         if self.overview_set.is_set():
-            self.overview_process = Thread(target=self.create_overview)
-            self.overview_process.start()  # If doing an overview image, start down sampling and mips
+            self.create_overview() # If doing an overview image, start down sampling and mips
+            self.stack = None  # Clear stack buffer
+
 
         self.log.info('Waiting for camera to finish')
         start = time()
@@ -684,10 +670,6 @@ class Ispim(Spim):
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
 
-        if self.overview_process != None:
-            self.overview_process.join()
-
-        split_image_overview = {}
         reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
         for wl in self.cfg.imaging_wavelengths:
             index = self.cfg.imaging_wavelengths.index(wl)
@@ -816,7 +798,7 @@ class Ispim(Spim):
                 packet = None
                 yield self.im, self.active_lasers[layer_num + 1]
             else:
-                yield
+                yield   # yield for thread
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
@@ -836,7 +818,6 @@ class Ispim(Spim):
             fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for getting wavelength
             self.log.info(f"Setting filter wheel to index {fw_index}")
             with self.stage_query_lock:
-                self.log.info(f"iapim")
                 self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
@@ -844,10 +825,10 @@ class Ispim(Spim):
         self.active_lasers = wavelength
         for laser in self.active_lasers: self.lasers[str(laser)].enable()
 
-    def set_scan_start(self, start):
+    def set_scan_start(self, start: dict):
 
         """Set start position of scan in sample pose.
-        :param start: start position of scan"""
+        :param start: start position of scan in 1/10 um"""
 
         self.start_pos = start
         self.log.info(f'Scan start position set to {self.start_pos}')

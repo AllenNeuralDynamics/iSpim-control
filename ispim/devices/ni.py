@@ -16,7 +16,11 @@ class WaveformHardware:
     def __init__(self, dev_name, input_trigger_name, count_trigger_name,
                  ao_counter_trigger_name, update_frequency_hz, livestream_frequency_hz):
 
+        self.log = logging.getLogger(__name__)
         self.dev_name = dev_name  # NI card address, i.e. Dev2
+        self.dev = nidaqmx.system.device.Device(self.dev_name)
+        self.log.warning('Resetting NIDAQ')
+        self.dev.reset_device()
         self.input_trigger_name = input_trigger_name.lstrip('/')  # NI card output trigger port, i.e. PFI00
         self.counter_trigger_name = count_trigger_name.lstrip('/')  # PFI counter task port
         self.ao_counter_trigger_name = ao_counter_trigger_name.lstrip('/')  # PFI port that triggers ao lines (connected to PFI counter task port)
@@ -24,7 +28,6 @@ class WaveformHardware:
         self.livestream_frequency_hz = livestream_frequency_hz
         self.ao_task = None
         self.counter_task = None
-        self.log = logging.getLogger(__name__)
         self.live = None
 
     def configure(self, period_time: float, ao_names_to_channels: dict, do_names_to_channels: dict, channel_num : int = 1,
