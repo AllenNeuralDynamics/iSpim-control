@@ -27,7 +27,7 @@ class WaveformHardware:
         self.log = logging.getLogger(__name__)
         self.live = None
 
-    def configure(self, period_time: float, ao_names_to_channels: dict, channel_num : int = 1,
+    def configure(self, period_time: float, ao_names_to_channels: dict, do_names_to_channels: dict, channel_num : int = 1,
                   live: bool = False):
         """Configure the daq with tasks."""
         # Close any existing tasks if we are reconfiguring.
@@ -53,6 +53,19 @@ class WaveformHardware:
         # Takes into account the number of channels in ao task
         self.ao_task.triggers.start_trigger.retriggerable = True
 
+        self.do_task = nidaqmx.Task("digital_output_task")
+        for channel_name, channel_index in do_names_to_channels.items():
+            physical_name = f"/{self.dev_name}/{channel_index}"
+            self.log.debug(f"Setting up do channel {channel_name} "
+                           f"on {physical_name}")
+            self.do_task.do_channels.add_do_chan(physical_name)
+        self.do_task.timing.cfg_samp_clk_timing(
+            rate=self.update_freq,
+            active_edge=Edge.RISING,
+            sample_mode=AcqType.FINITE,
+            samps_per_chan=sample_count * channel_num)
+        self.do_task.triggers.start_trigger.retriggerable = True
+
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
             co_channel = self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
@@ -66,6 +79,9 @@ class WaveformHardware:
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/{self.ao_counter_trigger_name}",
                                                                         # if in live mode PFI3 trigger_edge = Slope.RISING)
                                                                         trigger_edge=Slope.RISING)
+            self.do_task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=f"/{self.dev_name}/{self.ao_counter_trigger_name}",
+                                                                        # if in live mode PFI3 trigger_edge = Slope.RISING)
+                                                                        trigger_edge=Slope.RISING)
 
 
         else:
@@ -73,7 +89,9 @@ class WaveformHardware:
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
                 trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
                 trigger_edge=Slope.RISING)
-            
+            self.do_task.triggers.start_trigger.cfg_dig_edge_start_trig(
+                trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
+                trigger_edge=Slope.RISING)
             self.counter_task = nidaqmx.Task("counter_task")
             self.counter_loop = self.counter_task.ci_channels.add_ci_count_edges_chan(f'/{self.dev_name}/ctr0',
                                                                                       edge=nidaqmx.constants.Edge.RISING)
@@ -86,27 +104,29 @@ class WaveformHardware:
             self.ao_task.out_stream.output_buf_size = sample_count*channel_num  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
 
-    def assign_waveforms(self, voltages_t, scout_mode: bool = False):
+    def assign_waveforms(self, ao_voltages_t:ndarray, do_voltages_t:ndarray, scout_mode: bool = False):
         """Write analog and digital waveforms to device.
         Order is driven by the TOML config file.
         """
         # Confirm digital signal waveform is a numpy array because we must
         # ultimately write the digital waveform to the device as bools.
 
-        assert type(voltages_t) == ndarray, \
+        assert type(ao_voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
         if scout_mode:
             self.ao_task.control(TaskMode.TASK_UNRESERVE)   # Unreserve buffer
-            self.ao_task.out_stream.output_buf_size = len(voltages_t[0])  # Sets buffer to length of voltages
+            self.ao_task.out_stream.output_buf_size = len(ao_voltages_t[0])  # Sets buffer to length of voltages
             self.ao_task.control(TaskMode.TASK_COMMIT)
-        self.ao_task.write(voltages_t, auto_start=False)  # arrays of floats
+        self.ao_task.write(ao_voltages_t, auto_start=False)  # arrays of floats
+        self.do_task.write(do_voltages_t.astype(bool), auto_start=False)  # arrays of floats
 
 
     def start(self):
         """start tasks."""
         # Start ao_task and counter task
         self.ao_task.start()
+        self.do_task.start()
         self.counter_task.start()
 
     def playback_finished(self):
@@ -133,6 +153,7 @@ class WaveformHardware:
         self.counter_task.wait_until_done(1)
         sleep(wait)         # Sleep so ao task can finish
         self.ao_task.stop()
+        self.do_task.stop()
 
     def restart(self):
         # Restart ao task
@@ -148,3 +169,6 @@ class WaveformHardware:
         if self.ao_task is not None:
             self.ao_task.close()
             self.ao_task = None
+        if self.do_task is not None:
+            self.do_task.close()
+            self.do_task = None

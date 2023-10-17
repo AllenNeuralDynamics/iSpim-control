@@ -281,7 +281,7 @@ class IspimConfig(SpimConfig):
         return set([int(nm) for nm in self.cfg['channel_specs'].keys() if nm.isdigit()])
 
     @property
-    def daq_used_channels(self):
+    def daq_ao_used_channels(self):
         """Return the total channels used on the daq."""
         # ao channels for lasers must be tallied up from channel_specs.
         ao_laser_count = 0
@@ -312,6 +312,38 @@ class IspimConfig(SpimConfig):
                 self.log.warning(f"{wavelen} [nm] laser is not driven by an"
                                  f"analog output channel on the NI DAQ.")
         return ao_names_to_channels
+
+    @property
+    def daq_do_used_channels(self):
+        """Return the total do channels used on the daq."""
+        # do channels for lasers must be tallied up from channel_specs.
+        do_laser_count = 0
+        # Since it's possible that lasers aren't strictly driven by an
+        # ao channel, we must tally them up.
+        do_names_to_channels = {}
+        for wavelen, specs in self.laser_specs.items():
+            do_channel = specs.get('do_channel', None)
+            if do_channel is not None and do_channel not in do_names_to_channels.values():
+                do_names_to_channels[do_channel] = do_channel
+                do_laser_count += 1
+
+        return do_laser_count
+
+    @property
+    def daq_do_names_to_channels(self):
+        """Return a dict of {<digital output signal name> : <daq do channel>}.
+
+        Laser signals are stuffed in as str(wavelength_in_nm).
+        """
+
+        do_names_to_channels = {}
+        for wavelen, specs in self.laser_specs.items():
+            do_channel = specs.get('do_channel', None)
+            # Handle (rare!) case that a laser isn't driven by an ao channel.
+            if do_channel is not None and do_channel not in do_names_to_channels.values():
+                do_names_to_channels[do_channel] = do_channel
+
+        return do_names_to_channels
 
     # Simple @properties that do not have setters because they shouldn't be
     # changed from anything else other than the toml file itself.

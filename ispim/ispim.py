@@ -175,11 +175,11 @@ class Ispim(Spim):
             self.ni.counter_task.read = self.__sim_counter_read
         if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
             self.log.info("Configuring NIDAQ")
-            self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
+            self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, self.cfg.daq_do_names_to_channels, len(active_wavelength), live)
         self.log.info("Generating waveforms.")
-        _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
+        _, ao_voltages_t, do_voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
-        self.ni.assign_waveforms(voltages_t, scout_mode)
+        self.ni.assign_waveforms(ao_voltages_t, do_voltages_t, scout_mode)
 
     def __sim_counter_read(self):
         count = self.__sim_counter_count
