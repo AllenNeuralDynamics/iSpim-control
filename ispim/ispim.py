@@ -246,9 +246,9 @@ class Ispim(Spim):
                         {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
                                                         self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
                                                         z_step_size_um]},
-                        {'translation':[self.stage_x_pos * 0.001,
-                                                                   self.stage_y_pos * 0.001,
-                                                                   self.stage_z_pos * 0.001]}
+                        {'translation':[self.stage_x_pos * 0.0001,
+                                                                   self.stage_y_pos * 0.0001,
+                                                                   self.stage_z_pos * 0.0001]}
                     ],
                     'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
                                 'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
@@ -263,9 +263,9 @@ class Ispim(Spim):
                     'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
                     'z_voxel_size': z_step_size_um,
                     'voxel_size_units': 'micrometers',
-                    'tile_x_position': self.stage_x_pos * 0.001,
-                    'tile_y_position': self.stage_y_pos * 0.001,
-                    'tile_z_position': self.stage_z_pos * 0.001,
+                    'tile_x_position': self.stage_x_pos * 0.0001,
+                    'tile_y_position': self.stage_y_pos * 0.0001,
+                    'tile_z_position': self.stage_z_pos * 0.0001,
                     'tile_position_units': 'millimeters',
                     'lightsheet_angle': 45,
                     'lightsheet_angle_units': 'degrees',
@@ -302,7 +302,7 @@ class Ispim(Spim):
                                       self.cfg.tile_overlap_y_percent,
                                       self.cfg.tile_prefix,
                                       self.cfg.imaging_specs['filetype'],
-                                      self.local_storage_dir,
+                                      self.cache_storage_dir,
                                       self.img_storage_dir,
                                       self.deriv_storage_dir,
                                       self.cfg.acquisition_style)
@@ -393,7 +393,7 @@ class Ispim(Spim):
                               'subject_id': self.cfg.imaging_specs['subject_id'],
                               'chamber_immersion': {'medium': self.cfg.immersion_medium,
                                                                  'refractive_index': self.cfg.immersion_medium_refractive_index},
-                              'instrument_id': self.cfg.imaging_specs['instrument_id'],
+                              'instrument_id': f"{self.cfg.design_specs['instrument_type']} {self.cfg.design_specs['instrument_num']}",
                               'experimenter_full_name': [self.cfg.experimenters_name],  # Needs to be in list for AIND Schema,
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
@@ -456,7 +456,6 @@ class Ispim(Spim):
                             for
                             camera in self.stream_ids]
 
-                        os.makedirs(local_storage_dir, exist_ok=True)  # Make local directory if not already created
                         filepath_srcs = [local_storage_dir / f for f in filenames]
 
                         self.log.info(f"Collecting tile stacks at "
@@ -483,7 +482,8 @@ class Ispim(Spim):
                                           "to complete.")
                             for p in transfer_processes:
                                 p.join()
-                        if img_storage_dir is not None:
+
+                        if img_storage_dir is not None and img_storage_dir != local_storage_dir:
                             filepath_dests = [img_storage_dir / f for f in filenames]
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dests}.")
@@ -505,8 +505,7 @@ class Ispim(Spim):
             if not self.overview_set.is_set():
                 dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
                 for img in self.overview_imgs:
-                    DataTransfer(Path(img), Path(dest[:dest.find('\micr')]+img[img.find('\overview_img_'):])).start()
-
+                    DataTransfer(Path(img), Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('\overview_img_'):])).start()
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
