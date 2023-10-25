@@ -26,7 +26,8 @@ from ispim.operations import normalized_dct_shannon_entropy
 import threading
 import sys
 import serial
-
+from math import ceil
+import subprocess
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -179,7 +180,9 @@ class Ispim(Spim):
         if self.simulated:
             self.ni.counter_task = Mock()
             self.ni.counter_task.read = self.__sim_counter_read
-        if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
+        if not self.livestream_enabled.is_set() and self.ni.live != live:       # Only configures daq on the initiation of livestream
+            # Only configure if tasks need to be updated
+            print(self.ni.live , live)
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, self.cfg.daq_do_names_to_channels, len(active_wavelength), live)
         self.log.info("Generating waveforms.")
@@ -505,7 +508,9 @@ class Ispim(Spim):
             if not self.overview_set.is_set():
                 dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
                 for img in self.overview_imgs:
-                    DataTransfer(Path(img), Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('\overview_img_'):])).start()
+                    dest = Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('\overview_img_'):])
+                    cmd = subprocess.run(f'xcopy "{Path(img)}" "{dest}*" /y /i /j')
+                    os.remove(Path(img))
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
@@ -678,24 +683,17 @@ class Ispim(Spim):
                 len(self.cfg.imaging_wavelengths) != 1 else self.overview_stack
 
             # Create empty array size of overview image
-            rows = np.shape(split_image_overview[0])[0]
-            cols = split_image_overview[0].shape[1]
+            rows = ceil(self.cfg.row_count_px/10)
+            cols = self.ztiles
             overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
-            overlap_rows = rows - overlap
-            reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), ytiles * cols))
+            reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), cols))
 
+            x_pos = 0
             for x in range(0, xtiles):
-                for y in range(0, ytiles):
-                    cols = split_image_overview[0].shape[1]  # Account for lost frames
-                    if x == xtiles - 1:
-                        reshaped[x * overlap_rows:(x * overlap_rows) + rows, y * cols:(y + 1) * cols] = \
-                        split_image_overview[
-                            0]
-                    else:
-                        reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = \
-                        split_image_overview[0][
-                        0:overlap_rows]
-                    del split_image_overview[0]
+                rows = split_image_overview[x].shape[0]
+                reshaped[x_pos:x_pos+rows, :] = (
+                    np.maximum(reshaped[x_pos:x_pos+rows, :], split_image_overview[x]))
+                x_pos += round((100-self.cfg.tile_overlap_x_percent)/100 * ceil(self.cfg.row_count_px/10))
 
             reshaped_array[index] = reshaped
 
@@ -760,7 +758,6 @@ class Ispim(Spim):
         self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
 
         self.ni.stop()
-        self.ni.close()
 
         for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
