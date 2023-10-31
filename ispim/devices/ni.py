@@ -115,14 +115,8 @@ class WaveformHardware:
         assert type(ao_voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
-        #if scout_mode:
-        self.ao_task.control(TaskMode.TASK_UNRESERVE)   # Unreserve buffer
-        self.ao_task.out_stream.output_buf_size = len(ao_voltages_t[0])  # Sets buffer to length of voltages
-        self.ao_task.control(TaskMode.TASK_COMMIT)
-        self.do_task.control(TaskMode.TASK_UNRESERVE)  # Unreserve buffer
-        self.do_task.out_stream.output_buf_size = len(ao_voltages_t[0])  # Sets buffer to length of voltages
-        self.do_task.control(TaskMode.TASK_COMMIT)
-
+        if scout_mode:
+            self.rereserve_buffer(len(ao_voltages_t[0]))
 
         self.ao_task.write(ao_voltages_t, auto_start=False)  # arrays of floats
         self.do_task.write(do_voltages_t.astype(bool), auto_start=False)  # arrays of floats
@@ -143,6 +137,16 @@ class WaveformHardware:
     def wait_until_done(self, timeout=1.0):
         # Check if ao task is finished
         return self.ao_task.wait_until_done(timeout)
+
+    def rereserve_buffer(self, buf_len):
+        """If tasks are already configured, the buffer needs to be cleared and rereserved to work"""
+        self.ao_task.control(TaskMode.TASK_UNRESERVE)  # Unreserve buffer
+        self.ao_task.out_stream.output_buf_size = buf_len  # Sets buffer to length of voltages
+        self.ao_task.control(TaskMode.TASK_COMMIT)
+
+        self.do_task.control(TaskMode.TASK_UNRESERVE)  # Unreserve buffer
+        self.do_task.out_stream.output_buf_size = buf_len
+        self.do_task.control(TaskMode.TASK_COMMIT)
 
     def stop(self, wait = 1):
         """Stop the tasks"""
