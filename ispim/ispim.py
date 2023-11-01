@@ -330,6 +330,14 @@ class Ispim(Spim):
         x_grid_step_um, y_grid_step_um = self.get_xy_grid_step(tile_overlap_x_percent,
                                                                tile_overlap_y_percent)
 
+        # TODO: this is a hacky fix for now. this is a bug we've had but not identified until now.
+        # For the iSPIM, the field of view in Y is oriented at 45 deg. When we project this length
+        # onto the sample pose y axis, it is shorter by sqrt(2). Therefore we need to reduce the
+        # grid step in y also by sqrt(2). Later we should back this into a config value which 
+        # specifies the angle between the motorized axis and the sample axis...
+        
+        y_grid_step_um = y_grid_step_um / np.sqrt(2)
+        
         # Calculate number of tiles in XYZ
         # Always round up so that we cover the desired imaging region.
         xtiles, ytiles, ztiles = self.get_tile_counts(tile_overlap_x_percent,
