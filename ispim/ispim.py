@@ -26,6 +26,8 @@ from ispim.operations import normalized_dct_shannon_entropy
 import threading
 import sys
 import serial
+from math import ceil, floor
+import subprocess
 
 class Ispim(Spim):
 
@@ -96,6 +98,8 @@ class Ispim(Spim):
         self.__sim_counter_count = 0
 
         self.stage_query_lock = threading.Lock()
+
+        self.ytiles_acquired = 0
 
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
@@ -179,7 +183,7 @@ class Ispim(Spim):
         if self.simulated:
             self.ni.counter_task = Mock()
             self.ni.counter_task.read = self.__sim_counter_read
-        if not self.livestream_enabled.is_set():       # Only configures daq on the initiation of livestream
+        if not self.livestream_enabled.is_set() and self.ni.live != live: # Only configures daq when in different state
             self.log.info("Configuring NIDAQ")
             self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
         self.log.info("Generating waveforms.")
@@ -496,6 +500,7 @@ class Ispim(Spim):
                         self.tile_time_s = time() - tile_start
                     self.stage_x_pos += x_grid_step_um * STEPS_PER_UM
                 self.stage_y_pos += y_grid_step_um * STEPS_PER_UM
+                self.ytiles_acquired += 1
 
         finally:
             if transfer_processes is not None:
@@ -505,7 +510,11 @@ class Ispim(Spim):
             if not self.overview_set.is_set():
                 dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
                 for img in self.overview_imgs:
-                    DataTransfer(Path(img), Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('\overview_img_'):])).start()
+                    dest_path = Path(
+                        dest[:-len(self.cfg.design_specs['instrument_type'])] + img[img.find('overview_img_') - 3:])
+                    cmd = subprocess.run(f'xcopy "{Path(img)}" "{dest_path}*" /y /i /j')
+                    os.remove(Path(img))
+
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
@@ -554,7 +563,7 @@ class Ispim(Spim):
         # Specify fast axis = Tiger x, slow axis = Tiger y,
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else tile_count
         if self.overview_set.is_set():
-            self.stack = [None] * (tile_count)  # Create buffer the size of stacked image
+            self.stack = self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
@@ -648,21 +657,35 @@ class Ispim(Spim):
         return 0
 
     def overview_scan(self):
-
         """Quick overview scan function """
-
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
                                                            .8 * 10,
                                                            self.cfg.volume_x_um,
-                                                           300,
+                                                           self.cfg.volume_y_um,
                                                            self.cfg.volume_z_um)
 
-        self.overview_stack = None  # Clear previous image overview if any
-        self.overview_stack = []  # Create empty array size of tiles
+        self.overview_ytiles = ytiles
+        self.overview_xtiles = xtiles
+
+        x_grid_step_px = (1 - self.cfg.tile_overlap_x_percent / 100.0) * ceil(self.cfg.row_count_px / 10)
+        y_grid_step_px = ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) *
+                              ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)
+
+        x_voxels = ceil((xtiles - 1) * x_grid_step_px) + ceil(self.cfg.row_count_px / 10)
+        y_voxels = ceil((ytiles - 1) * y_grid_step_px) + ceil(self.cfg.column_count_px / 10)
+        z_voxels = self.ztiles
+
+        self.overview = {}
+        for wl in self.cfg.imaging_wavelengths:
+            self.overview[wl] = {
+                'xy': np.zeros((x_voxels, y_voxels)),
+                'yz': np.zeros((z_voxels, y_voxels)),
+                'xz': np.zeros((x_voxels, z_voxels))
+            }
         self.overview_set.set()
-        # Y volume is always 1 tile
-        self.collect_volumetric_image(self.cfg.volume_x_um, 300,
+
+        self.collect_volumetric_image(self.cfg.volume_x_um, self.cfg.volume_y_um,
                                       self.cfg.volume_z_um, .8 * 10,
                                       self.cfg.imaging_wavelengths,
                                       (.8 * 10 / 1000 / ((self.cfg.get_period_time()) + self.cfg.jitter_time_s)),
@@ -670,66 +693,63 @@ class Ispim(Spim):
                                       self.cfg.tile_prefix, 'Trash', self.cfg.local_storage_dir,
                                       acquisition_style='sequential')
 
-        reshaped_array = [None]*len(self.cfg.imaging_wavelengths)
-        for wl in self.cfg.imaging_wavelengths:
-            index = self.cfg.imaging_wavelengths.index(wl)
-            # Split list of all overview images into seperate channels
-            split_image_overview= self.overview_stack[index::len(self.cfg.imaging_wavelengths)] if \
-                len(self.cfg.imaging_wavelengths) != 1 else self.overview_stack
-
-            # Create empty array size of overview image
-            rows = np.shape(split_image_overview[0])[0]
-            cols = split_image_overview[0].shape[1]
-            overlap = round((self.cfg.tile_overlap_x_percent / 100) * rows)
-            overlap_rows = rows - overlap
-            reshaped = np.zeros(((xtiles * rows) - (overlap * (xtiles - 1)), ytiles * cols))
-
-            for x in range(0, xtiles):
-                for y in range(0, ytiles):
-                    cols = split_image_overview[0].shape[1]  # Account for lost frames
-                    if x == xtiles - 1:
-                        reshaped[x * overlap_rows:(x * overlap_rows) + rows, y * cols:(y + 1) * cols] = \
-                        split_image_overview[
-                            0]
-                    else:
-                        reshaped[x * overlap_rows:(x + 1) * overlap_rows, y * cols:(y + 1) * cols] = \
-                        split_image_overview[0][
-                        0:overlap_rows]
-                    del split_image_overview[0]
-
-            reshaped_array[index] = reshaped
-
-        self.overview_imgs.append(fr'{self.cfg.local_storage_dir}\overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
-                         fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
         pos = self.sample_pose.get_position()
-        tifffile.imwrite(self.overview_imgs[-1],
-                         reshaped_array,
-                         metadata={'position': {'z': pos['z'], 'x': pos['x'], 'y': pos['y']},
-                                    'volume':{'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um, 'y': 300},
-                                    'tile':{'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
+
+        self.overview_channels = {}
+        self.overview_channels['xy'] = [self.overview[wl]['xy'] for wl in self.overview.keys()]
+        self.overview_channels['yz'] = [self.overview[wl]['yz'] for wl in self.overview.keys()]
+        self.overview_channels['xz'] = [self.overview[wl]['xz'] for wl in self.overview.keys()]
+        for orientation in ['xy', 'yz', 'xz']:
+            self.overview_imgs.append(
+                fr'{self.cfg.local_storage_dir}\{orientation}_overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
+                fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
+            tifffile.imwrite(self.overview_imgs[-1],
+                             self.overview_channels[orientation],
+                             metadata={'position': {'z': pos['z'], 'x': pos['x'], 'y': pos['y']},
+                                       'volume': {'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um,
+                                                  'y': self.cfg.volume_y_um},
+                                       'tile': {'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
 
         self.overview_set.clear()
         self.overview_process = None
         self.start_pos = None  # Reset start position
+        self.ytiles_acquired = 0
 
-
-        return reshaped_array, xtiles
+        return self.overview_channels
 
     def create_overview(self):
 
         """Create overview image from a stack"""
 
-        self.stack = [i for i in self.stack if i is not None]           # Remove dropped tiles
+        wl = self.active_lasers[0]
         downsampled = [x[0::10, 0::10] for x in self.stack]           # Down sample by 10, scikitimage downscale local mean, gpu downsample
-        mipstack = [np.max(x, axis=1) for x in downsampled]             # Max projection
-        mipstack = np.array(mipstack)
 
-        # Reshape max
-        rows = mipstack[0].shape[0]
-        cols = mipstack.shape[0]
-        reshaped = np.ones((self.ztiles, rows))
-        reshaped[0:cols, :] = mipstack
-        self.overview_stack.append(np.rot90(np.array(reshaped)))
+        x_grid_step_um, y_grid_step_um = self.get_xy_grid_step(self.cfg.tile_overlap_x_percent,
+                                                               self.cfg.tile_overlap_y_percent)
+
+        xtile = round(((self.stage_x_pos-self.start_pos['x'])/10)/x_grid_step_um)
+        ytile = self.ytiles_acquired
+
+        # mipping in xz direction
+        mipstack_xz = np.rot90(np.array([np.max(x, axis=1) for x in downsampled]))  # Max projection
+        x_pos_px = int(round((100 - self.cfg.tile_overlap_x_percent) / 100 * ceil(self.cfg.row_count_px / 10)) * xtile)
+        self.overview[wl]['xz'][x_pos_px:x_pos_px + mipstack_xz.shape[0], :] = (
+                np.maximum(self.overview[wl]['xz'][x_pos_px:x_pos_px + mipstack_xz.shape[0], :], mipstack_xz))
+
+        # mipping xy
+        mipstack_xy = np.max(downsampled, axis=0)
+        mipstack_xy = np.flip(mipstack_xy, axis=0)
+        y_pos_px = int(ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) * ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)  * ytile)
+        self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0], y_pos_px:y_pos_px + mipstack_xy.shape[1]] = (
+            np.maximum(self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0],
+                                        y_pos_px:y_pos_px + mipstack_xy.shape[1]], mipstack_xy))
+
+        # mipping yz
+        mipstack_yz = np.array([np.max(x, axis=0) for x in downsampled])
+        shift = 34*ytile #round(y_pos_px/2)  # Need to shift pixels to account for angle in frames. Why 34?
+        mipstack_yz = mipstack_yz if ytile == 0 else mipstack_yz[:-shift,:]
+        self.overview[wl]['yz'][shift:, y_pos_px:y_pos_px + mipstack_yz.shape[1]] = (
+            np.maximum(self.overview[wl]['yz'][shift:, y_pos_px:y_pos_px + mipstack_yz.shape[1]], mipstack_yz))
 
     def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
@@ -760,7 +780,6 @@ class Ispim(Spim):
         self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
 
         self.ni.stop()
-        self.ni.close()
 
         for laser in self.active_lasers: self.lasers[str(laser)].disable()
         self.active_lasers = None
