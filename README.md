@@ -55,7 +55,7 @@ Software control of the ASI DiSPIM.
 9. Install [fio](https://github.com/axboe/fio#id5)
 
   -   If using spim-core,  need to install fios. I found it hard, but I’m sure it’ll be a piece of cake for you!
-  - Pip clone the repo into projects folder 
+  - Clone the repo into projects folder 
   - The fio repo has a pretty detailed install but just incase I’ll reiterate what worked for me
   - Download the lates [fio msi windows installer](https://github.com/axboe/fio/releases) 
   - Download cygwin. IMPORTANT: when installing Cygwin, it will ask you what packages you want installed. Specify make and then any packages starting with mingw64-x86_64 
@@ -70,10 +70,7 @@ Software control of the ASI DiSPIM.
           make 
         
           make install 
-        
-          IMPORTANT: I had to delete the block comments found in the configure file before this would run and it still complained a little about $’\r’ not being found but it did work.  
-        
-          Make sure to close any pycharm or command prompt instances before trying to use command fio 
+
         ```
 -   IMPORTANT: I had to delete the block comments found in the configure file before this would run and it still complained a little about $’\r’ not being found but it did work.  
 
@@ -104,7 +101,7 @@ Stage:
 
 2.  Cause- A potential cause of this behavior is that the stage firmware not correctly specifying what type of lead screw is in the system. For example, if you have a extra-fine lead screw but the software thinks that there it’s using a standard screw, there will be irregularly spaced intervals. 
 
-3.  Solution- To change the leadscrew, open the tiger command console and send command CCA X = 6 for fine lead screw.  See here for more information on how to specify correct leadscrew 
+3.  Solution- To change the leadscrew, open the tiger command console and send command CCA X = 6 for fine lead screw.  See [here](http://www.asiimaging.com/docs/products/serial_commands#commandcustoma_cca) for more information on how to specify correct leadscrew 
 
 LASERS: 
 
@@ -112,4 +109,4 @@ LASERS:
 
 2.  Cause- Some lasers, like vortran, need to have a 50 Ohm impedance from the source to work. Nidaq does not have this high of impedance.  
 
-3.  Solution- Either use these lasers in analog mode or you can buy a driver that can create a 50 Ohm impedance. We’ve used this and had success.  
+3.  Solution- Either use these lasers in analog mode or you can buy a driver that can create a 50 Ohm impedance. We’ve used [this](https://www.tindie.com/products/land_boards/5075-ohm-ttl-line-driver/) and had success.  

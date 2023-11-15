@@ -8,7 +8,6 @@ from time import perf_counter, sleep, time
 from mock import NonCallableMock as Mock
 from threading import Thread, Event
 from ispim.ispim_config import IspimConfig
-from ispim.devices.frame_grabber import FrameGrabber
 from ispim.devices.ni import WaveformHardware
 from ispim.compute_waveforms import generate_waveforms
 from tigerasi.tiger_controller import TigerController, STEPS_PER_UM
@@ -40,17 +39,16 @@ class Ispim(Spim):
 
         self.cfg = IspimConfig(config_filepath)
         # Instantiate hardware devices
-        self.frame_grabber = FrameGrabber() if not self.simulated else \
-            Mock(FrameGrabber)
         self.ni = WaveformHardware(**self.cfg.daq_obj_kwds) if not self.simulated else \
             Mock(WaveformHardware)
         self.tigerbox = TigerController(**self.cfg.tiger_obj_kwds) if not \
             self.simulated else SimTiger(**self.cfg.tiger_obj_kwds,
                                          build_config={'Motor Axes': ['X', 'Y', 'Z', 'V', 'W', 'A', 'B', 'C', 'D']})
-        self.sample_pose = SamplePose(self.tigerbox, **self.cfg.sample_pose_kwds)
+        self.sample_pose = SamplePose(self.tigerbox, **{'axis_map':{a:specs['mapped_scan_axis'] for a, specs in
+                                                    self.cfg.tiger_specs.items() if 'mapped_scan_axis' in specs.keys()}})
         self.filter_wheel = FilterWheel(self.tigerbox,
                                         **self.cfg.filter_wheel_kwds)
-
+        self.camera = None
         self.lasers = {}  # populated in _setup_lasers.
         self.combiners = {}
         self.channel_gene = {}  # dictionary containing labeled gene for each channel
@@ -66,8 +64,6 @@ class Ispim(Spim):
         self.stage_x_pos = None
         self.stage_y_pos = None
         self.scout_mode = False
-        # camera streams filled in with framegrabber.cameras
-        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -105,24 +101,20 @@ class Ispim(Spim):
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
+        self.log.debug(f"Setting up camera")
+        for camera, specs in self.cfg.camera_specs.items():
+            __import__(specs['driver'])
+            camera_class = getattr(sys.modules[specs['driver']], specs['module'])
+            kwds = dict(specs['kwds'])
+            for k, v in kwds.items():
+                if str(v).split('.')[0] in dir(sys.modules[specs['driver']]):
+                    arg_class = getattr(sys.modules[specs['driver']], v.split('.')[0])
+                    kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
+                else:
+                    kwds[k] = eval(v) if '.' in str(v) else v
+            self.camera = camera_class(**kwds) if not self.simulated else Mock()
+            self.camera.configure(**specs['configure'])
 
-        if self.simulated:
-            self.frame_grabber.runtime = Mock()
-
-        self.frame_grabber.setup_cameras((self.cfg.sensor_column_count,
-                                          self.cfg.sensor_row_count))
-
-        # Initializing readout direction of camera(s)
-        self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction)
-
-        # Initializing line interval of both cameras
-        self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
-                                             self.cfg.sensor_row_count)
-
-        # Initializing exposure time of both cameras
-        cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
-        self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
-                                             cpx_line_interval[0])
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
@@ -173,26 +165,22 @@ class Ispim(Spim):
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
-        self.log.info("Setting backlash in Z to 0")
-        self.sample_pose.set_axis_backlash(Z=0.0)
-        self.log.info("Setting speeds to 1.0 mm/sec")
-        self.tigerbox.set_speed(X=1.0, Y=1.0, Z=1.0)
-        # Note: Tiger X is Tiling Z, Tiger Y is Tiling X, Tiger Z is Tiling Y.
-        #   This axis remapping is handled upon SamplePose __init__.
-        # loop over axes and verify in external mode
-        # TODO, think about where to store this mapping in config
-        # TODO, merge ispim commands in tigerasi
-        # TODO, how to call this? via tigerbox?
-        externally_controlled_axes = \
-            {a.lower(): PiezoControlMode.EXTERNAL_CLOSED_LOOP for a in
-             self.cfg.tiger_specs['axes'].values()}
-        self.tigerbox.set_axis_control_mode(**externally_controlled_axes)
 
-        # TODO, this needs to be buried somewhere else
-        # TODO, how to store card # mappings, in config?
-        (self.tigerbox
-         .set_ttl_pin_modes(in0_mode=TTLIn0Mode.MOVE_TO_NEXT_ABS_POSITION,
-                                        card_address=31))
+        self.log.info(f"Setting stage backlash")
+        self.sample_pose.set_axis_backlash(**{a.lower(): specs['backlash_mm']
+                                              for a, specs in self.cfg.tiger_specs.items() if 'backlash_mm' in specs})
+        self.log.info("Setting stage speeds")
+        self.sample_pose.set_speed(**{a.lower(): specs['speed_mm_s'] for a, specs in self.cfg.tiger_specs.items()
+                                   if 'speed_mm_s' in specs.keys()})
+        self.log.info("Setting axis control mode")
+        self.sample_pose.set_axis_control_mode(**{a.lower(): PiezoControlMode(str(specs['external_control_mode']))
+                                               for a, specs in self.cfg.tiger_specs.items() if a.upper() in
+                                               self.tigerbox.ordered_axes})
+
+        for a, specs in self.cfg.tiger_specs.items():
+            if 'ttl_mode' in specs.keys():
+                self.tigerbox.set_ttl_pin_modes(in0_mode=TTLIn0Mode(specs['ttl_mode']),
+                                                card_address=self.tigerbox.axis_to_card[a.upper()])
 
     def _setup_waveform_hardware(self, active_wavelength: list, live: bool = False, scout_mode: bool = False):
 
@@ -271,7 +259,7 @@ class Ispim(Spim):
                                                                    self.stage_z_pos * 0.0001]}
                     ],
                     'channel' : {'channel_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
-                                'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
+                                     'light_source_name': self.channel_gene[laser] if laser in self.channel_gene.keys() else '',
                                              'excitation_wavelength': laser,
                                              'excitation_power': self.lasers[laser].get_setpoint(),
                                              'filter_wheel_index': '0' if self.cfg.acquisition_style == 'interleaved' else self.cfg.laser_specs[laser]["filter_index"],
@@ -431,19 +419,14 @@ class Ispim(Spim):
                 # move back to x=0 which maps to z=0
                 self.stage_x_pos = self.start_pos['x']  # Both in SAMPLE POSE
 
-                self.log.info("Setting speed in Y to 1.0 mm/sec")
-                self.tigerbox.set_speed(Z=1.0)  # Z maps to Y
-
                 self.log.info(f"Moving to Y = {self.stage_y_pos}.")
-                self.tigerbox.move_absolute(z=round(self.stage_y_pos), wait=False)
+                self.sample_pose.move_absolute(y=round(self.stage_y_pos), wait=False)
                 self.wait_to_stop('y', self.stage_y_pos)  # Use in case stage gets stuck , wait_to_stop uses SAMPLE POSE
 
                 for i in range(xtiles):
                     # Move to specified X position
-                    self.log.debug("Setting speed in X to 1.0 mm/sec")
-                    self.tigerbox.set_speed(Y=1.0)  # Y maps to X
                     self.log.debug(f"Moving to X = {round(self.stage_x_pos)}.")
-                    self.tigerbox.move_absolute(y=round(self.stage_x_pos), wait=False)
+                    self.sample_pose.move_absolute(x=round(self.stage_x_pos), wait=False)
                     self.wait_to_stop('x', self.stage_x_pos)  # wait_to_stop uses SAMPLE POSE
 
                     # If sequential, loop through k for each of active_wavelenghths and feed in list as [[wl]]
@@ -457,17 +440,16 @@ class Ispim(Spim):
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
-                        self.tigerbox.set_speed(X=1.0)  # X maps to Z
                         self.log.debug("Applying extra move to take out backlash.")
                         z_backup_pos = -STEPS_PER_UM * self.cfg.stage_backlash_reset_dist_um
-                        self.tigerbox.move_absolute(x=round(z_backup_pos))
+                        self.sample_pose.move_absolute(z=round(z_backup_pos))
                         self.log.info(f"Moving to Z = {self.stage_z_pos}.")
-                        self.tigerbox.move_absolute(x=self.stage_z_pos, wait=False)
+                        self.sample_pose.move_absolute(z=self.stage_z_pos, wait=False)
                         self.wait_to_stop('z', self.stage_z_pos)  # wait_to_stop uses SAMPLE POSE
 
                         self.log.info(f"Setting scan speed in Z to {scan_speed_mm_s} mm/sec.")
-                        self.tigerbox.set_speed(X=scan_speed_mm_s)
-                        self.log.info(f"Actual speed {self.tigerbox.get_speed('x')}mm/sec.")
+                        self.sample_pose.set_speed(X=scan_speed_mm_s)
+                        self.log.info(f"Actual speed {self.sample_pose.get_speed('x')}mm/sec.")
 
                         self.log.info(f"Setting up lasers for active channels: {channel[k]}")
                         self.setup_imaging_for_laser(channel[k])
@@ -479,10 +461,8 @@ class Ispim(Spim):
 
                         channel_string = '_'.join(map(str, self.active_lasers)) if \
                             acquisition_style == 'interleaved' else channel[k][0]
-                        filenames = [
-                            f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"
-                            for
-                            camera in self.stream_ids]
+                        filenames = [f"{tile_prefix}_X_{i:0>4d}_Y_{j:0>4d}_Z_{0:0>4d}_ch_{channel_string}.{filetype_suffix}"]
+
 
                         filepath_srcs = [local_storage_dir / f for f in filenames]
 
@@ -515,8 +495,8 @@ class Ispim(Spim):
                             filepath_dests = [img_storage_dir / f for f in filenames]
                             self.log.info("Starting transfer process for "
                                           f"{filepath_dests}.")
-                            transfer_processes = [DataTransfer(filepath_srcs[streams],
-                                                               filepath_dests[streams]) for streams in self.stream_ids]
+                            transfer_processes = [DataTransfer(srcs,dests) for srcs, dests in
+                                                  zip(filepath_srcs, filepath_dests)]
                             for p in transfer_processes:
                                 p.start()
 
@@ -542,7 +522,7 @@ class Ispim(Spim):
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
-            self.frame_grabber.runtime.abort()
+            self.camera.stop()
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
@@ -589,31 +569,25 @@ class Ispim(Spim):
         if self.overview_set.is_set():
             self.stack = self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
 
-        self.log.info(f"Configuring framegrabber")
-        self._setup_camera()
-        self.frame_grabber.setup_stack_capture(filepath_srcs,
-                                               frames,
-                                               filetype)
-        self.frame_grabber.start()
+        self.log.info(f"Configuring Camera")
+        self.camera.setup_stack_capture(filepath_srcs[0],frames,filetype)   #FIXME: Don't be a filepath list
+        self.camera.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
 
         prev_frame_count = 0
-        curr_frame_count = 0
         self.latest_frame_layer = 0
         while self.ni.counter_task.read() < tile_count:
             if self.simulated:
                 tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
                                                            self.cfg.sensor_row_count)), append=True, bigtiff=True)
-            
-            for streams in self.stream_ids:
-                frame_count = self.framedata(streams)
-            curr_frame_count += frame_count
-            if curr_frame_count != prev_frame_count:
-                prev_frame_count = curr_frame_count
+            self.frame = self.camera.grab_frame()
+            self.latest_frame_layer = self.camera.grab_frame_count()
+            if self.camera.grab_frame_count() != prev_frame_count:
+                prev_frame_count = self.camera.grab_frame_count()
                 self.log.info(f'Total frames: {frames} '
-                              f'-> Frames collected: {curr_frame_count}')
+                              f'-> Frames collected: {self.camera.grab_frame_count()}')
             else:
                 print('No new frames')
             sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
@@ -628,17 +602,8 @@ class Ispim(Spim):
             self.create_overview() # If doing an overview image, start down sampling and mips
             self.stack = None  # Clear stack buffer
 
-
-        self.log.info('Waiting for camera to finish')
-        start = time()
-        if not self.simulated:
-            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-                sleep(.05)
-                if time() - start > 10:
-                    self.log.info('Task timed out')
-                    break
         self.log.info('Stopping camera')
-        self.frame_grabber.runtime.abort()
+        self.camera.stop()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -646,39 +611,15 @@ class Ispim(Spim):
         """Worker yielding the latest frame and frame id during acquisition"""
 
         while True:
-            if self.latest_frame is not None and self.active_lasers is not None:
+            if self.frame is not None and self.active_lasers is not None:
                 if self.cfg.acquisition_style == 'interleaved' and not self.overview_set.is_set():
                     wl = self.active_lasers[self.latest_frame_layer % (len(self.active_lasers)) - 1]
                 else:
                     wl = self.active_lasers[0]
-                yield self.latest_frame, wl
+                yield self.frame, wl
             else:
                 yield # yield so thread can quit
             sleep(.1)
-
-    def framedata(self, stream):
-        if self.simulated:
-            self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
-            self.latest_frame_layer =+ 1
-            return 1
-
-        if a := self.frame_grabber.runtime.get_available_data(stream):
-            packet = a.get_frame_count()
-            f = next(a.frames())
-            self.latest_frame = f.data().squeeze().copy()
-            self.latest_frame_layer = f.metadata().frame_id
-
-            if self.overview_set.is_set():
-                for f in a.frames():
-                    self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
-
-            f = None  # <-- fails to get the last frames if this is held?
-            a = None  # <-- fails to get the last frames if this is held?
-            logging.debug(
-                f"Frames in packet: {packet}"
-            )
-            return packet
-        return 0
 
     def overview_scan(self):
         """Quick overview scan function """
@@ -787,7 +728,7 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.scout_mode = scout_mode
         self.setup_imaging_for_laser(wavelength, True)
-        self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
+        self.camera.setup_stack_capture(self.cfg.local_storage_dir, 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
         self.setting_up_livestream = False
@@ -801,7 +742,7 @@ class Ispim(Spim):
             return
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
-        self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
+        self.camera.stop()
 
         self.ni.stop()
 
@@ -814,13 +755,12 @@ class Ispim(Spim):
     def _livestream_worker(self):
         """Pulls images from the camera and puts them into the ring buffer."""
 
-        self.frame_grabber.start()
+        self.camera.start()
         self.ni.start()
         if self.scout_mode:
             sleep(self.cfg.get_period_time())
             self.ni.stop()
         self.active_lasers.sort()
-
         while self.livestream_enabled.is_set():
             if self.simulated:
                 sleep(1 / 16)
@@ -830,18 +770,14 @@ class Ispim(Spim):
                 noise = np.random.normal(0, .1, blank.shape)
                 yield noise + blank, 1
 
-            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
-                f = next(packet.frames())
-                metadata = f.metadata()
-
-                # TODO: Why does this work?
-                layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-                self.im = f.data().squeeze().copy()
-                f = None
-                packet = None
-                yield self.im, self.active_lasers[layer_num + 1]
             else:
-                yield   # yield for thread
+                try:
+                    layer_num =self.camera.grab_frame_count() % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 \
+                        else -1
+                    yield self.camera.grab_frame(), self.active_lasers[layer_num + 1]
+                except:
+                    yield
+
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):
@@ -882,7 +818,7 @@ class Ispim(Spim):
 
     def close(self):
         """Safely close all open hardware connections."""
-        self.frame_grabber.close()
+        self.camera.close()
         self.ni.close()
         for wavelength, laser in self.lasers.items():
             self.log.info(f"Powering down {wavelength}[nm] laser.")
