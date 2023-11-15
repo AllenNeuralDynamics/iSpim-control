@@ -5,7 +5,7 @@ from numpy import pi
 import matplotlib.pyplot as plt
 from scipy.signal import sawtooth
 from ispim.ispim_config import IspimConfig
-
+import copy
 
 # TODO: cfg should be able to lookup config params sensibly (like with a string for a key)
 def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
@@ -28,9 +28,13 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     active_wavelengths.sort()
 
     for ch in active_wavelengths:
-
         # Create wavelength-dependent constants
-        active_laser_specs = cfg.laser_specs[str(ch)]
+        for laser in cfg.laser_wavelengths:
+            laser_path = laser.split('.')
+            active_laser_specs = copy.deepcopy(cfg.laser_specs)
+            for kwd in laser_path:
+                active_laser_specs = active_laser_specs[kwd]
+
         etl_offset = active_laser_specs['etl']['offset']
         etl_amplitude = active_laser_specs['etl']['amplitude']
         galvo_x_offset = active_laser_specs['galvo']['x_offset']
@@ -165,12 +169,25 @@ def laser_waveforms(laser_specs, active_wavelen: int,
     lasers_t = {}
     # Generate Laser Signal. Signal should be:
     # a pulse for the active laser but a flatline for inactive lasers.
-    for ao_name in [str(nm) for nm in laser_specs if nm.isdigit()]:
-        disable_voltage = laser_specs[ao_name]['disable_voltage']
-        enable_voltage = laser_specs[ao_name]['disable_voltage']
+    laser_wavelengths = []
+    for name, specs in laser_specs.items():
+        if 'type' in specs.keys() and specs['type'] == 'laser':
+            laser_wavelengths.append(int(name))
+        elif 'type' in specs.keys() and specs['type'] == 'combiner':
+            # If laser in combiner box, name will have combiner in it
+            combiner_wl = [name + '.' + nm for nm in specs.keys() if nm.isdigit() and specs[nm]['type'] == 'laser']
+            laser_wavelengths = [*laser_wavelengths, *combiner_wl]
+
+    for laser in laser_wavelengths:
+        laser_path = laser.split('.')
+        channel_specs = copy.deepcopy(laser_specs)
+        for kwd in laser_path:
+            channel_specs = channel_specs[kwd]
+        disable_voltage = channel_specs['disable_voltage']
+        enable_voltage = channel_specs['disable_voltage']
         # Only enable the active wavelengths.
-        if ao_name == str(active_wavelen):
-            enable_voltage = laser_specs[ao_name]['enable_voltage']
+        if laser == str(active_wavelen):
+            enable_voltage = channel_specs['enable_voltage']
         # Generate Laser Signal analog time series.
         laser_t = disable_voltage*np.ones(period_samples)
         start = pre_buffer_samples-laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
@@ -178,12 +195,12 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         # Fake snapback to match other waveforms
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))
-        lasers_t[ao_name] = laser_t
+        lasers_t[laser] = laser_t
     return lasers_t
 
 
 def plot_waveforms_to_pdf(cfg: IspimConfig, t: np.array,
-                          voltages_t: np.array, active_wavelength: int,
+                          voltages_t: np.array,
                           filename: str = "plot.pdf"):
 
         fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(10, 7))

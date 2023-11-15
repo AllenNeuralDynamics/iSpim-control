@@ -278,7 +278,25 @@ class IspimConfig(SpimConfig):
     def laser_wavelengths(self):
         """Returns set of all configured laser wavelengths.
         Note: this is NOT the subset of wavelengths used for imaging."""
-        return set([int(nm) for nm in self.cfg['channel_specs'].keys() if nm.isdigit()])
+        wl = []
+        for name, specs in self.laser_specs.items():
+            if 'type' in specs.keys() and specs['type'] == 'laser':
+                    wl.append(int(name))
+            elif 'type' in specs.keys() and specs['type'] == 'combiner':
+                    # If laser in combiner box, name will have combiner in it
+                    combiner_wl = [name+'.'+ nm for nm in specs.keys() if nm.isdigit() and specs[nm]['type'] == 'laser']
+                    wl = [*wl, *combiner_wl]
+        return wl
+
+    def laser_wavelengths_specs(self, name):
+        """Return specs for specific wavelength in case laser is inside combine"""
+
+        laser_path = name.split('.')
+        laser_specs = copy.deepcopy(self.laser_specs)
+        for kwd in laser_path:
+            laser_specs = laser_specs[kwd]
+
+        return laser_specs
 
     @property
     def daq_used_channels(self):
@@ -287,9 +305,11 @@ class IspimConfig(SpimConfig):
         ao_laser_count = 0
         # Since it's possible that lasers aren't strictly driven by an
         # ao channel, we must tally them up.
-        for wavelength, specs in self.laser_specs.items():
-            if 'ao_channel' in specs:
+        for laser in self.laser_wavelengths:
+            laser_specs = self.laser_wavelengths_specs(laser)
+            if 'ao_channel' in laser_specs:
                 ao_laser_count += 1
+
         return len(self.cfg['daq_ao_names_to_channels']) + ao_laser_count
 
     @property
@@ -302,14 +322,17 @@ class IspimConfig(SpimConfig):
         # so we don't change TOML values if we later save the TOML.
         ao_names_to_channels = \
             copy.deepcopy(self.cfg['daq_ao_names_to_channels'])
-        for wavelen, specs in self.laser_specs.items():
-            ao_channel = specs.get('ao_channel', None)
+
+        for laser in self.laser_wavelengths:
+            laser_specs = self.laser_wavelengths_specs(laser)
+            #for wavelen, specs in laser_specs.items():
+            ao_channel = laser_specs.get('ao_channel', None)
             # Handle (rare!) case that a laser isn't driven by an ao channel.
             if ao_channel is not None:
-                ao_names_to_channels[f"{wavelen}"] = ao_channel
+                ao_names_to_channels[f"{laser}"] = ao_channel
             # This case is so rare that we should warn about it.
             else:
-                self.log.warning(f"{wavelen} [nm] laser is not driven by an"
+                self.log.warning(f"{laser} [nm] laser is not driven by an"
                                  f"analog output channel on the NI DAQ.")
         return ao_names_to_channels
 

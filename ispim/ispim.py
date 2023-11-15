@@ -52,6 +52,7 @@ class Ispim(Spim):
                                         **self.cfg.filter_wheel_kwds)
 
         self.lasers = {}  # populated in _setup_lasers.
+        self.combiners = {}
         self.channel_gene = {}  # dictionary containing labeled gene for each channel
 
         # Extra Internal State attributes for the current image capture
@@ -126,34 +127,49 @@ class Ispim(Spim):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
         self.log.debug(f"Setting up lasers")
-        if 'laser_hub' in self.cfg.laser_specs.keys():
-            shared_laser_ports = {}
-            for hub in self.cfg.laser_specs['laser_hub']:
-                shared_laser_ports[hub] = serial.Serial(**self.cfg.laser_specs['laser_hub'][hub])
+        for name, specs in self.cfg.laser_specs.items():
+            if 'type' in specs.keys() and specs['type'] == 'laser':
+                # If type is laser, create laser class and use kw specified
+                self.lasers[name] = self.load_device(specs['driver'], specs['module'], specs['kwds'])
+                self.setup_device(self.lasers[name],specs['driver'], specs['setup'] )
+            elif 'type' in specs.keys() and specs['type'] == 'combiner':
+                # If type is combiner, set up combiner then set up all lasers inside combiner
+                self.combiners[name] = self.load_device(specs['driver'], specs['module'], specs['kwds'])
+                for nm in specs.keys():
+                    if nm.isdigit() and specs[nm]['type'] == 'laser':
+                        kwds = dict(specs[nm]['kwds'])
+                        kwds['port'] = self.combiners[name].ser # Add combiner port to kwds
+                        self.lasers[name+'.'+ nm] = self.load_device(specs[nm]['driver'], specs[nm]['module'], kwds)
+                        self.setup_device(self.lasers[name+'.'+ nm], specs[nm]['driver'], specs[nm]['setup'])
+            self.log.info(f"Successfully setup {name} laser")
 
-        for wl, specs in self.cfg.laser_specs.items():
 
-            if wl == 'laser_hub':
-                continue
-            elif 'port' in specs['kwds'].keys() and specs['kwds']['port'] == 'COMxx':
-                self.log.warning(f'Skipping setup for laser {wl}')
-                continue
+    def load_device(self, driver, module, kwds):
+        """Load in device based on config. Expecting driver, module, and kwds input"""
+        __import__(driver)
+        device_class = getattr(sys.modules[driver], module)
+        for k, v in kwds.items():
+            if str(v).split('.')[0] in dir(sys.modules[driver]):
+                arg_class = getattr(sys.modules[driver], v.split('.')[0])
+                kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
+            else:
+                kwds[k] = eval(v) if '.' in str(v) else v
+        return device_class(**kwds) if not self.simulated else Mock()
 
-            __import__(specs['driver'])
-            laser_class = getattr(sys.modules[specs['driver']], specs['module'])
-            kwds = dict(specs['kwds'])
-            for k, v in kwds.items():
-                if str(v).split('.')[0] in dir(sys.modules[specs['driver']]):
-                    arg_class = getattr(sys.modules[specs['driver']], v.split('.')[0])
-                    kwds[k] = getattr(arg_class, '.'.join(v.split('.')[1:]))
-                else:
-                    kwds[k] = eval(v) if '.' in str(v) else v
-            if 'laser_hub' in specs.keys():
-                kwds['port'] = shared_laser_ports[specs['laser_hub']]
+    def setup_device(self, device, driver, setup):
+        """Setup device based on config
+        :param device: device to be setup
+        :param setup: dictionary of attributes, values to set according to config"""
 
-            self.lasers[wl] = laser_class(**kwds) if not self.simulated else Mock()
-            self.lasers[wl].disable_cdrh()  # disable five second cdrh delay
-            self.log.debug(f"Successfully setup {wl} laser")
+        for property, value in setup.items():
+            if str(value).split('.')[0] in dir(sys.modules[driver]):
+                arg_class = getattr(sys.modules[driver], value.split('.')[0])
+                value = getattr(arg_class, '.'.join(value.split('.')[1:]))
+            else:
+                value = eval(value) if '.' in str(value) else value
+
+            setattr(device, property, value)
+
 
     def _setup_motion_stage(self):
         """Configure the sample stage for the ispim according to the config."""
@@ -233,7 +249,7 @@ class Ispim(Spim):
                 break
             else:
                 self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                sleep(0.5)
+
 
     def log_stack_acquisition_params(self, curr_tile_index, stack_name,
                                      z_step_size_um):

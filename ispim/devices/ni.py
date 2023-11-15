@@ -44,6 +44,7 @@ class WaveformHardware:
         # Create AO task and initialize the required channels
         self.ao_task = nidaqmx.Task("analog_output_task")
         for channel_name, channel_index in ao_names_to_channels.items():
+            print(channel_name, channel_index)
             physical_name = f"/{self.dev_name}/ao{channel_index}"
             self.log.debug(f"Setting up ao channel {channel_name} "
                             f"on {physical_name}")
