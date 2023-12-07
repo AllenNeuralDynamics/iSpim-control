@@ -97,7 +97,7 @@ class Ispim(Spim):
 
         self.__sim_counter_count = 0
 
-        self.stage_query_lock = threading.Lock()
+        self.stage_lock = threading.Lock()
 
         self.ytiles_acquired = 0
 
@@ -224,16 +224,24 @@ class Ispim(Spim):
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
-        start = time()
-        while self.sample_pose.is_moving():
-            pos = self.sample_pose.get_position()
-            distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 2.0 or time()-start > 60:
-                self.tigerbox.halt()
-                break
+
+        moving = True
+        pos_old = self.sample_pose.get_position()
+        sleep(.01)
+        while moving:
+            pos_new = self.sample_pose.get_position()
+            if pos_old != pos_new:
+                moving = True
+                pos_old = pos_new
+                distance = abs(pos_new[axis.lower()] - desired_position)
+                if distance < 2.0:
+                    self.tigerbox.halt()
+                    break
+                else:
+                    self.log.info(f"Stage is still moving! {axis} = {pos_new[axis.lower()]} -> {desired_position}")
+                sleep(.01)
             else:
-                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                sleep(0.5)
+                moving = False
 
     def log_stack_acquisition_params(self, curr_tile_index, stack_name,
                                      z_step_size_um):
@@ -363,11 +371,11 @@ class Ispim(Spim):
         # Check to see if disk has enough space for two tiles
         frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
-        self.check_read_write_speeds(self.cfg.local_storage_dir)
+        #self.check_read_write_speeds(self.cfg.local_storage_dir)
         #Check if external disk has enough space
         if not self.overview_set.is_set() and self.cfg.ext_storage_dir != self.cfg.local_storage_dir:
             self.check_ext_disk_space(xtiles, ytiles, frames)
-            self.check_read_write_speeds(self.cfg.ext_storage_dir)
+            #self.check_read_write_speeds(self.cfg.ext_storage_dir)
 
 
         # Est time scan will finish
@@ -477,6 +485,25 @@ class Ispim(Spim):
                         self.log_stack_acquisition_params(self.tiles_acquired,
                                                           filenames,
                                                           z_step_size_um)
+
+                        self._setup_camera()
+                        self.frame_grabber.setup_stack_capture(filepath_srcs,
+                                                               frames,
+                                                               filetype)
+                        # Collect background image for this tile
+                        if not self.overview_set.is_set():
+                            self.log.info("Starting background image.")
+                            bkg_img = self.frame_grabber.collect_background(frame_average=10)
+                            # Save background image TIFF file
+                            stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
+                            print('background image storage',
+                                  (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
+                            tifffile.imwrite(
+                                str((deriv_storage_dir / Path(
+                                    f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
+                                bkg_img, tile=(256, 256))
+                            self.log.info("Completed background image.")
+
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
                         self._collect_stacked_tiff(slow_scan_axis_position,
@@ -844,7 +871,7 @@ class Ispim(Spim):
         if self.cfg.acquisition_style == 'sequential':
             fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for getting wavelength
             self.log.info(f"Setting filter wheel to index {fw_index}")
-            with self.stage_query_lock:
+            with self.stage_lock:
                 self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
