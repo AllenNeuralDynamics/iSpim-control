@@ -479,16 +479,17 @@ class Ispim(Spim):
                                                           z_step_size_um)
 
                         # Collect background image for this tile
-                        self.log.info("Starting background image.")
-                        bkg_img = self.frame_grabber.collect_background(frame_average=10)
-                        # Save background image TIFF file
-                        stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
-                        print('background image storage',
-                              (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
-                        tifffile.imwrite(
-                            str((deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
-                            bkg_img, tile=(256, 256))
-                        self.log.info("Completed background image.")
+                        if not self.overview_set.is_set():
+                            self.log.info("Starting background image.")
+                            bkg_img = self.frame_grabber.collect_background(frame_average=10)
+                            # Save background image TIFF file
+                            stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
+                            print('background image storage',
+                                  (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
+                            tifffile.imwrite(
+                                str((deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
+                                bkg_img, tile=(256, 256))
+                            self.log.info("Completed background image.")
 
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
