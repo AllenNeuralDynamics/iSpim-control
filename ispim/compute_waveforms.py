@@ -172,7 +172,8 @@ def laser_waveforms(laser_specs, active_wavelen: int,
     # Generate Laser Signal. Signal should be:
     # a pulse for the active laser but a flatline for inactive lasers.
     port_wl_map = {'port0/line0': [638, 561],
-                  'port0/line1': [405, 488]}
+                  'port0/line1': [405, 488, 594],
+                   }
 
     for port, wls in port_wl_map.items():
         disable_voltage = 0
@@ -184,15 +185,6 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))
         lasers_t[port] = laser_t
-    # Create waveform for 594
-    enable_voltage = 1 if 594 == active_wavelen else 0
-    laser_t = np.zeros(period_samples)
-    start = pre_buffer_samples - laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
-    laser_t[start:period_samples - abs(rest_samples - laser_post_buffer_samples)] = enable_voltage
-    # Fake snapback to match other waveforms
-    snapback = np.zeros(rest_samples)
-    laser_t = np.concatenate((snapback, laser_t))
-    lasers_t['594'] = laser_t
 
     return lasers_t
 

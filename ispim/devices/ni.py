@@ -66,7 +66,8 @@ class WaveformHardware:
             sample_mode=AcqType.FINITE,
             samps_per_chan=sample_count * channel_num)
         self.do_task.triggers.start_trigger.retriggerable = True
-
+        self.do_task.do_line_states_done_state = Level.LOW  # When stopped, do task are off
+        self.do_task.do_line_states_paused_state = Level.LOW
         if live:
             self.counter_task = nidaqmx.Task("counter_task")
             co_channel = self.counter_task.co_channels.add_co_pulse_chan_freq(f"/{self.dev_name}/ctr0",
@@ -117,7 +118,6 @@ class WaveformHardware:
         # Write analog voltages.
         if scout_mode:
             self.rereserve_buffer(len(ao_voltages_t[0]))
-
         self.ao_task.write(ao_voltages_t, auto_start=False)  # arrays of floats
         self.do_task.write(do_voltages_t.astype(bool), auto_start=False)  # arrays of floats
 

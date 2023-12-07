@@ -89,14 +89,13 @@ class Ispim(Spim):
         self.im = None
 
         self.stack = []
-        self.y_z_overview_stack = None
         self.overview_process = None
         self.overview_set = Event()
         self.overview_imgs = []
 
         self.__sim_counter_count = 0
 
-        self.stage_query_lock = threading.Lock()
+        self.stage_lock = threading.Lock()
 
         self.ytiles_acquired = 0
 
@@ -436,8 +435,9 @@ class Ispim(Spim):
 
                     loops = 1 if acquisition_style == 'interleaved' else len(channels)
                     channel = [channels] if acquisition_style == 'interleaved' else [[wl] for wl in channels]
-
+                    channels
                     for k in range(0, loops):
+                        print('j, i, k', j, i, k)
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
@@ -477,6 +477,19 @@ class Ispim(Spim):
                         self.log_stack_acquisition_params(self.tiles_acquired,
                                                           filenames,
                                                           z_step_size_um)
+
+                        # Collect background image for this tile
+                        self.log.info("Starting background image.")
+                        bkg_img = self.frame_grabber.collect_background(frame_average=10)
+                        # Save background image TIFF file
+                        stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
+                        print('background image storage',
+                              (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
+                        tifffile.imwrite(
+                            str((deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
+                            bkg_img, tile=(256, 256))
+                        self.log.info("Completed background image.")
+
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
                         self._collect_stacked_tiff(slow_scan_axis_position,
@@ -746,7 +759,8 @@ class Ispim(Spim):
         # mipping xy
         mipstack_xy = np.max(downsampled, axis=0)
         mipstack_xy = np.flip(mipstack_xy, axis=0)
-        y_pos_px = int(ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) * ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)  * ytile)
+        y_pos_px = int(ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) *
+                            ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)  * ytile)
         self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0], y_pos_px:y_pos_px + mipstack_xy.shape[1]] = (
             np.maximum(self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0],
                                         y_pos_px:y_pos_px + mipstack_xy.shape[1]], mipstack_xy))
@@ -844,7 +858,7 @@ class Ispim(Spim):
         if self.cfg.acquisition_style == 'sequential':
             fw_index = self.cfg.laser_specs[str(wavelength[0])]['filter_index']  #TODO: This is a hack for getting wavelength
             self.log.info(f"Setting filter wheel to index {fw_index}")
-            with self.stage_query_lock:
+            with self.stage_lock:
                 self.filter_wheel.set_index(fw_index)
 
         # Reprovision the DAQ.
