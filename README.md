@@ -57,7 +57,7 @@ Software control of the ASI DiSPIM.
   -   If using spim-core,  need to install fios. I found it hard, but I’m sure it’ll be a piece of cake for you!
   - Pip clone the repo into projects folder 
   - The fio repo has a pretty detailed install but just incase I’ll reiterate what worked for me
-  - Download the lates fio msi windows installer 
+  - Download the lates [fio msi windows installer](https://github.com/axboe/fio/releases) 
   - Download cygwin. IMPORTANT: when installing Cygwin, it will ask you what packages you want installed. Specify make and then any packages starting with mingw64-x86_64 
   - Open cyqwin terminal and navigate to the drive your working from. For example, mine was the c drive so type:
     -       cd /cygdrive/c 

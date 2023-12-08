@@ -89,6 +89,7 @@ class Ispim(Spim):
         self.im = None
 
         self.stack = []
+        self.overview_stack = None
         self.overview_process = None
         self.overview_set = Event()
         self.overview_imgs = []
@@ -223,16 +224,24 @@ class Ispim(Spim):
 
     def wait_to_stop(self, axis: str, desired_position: int):
         """Wait for stage to stop moving. IN SAMPLE POSE"""
-        start = time()
-        while self.sample_pose.is_moving():
-            pos = self.sample_pose.get_position()
-            distance = abs(pos[axis.lower()] - desired_position)
-            if distance < 2.0 or time()-start > 60:
-                self.tigerbox.halt()
-                break
+
+        moving = True
+        pos_old = self.sample_pose.get_position()
+        sleep(.01)
+        while moving:
+            pos_new = self.sample_pose.get_position()
+            if pos_old != pos_new:
+                moving = True
+                pos_old = pos_new
+                distance = abs(pos_new[axis.lower()] - desired_position)
+                if distance < 2.0:
+                    self.tigerbox.halt()
+                    break
+                else:
+                    self.log.info(f"Stage is still moving! {axis} = {pos_new[axis.lower()]} -> {desired_position}")
+                sleep(.01)
             else:
-                self.log.info(f"Stage is still moving! {axis} = {pos[axis.lower()]} -> {desired_position}")
-                sleep(0.5)
+                moving = False
 
     def log_stack_acquisition_params(self, curr_tile_index, stack_name,
                                      z_step_size_um):
@@ -435,9 +444,8 @@ class Ispim(Spim):
 
                     loops = 1 if acquisition_style == 'interleaved' else len(channels)
                     channel = [channels] if acquisition_style == 'interleaved' else [[wl] for wl in channels]
-                    channels
+
                     for k in range(0, loops):
-                        print('j, i, k', j, i, k)
                         tile_start = time()
                         # Move to specified Z position
                         self.log.debug("Setting speed in Z to 1.0 mm/sec")
@@ -478,6 +486,10 @@ class Ispim(Spim):
                                                           filenames,
                                                           z_step_size_um)
 
+                        self._setup_camera()
+                        self.frame_grabber.setup_stack_capture(filepath_srcs,
+                                                               frames,
+                                                               filetype)
                         # Collect background image for this tile
                         if not self.overview_set.is_set():
                             self.log.info("Starting background image.")
@@ -487,7 +499,8 @@ class Ispim(Spim):
                             print('background image storage',
                                   (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
                             tifffile.imwrite(
-                                str((deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
+                                str((deriv_storage_dir / Path(
+                                    f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
                                 bkg_img, tile=(256, 256))
                             self.log.info("Completed background image.")
 
@@ -677,9 +690,7 @@ class Ispim(Spim):
         return 0
 
     def overview_scan(self):
-
         """Quick overview scan function """
-
         xtiles, ytiles, self.ztiles = self.get_tile_counts(self.cfg.tile_overlap_x_percent,
                                                            self.cfg.tile_overlap_y_percent,
                                                            .8 * 10,
