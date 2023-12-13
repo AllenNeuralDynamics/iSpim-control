@@ -17,7 +17,8 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
     :param active_wavelength: laser wavelength that will be turned on.
     """
     # initialize empty output voltage array for all interleaved channels
-    voltages_out = np.array([]).reshape(cfg.daq_used_channels, 0)
+    ao_voltages_out = np.array([]).reshape(cfg.daq_ao_used_channels, 0)
+    do_voltages_out = np.array([]).reshape(cfg.daq_do_used_channels, 0)
     pre_buffer_samples = cfg.get_pre_buffer_samples()
     post_buffer_samples = cfg.get_post_buffer_samples()
     exposure_samples = cfg.get_exposure_samples()
@@ -43,7 +44,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
 
         # Get peaks of previous sawtooth to connect the waveforms
         previous_peak = [0,0] if active_wavelengths.index(ch) == 0 \
-            else voltages_out[:2,(period_samples*active_wavelengths.index(ch))-rest_samples]
+            else ao_voltages_out[:2,(period_samples*active_wavelengths.index(ch))-rest_samples]
 
         galvo_y, galvo_x = \
                 galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
@@ -52,7 +53,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
                             period_samples, previous_peak, pre_buffer_samples, post_buffer_samples, rest_samples)
 
         previous_etl = [0] if active_wavelengths.index(ch) == 0 \
-            else voltages_out[2,(period_samples*active_wavelengths.index(ch))-rest_samples]
+            else ao_voltages_out[2,(period_samples*active_wavelengths.index(ch))-rest_samples]
 
         etl = etl_waveforms(etl_amplitude, etl_offset,
                                   exposure_samples, period_samples, previous_etl, rest_samples)
@@ -74,29 +75,34 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
         waveforms.update(laser_signals_dict)
 
         # initialize empty output voltage array for single channel
-        voltages_t = np.zeros((cfg.daq_used_channels, etl.size))
+        ao_voltages_t = np.zeros((cfg.daq_ao_used_channels, etl.size))
+        do_voltages_t = np.zeros((cfg.daq_do_used_channels, etl.size))
 
         # Populate all waveforms in the order the NI card will create them.
         for index, (name, _) in enumerate(cfg.daq_ao_names_to_channels.items()):
-            voltages_t[index] = waveforms[name]
+            ao_voltages_t[index] = waveforms[name]
 
         # concatenate and add to the growing output voltage matrix along samples axis
         if active_wavelengths.index(ch) == 0:   # Remove beginning of first waveform
-            voltages_out = np.concatenate((voltages_out, voltages_t[:,rest_samples:]), axis=1)
+            ao_voltages_out = np.concatenate((ao_voltages_out, ao_voltages_t[:,rest_samples:]), axis=1)
 
         else:
             i = active_wavelengths.index(ch)
-            voltages_out[:, (period_samples * i) - rest_samples:period_samples * i] = \
-                voltages_t[:, 0:rest_samples]
+            ao_voltages_out[:, (period_samples * i) - rest_samples:period_samples * i] = \
+                ao_voltages_t[:, 0:rest_samples]
+            ao_voltages_out = np.concatenate((ao_voltages_out, ao_voltages_t[:, rest_samples:]), axis=1)
 
-            #if i != len(active_wavelengths) - 1:
-            voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:]), axis=1)
-            # else:
-            #     voltages_t[0][period_samples] = voltages_out[0][0]  # galvo snap back down
-            #     voltages_out = np.concatenate((voltages_out, voltages_t[:, rest_samples:period_samples+1]), axis=1)
-    #end = period_samples if len(active_wavelengths) == 1 else (len(active_wavelengths) * period_samples)-(rest_samples+1)
-    t = np.linspace(0, len(active_wavelengths) * period_samples, len(voltages_out[0]), endpoint=False)
-    return t, voltages_out
+        for index, (name, _) in enumerate(cfg.daq_do_names_to_channels.items()):
+            do_voltages_t[index] = waveforms[name]
+
+        # concatenate and add to the growing output voltage matrix along samples axis
+        if active_wavelengths.index(ch) == 0:   # Remove beginning of first waveform
+            do_voltages_out = np.concatenate((do_voltages_out, do_voltages_t[:,rest_samples:]), axis=1)
+
+
+
+    t = np.linspace(0, len(active_wavelengths) * period_samples, len(ao_voltages_out[0]), endpoint=False)
+    return t, ao_voltages_out, do_voltages_out
 
 
 def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
@@ -165,32 +171,33 @@ def laser_waveforms(laser_specs, active_wavelen: int,
     lasers_t = {}
     # Generate Laser Signal. Signal should be:
     # a pulse for the active laser but a flatline for inactive lasers.
-    for ao_name in [str(nm) for nm in laser_specs if nm.isdigit()]:
-        disable_voltage = laser_specs[ao_name]['disable_voltage']
-        enable_voltage = laser_specs[ao_name]['disable_voltage']
-        # Only enable the active wavelengths.
-        if ao_name == str(active_wavelen):
-            enable_voltage = laser_specs[ao_name]['enable_voltage']
-        # Generate Laser Signal analog time series.
+    port_wl_map = {'port0/line0': [638, 561],
+                  'port0/line1': [405, 488, 594],
+                   }
+
+    for port, wls in port_wl_map.items():
+        disable_voltage = 0
+        enable_voltage = 1 if active_wavelen in wls else 0
         laser_t = disable_voltage*np.ones(period_samples)
         start = pre_buffer_samples-laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
         laser_t[start:period_samples-abs(rest_samples-laser_post_buffer_samples)] = enable_voltage
         # Fake snapback to match other waveforms
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))
-        lasers_t[ao_name] = laser_t
+        lasers_t[port] = laser_t
+
     return lasers_t
 
 
 def plot_waveforms_to_pdf(cfg: IspimConfig, t: np.array,
-                          voltages_t: np.array, active_wavelength: int,
+                          ao_voltages_t: np.array, active_wavelength: int,
                           filename: str = "plot.pdf"):
 
         fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(10, 7))
 
         axes.set_title("One Image Capture Sequence.")
         for index, ao_name in enumerate(cfg.daq_ao_names_to_channels.keys()):
-            axes.plot(t, voltages_t[index], label=ao_name)
+            axes.plot(t, ao_voltages_t[index], label=ao_name)
         axes.set_xlabel("time [s]")
         axes.set_ylabel("amplitude [V]")
         # axes.set_ylim(2,3)

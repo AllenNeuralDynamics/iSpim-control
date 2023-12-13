@@ -28,7 +28,6 @@ import sys
 import serial
 from math import ceil, floor
 import subprocess
-
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -183,13 +182,14 @@ class Ispim(Spim):
         if self.simulated:
             self.ni.counter_task = Mock()
             self.ni.counter_task.read = self.__sim_counter_read
-        if not self.livestream_enabled.is_set() and self.ni.live != live: # Only configures daq when in different state
+        if not self.livestream_enabled.is_set() and self.ni.live != live:       # Only configures daq on the initiation of livestream
+            # Only configure if tasks need to be updated
             self.log.info("Configuring NIDAQ")
-            self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, len(active_wavelength), live)
+            self.ni.configure(self.cfg.get_period_time(), self.cfg.daq_ao_names_to_channels, self.cfg.daq_do_names_to_channels, len(active_wavelength), live)
         self.log.info("Generating waveforms.")
-        _, voltages_t = generate_waveforms(self.cfg, active_wavelength)
+        _, ao_voltages_t, do_voltages_t = generate_waveforms(self.cfg, active_wavelength)
         self.log.info("Writing waveforms to hardware.")
-        self.ni.assign_waveforms(voltages_t, scout_mode)
+        self.ni.assign_waveforms(ao_voltages_t, do_voltages_t, scout_mode)
 
     def __sim_counter_read(self):
         count = self.__sim_counter_count
@@ -371,11 +371,11 @@ class Ispim(Spim):
         # Check to see if disk has enough space for two tiles
         frames = (ztiles * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else ztiles
         self.check_local_disk_space(frames)
-        #self.check_read_write_speeds(self.cfg.local_storage_dir)
+        self.check_read_write_speeds(self.cfg.local_storage_dir)
         #Check if external disk has enough space
         if not self.overview_set.is_set() and self.cfg.ext_storage_dir != self.cfg.local_storage_dir:
             self.check_ext_disk_space(xtiles, ytiles, frames)
-            #self.check_read_write_speeds(self.cfg.ext_storage_dir)
+            self.check_read_write_speeds(self.cfg.ext_storage_dir)
 
 
         # Est time scan will finish
@@ -486,6 +486,8 @@ class Ispim(Spim):
                                                           filenames,
                                                           z_step_size_um)
 
+                        # If camera isn't setup correctly, taking bkg images will fail.
+                        # This is how I got it to return frames
                         self._setup_camera()
                         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                                frames,
@@ -545,11 +547,9 @@ class Ispim(Spim):
             if not self.overview_set.is_set():
                 dest = str(img_storage_dir) if img_storage_dir != None else str(local_storage_dir)
                 for img in self.overview_imgs:
-                    dest_path = Path(
-                        dest[:-len(self.cfg.design_specs['instrument_type'])] + img[img.find('overview_img_') - 3:])
+                    dest_path = Path(dest[:-len(self.cfg.design_specs['instrument_type'])]+img[img.find('overview_img_')-3:])
                     cmd = subprocess.run(f'xcopy "{Path(img)}" "{dest_path}*" /y /i /j')
                     os.remove(Path(img))
-
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
@@ -598,14 +598,22 @@ class Ispim(Spim):
         # Specify fast axis = Tiger x, slow axis = Tiger y,
         frames = (tile_count * len(self.cfg.imaging_wavelengths)) if acquisition_style == 'interleaved' else tile_count
         if self.overview_set.is_set():
-            self.stack = self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
+            self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring framegrabber")
         self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-        self.frame_grabber.start()
+        try:
+            self.frame_grabber.start()
+        except Exception as e:
+            self.log.info(e)
+            self._setup_camera()
+            self.frame_grabber.setup_stack_capture(filepath_srcs,
+                                                   frames,
+                                                   filetype)
+            self.frame_grabber.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
@@ -700,7 +708,7 @@ class Ispim(Spim):
                                                            self.cfg.volume_y_um,
                                                            self.cfg.volume_z_um)
 
-        self.overview_ytiles = ytiles
+        self.overview_ytiles =  ytiles
         self.overview_xtiles = xtiles
 
         x_grid_step_px = (1 - self.cfg.tile_overlap_x_percent / 100.0) * ceil(self.cfg.row_count_px / 10)
@@ -735,20 +743,19 @@ class Ispim(Spim):
         self.overview_channels['yz'] = [self.overview[wl]['yz'] for wl in self.overview.keys()]
         self.overview_channels['xz'] = [self.overview[wl]['xz'] for wl in self.overview.keys()]
         for orientation in ['xy', 'yz', 'xz']:
-            self.overview_imgs.append(
-                fr'{self.cfg.local_storage_dir}\{orientation}_overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
-                fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
+            self.overview_imgs.append(fr'{self.cfg.local_storage_dir}\{orientation}_overview_img_{"_".join(map(str, self.cfg.imaging_wavelengths))}'
+                             fr'_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.tiff')
             tifffile.imwrite(self.overview_imgs[-1],
                              self.overview_channels[orientation],
                              metadata={'position': {'z': pos['z'], 'x': pos['x'], 'y': pos['y']},
-                                       'volume': {'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um,
-                                                  'y': self.cfg.volume_y_um},
-                                       'tile': {'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
+                                        'volume':{'z': self.cfg.volume_z_um, 'x': self.cfg.volume_x_um, 'y': self.cfg.volume_y_um},
+                                        'tile':{'x': xtiles, 'y': ytiles, 'z': self.ztiles}})
 
         self.overview_set.clear()
         self.overview_process = None
         self.start_pos = None  # Reset start position
         self.ytiles_acquired = 0
+
 
         return self.overview_channels
 
@@ -774,7 +781,8 @@ class Ispim(Spim):
         # mipping xy
         mipstack_xy = np.max(downsampled, axis=0)
         mipstack_xy = np.flip(mipstack_xy, axis=0)
-        y_pos_px = int(ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) * ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)  * ytile)
+        y_pos_px = int(ceil(((1 - self.cfg.tile_overlap_y_percent / 100.0) * self.cfg.tile_size_y_um) / np.sqrt(2) *
+                            ceil(self.cfg.column_count_px / 10) / self.cfg.tile_size_y_um)  * ytile)
         self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0], y_pos_px:y_pos_px + mipstack_xy.shape[1]] = (
             np.maximum(self.overview[wl]['xy'][x_pos_px:x_pos_px + mipstack_xz.shape[0],
                                         y_pos_px:y_pos_px + mipstack_xy.shape[1]], mipstack_xy))
@@ -785,6 +793,7 @@ class Ispim(Spim):
         mipstack_yz = mipstack_yz if ytile == 0 else mipstack_yz[:-shift,:]
         self.overview[wl]['yz'][shift:, y_pos_px:y_pos_px + mipstack_yz.shape[1]] = (
             np.maximum(self.overview[wl]['yz'][shift:, y_pos_px:y_pos_px + mipstack_yz.shape[1]], mipstack_yz))
+
 
     def start_livestream(self, wavelength: list, scout_mode: bool):
         """Repeatedly play the daq waveforms and buffer incoming images."""
