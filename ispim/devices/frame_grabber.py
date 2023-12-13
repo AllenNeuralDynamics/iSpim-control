@@ -69,7 +69,7 @@ class FrameGrabber:
 
     def collect_background(self, frame_average=1):
         """Retrieve a background image as a 2D numpy array with shape (rows, cols). """
-        # Note: the background image is optionally averaged
+
         dm = self.runtime.device_manager()
         filetype_id = self.p.video[0].storage.identifier
         self.p.video[0].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=False, line=0,

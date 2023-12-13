@@ -418,6 +418,12 @@ class Ispim(Spim):
                               'tags': ['schema']}
         self.log.info("acquisition parameters", extra=acquisition_params)
 
+        # If camera isn't setup correctly, taking bkg images will fail so put in safe state here.
+        self._setup_camera()
+        self.frame_grabber.setup_stack_capture([local_storage_dir],
+                                               frames,
+                                               filetype)
+
         try:
             for j in range(ytiles):
                 # move back to x=0 which maps to z=0
@@ -486,12 +492,6 @@ class Ispim(Spim):
                                                           filenames,
                                                           z_step_size_um)
 
-                        # If camera isn't setup correctly, taking bkg images will fail.
-                        # This is how I got it to return frames
-                        self._setup_camera()
-                        self.frame_grabber.setup_stack_capture(filepath_srcs,
-                                                               frames,
-                                                               filetype)
                         # Collect background image for this tile
                         if not self.overview_set.is_set():
                             self.log.info("Starting background image.")
