@@ -486,6 +486,8 @@ class Ispim(Spim):
                                                           filenames,
                                                           z_step_size_um)
 
+                        # If camera isn't setup correctly, taking bkg images will fail.
+                        # This is how I got it to return frames
                         self._setup_camera()
                         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                                frames,
@@ -603,7 +605,15 @@ class Ispim(Spim):
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-        self.frame_grabber.start()
+        try:
+            self.frame_grabber.start()
+        except Exception as e:
+            self.log.info(e)
+            self._setup_camera()
+            self.frame_grabber.setup_stack_capture(filepath_srcs,
+                                                   frames,
+                                                   filetype)
+            self.frame_grabber.start()
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
