@@ -95,7 +95,7 @@ class FrameGrabber:
         self.log.info(f"Averaging {frame_average} background images")
         self.stop()
 
-        self.p.video[0].storage.identifier = dm.select(DeviceKind.Storage, str(filetype_id))
+        self.p.video[0].storage.identifier = filetype_id
         self.p.video[0].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
         self.runtime.set_configuration(self.p)
         # Return median averaged 2D background image
