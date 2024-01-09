@@ -180,7 +180,7 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         enable_voltage = 1 if active_wavelen in wls else 0
         laser_t = disable_voltage*np.ones(period_samples)
         start = pre_buffer_samples-laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
-        laser_t[start:period_samples-abs(rest_samples-laser_post_buffer_samples)] = enable_voltage
+        laser_t[start:start + exposure_samples + laser_post_buffer_samples] = enable_voltage
         # Fake snapback to match other waveforms
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))

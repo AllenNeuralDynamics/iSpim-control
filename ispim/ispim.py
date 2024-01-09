@@ -114,13 +114,16 @@ class Ispim(Spim):
         self.frame_grabber.set_scan_direction(0, self.cfg.scan_direction)
 
         # Initializing line interval of both cameras
-        self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
-                                             self.cfg.sensor_row_count)
+        # self.frame_grabber.set_line_interval((self.cfg.exposure_time * 1000000) /
+        #                                      self.cfg.sensor_row_count)
+        self.frame_grabber.set_line_interval(5.0) # change to fast 5 us
 
         # Initializing exposure time of both cameras
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
-        self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
-                                             cpx_line_interval[0])
+        roll_time_us = cpx_line_interval[0]*self.cfg.sensor_row_count
+        strobe_time_us = self.cfg.exposure_time * 1000000 - roll_time_us
+        self.frame_grabber.set_exposure_time(strobe_time_us)
+        
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
