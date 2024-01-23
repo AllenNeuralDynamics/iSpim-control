@@ -58,14 +58,9 @@ class FrameGrabber:
             self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
             self.p.video[stream_id].max_frame_count = frame_count
             self.p.video[stream_id].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
-            # acq_trigger = Trigger(enable='True',
-            #                       line=2,
-            #                       event='FrameStart',
-            #                       kind='Input',
-            #                       edge='Rising')
-            # # External Trigger is index 1 in triggers list. Setup dummy trigger to skip index 0
-            # self.p.video[stream_id].camera.settings.triggers = [Trigger(), acq_trigger]
         self.runtime.set_configuration(self.p)
+        print(self.runtime.get_configuration())
+
 
     def collect_background(self, frame_average=1):
         """Retrieve a background image as a 2D numpy array with shape (rows, cols). """
@@ -78,8 +73,8 @@ class FrameGrabber:
         self.runtime.set_configuration(self.p)
         # Initialize background image array
         bkg_image = np.zeros((frame_average,
-                              self.p.video[0].camera.settings.shape[0],
-                              self.p.video[0].camera.settings.shape[1]),
+                              self.p.video[0].camera.settings.shape[1],
+                              self.p.video[0].camera.settings.shape[0]),
                              dtype='uint16')
         # Rapid fire camera and pull desired frame number out
         self.start()

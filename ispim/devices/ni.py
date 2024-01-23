@@ -87,7 +87,6 @@ class WaveformHardware:
 
 
         else:
-
             self.ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(
                 trigger_source=f"/{self.dev_name}/{self.input_trigger_name}",
                 trigger_edge=Slope.RISING)

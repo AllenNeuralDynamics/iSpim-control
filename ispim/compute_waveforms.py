@@ -63,7 +63,7 @@ def generate_waveforms(cfg: IspimConfig, active_wavelengths: list):
         laser_signals_dict =\
             laser_waveforms(cfg.laser_specs, ch,
                             exposure_samples, period_samples, rest_samples, pre_buffer_samples,
-                            laser_pre_buffer_samples, laser_post_buffer_samples)
+                            laser_pre_buffer_samples, post_buffer_samples)
         # organize signals by name.
         waveforms = \
         {
@@ -116,7 +116,7 @@ def galvo_waveforms(galvo_x_amplitude, galvo_x_offset,
     # x-axis galvos correct for MEMs mirror bow artifact. are quadratic with the y-axis galvo with some scaling amplitude and offset.
     galvo_y = galvo_y_amplitude*sawtooth(time_samples, width = (pre_buffer_samples+exposure_samples+post_buffer_samples)/period_samples) + galvo_y_offset
     # galvo x signal depends on its y signal value.
-    galvo_x = abs((galvo_y - galvo_y_offset)**2)*galvo_x_amplitude + galvo_x_offset
+    galvo_x = abs((galvo_y - galvo_y_offset)**2)*(0.1-galvo_x_amplitude) + galvo_x_offset
     galvo_x[exposure_samples+post_buffer_samples:period_samples] = galvo_x[0]  # constant value
 
     # Adding linear snapback to beginning of waveform for previous waveform
@@ -162,7 +162,7 @@ def camera_waveforms(exposure_samples, pre_buffer_samples, period_samples, rest_
 
 def laser_waveforms(laser_specs, active_wavelen: int,
                  exposure_samples, period_samples,rest_samples,
-                 pre_buffer_samples, laser_pre_buffer_samples, laser_post_buffer_samples):
+                 pre_buffer_samples, laser_pre_buffer_samples, post_buffer_samples):
     """Generate multiple laser waveforms with one active signal and the rest
     flatlined.
 
@@ -180,7 +180,7 @@ def laser_waveforms(laser_specs, active_wavelen: int,
         enable_voltage = 1 if active_wavelen in wls else 0
         laser_t = disable_voltage*np.ones(period_samples)
         start = pre_buffer_samples-laser_pre_buffer_samples if pre_buffer_samples > laser_pre_buffer_samples else 0
-        laser_t[start:period_samples-abs(rest_samples-laser_post_buffer_samples)] = enable_voltage
+        laser_t[0:start + exposure_samples + post_buffer_samples] = enable_voltage
         # Fake snapback to match other waveforms
         snapback = np.zeros(rest_samples)
         laser_t = np.concatenate((snapback, laser_t))

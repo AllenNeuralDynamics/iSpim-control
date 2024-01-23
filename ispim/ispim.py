@@ -18,7 +18,7 @@ from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
-from acquire import DeviceState
+from acquire import DeviceState, DeviceKind, SampleType
 import tifffile
 import shutil
 #from vortran_laser import stradus
@@ -121,6 +121,7 @@ class Ispim(Spim):
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
                                              cpx_line_interval[0])
+
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
 
@@ -255,8 +256,8 @@ class Ispim(Spim):
                     'tile_number': curr_tile_index,
                     'file_name': stack_name[0],
                     'coordinate_transformations': [
-                        {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
-                                                        self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
+                        {'scale': [self.cfg.tile_size_x_um / self.cfg.sensor_row_count,
+                                                        self.cfg.tile_size_y_um / self.cfg.sensor_column_count,
                                                         z_step_size_um]},
                         {'translation':[self.stage_x_pos * 0.0001,
                                                                    self.stage_y_pos * 0.0001,
@@ -271,8 +272,8 @@ class Ispim(Spim):
                                              'detector_name' : ''
                                                 },
                     'channel_name': f'{laser}',
-                    'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_column_count,
-                    'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_row_count,
+                    'x_voxel_size': self.cfg.tile_size_x_um / self.cfg.sensor_row_count,
+                    'y_voxel_size': self.cfg.tile_size_y_um / self.cfg.sensor_column_count,
                     'z_voxel_size': z_step_size_um,
                     'voxel_size_units': 'micrometers',
                     'tile_x_position': self.stage_x_pos * 0.0001,
@@ -493,18 +494,18 @@ class Ispim(Spim):
                                                           z_step_size_um)
 
                         # Collect background image for this tile
-                        if not self.overview_set.is_set():
-                            self.log.info("Starting background image.")
-                            bkg_img = self.frame_grabber.collect_background(frame_average=10)
-                            # Save background image TIFF file
-                            stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
-                            print('background image storage',
-                                  (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
-                            tifffile.imwrite(
-                                str((deriv_storage_dir / Path(
-                                    f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
-                                bkg_img, tile=(256, 256))
-                            self.log.info("Completed background image.")
+                        # if not self.overview_set.is_set():
+                        #     self.log.info("Starting background image.")
+                        #     bkg_img = self.frame_grabber.collect_background(frame_average=10)
+                        #     # Save background image TIFF file
+                        #     stack_prefix = f"{tile_prefix}_x_{i:04}_y_{j:04}_z_0000"
+                        #     print('background image storage',
+                        #           (deriv_storage_dir / Path(f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute())
+                        #     tifffile.imwrite(
+                        #         str((deriv_storage_dir / Path(
+                        #             f"bkg_{stack_prefix}_ch_{channel_string}.tiff")).absolute()),
+                        #         bkg_img, tile=(256, 256))
+                        #     self.log.info("Completed background image.")
 
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
@@ -601,10 +602,11 @@ class Ispim(Spim):
             self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
 
         self.log.info(f"Configuring framegrabber")
-        self._setup_camera()
+        #self._setup_camera()
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
+
         try:
             self.frame_grabber.start()
         except Exception as e:
@@ -614,10 +616,10 @@ class Ispim(Spim):
                                                    frames,
                                                    filetype)
             self.frame_grabber.start()
+
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
-
         prev_frame_count = 0
         curr_frame_count = 0
         self.latest_frame_layer = 0
@@ -681,7 +683,7 @@ class Ispim(Spim):
             self.latest_frame_layer =+ 1
             return 1
 
-        if a := self.frame_grabber.runtime.get_available_data(stream):
+        elif a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
             f = next(a.frames())
             self.latest_frame = f.data().squeeze().copy()
@@ -697,6 +699,7 @@ class Ispim(Spim):
                 f"Frames in packet: {packet}"
             )
             return packet
+
         return 0
 
     def overview_scan(self):
@@ -708,7 +711,7 @@ class Ispim(Spim):
                                                            self.cfg.volume_y_um,
                                                            self.cfg.volume_z_um)
 
-        self.overview_ytiles =  ytiles
+        self.overview_ytiles = ytiles
         self.overview_xtiles = xtiles
 
         x_grid_step_px = (1 - self.cfg.tile_overlap_x_percent / 100.0) * ceil(self.cfg.row_count_px / 10)
