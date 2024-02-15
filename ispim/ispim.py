@@ -601,21 +601,11 @@ class Ispim(Spim):
         if self.overview_set.is_set():
             self.stack = [np.zeros((self.cfg.row_count_px, self.cfg.column_count_px))] * (tile_count)  # Create buffer the size of stacked image
 
-        self.log.info(f"Configuring framegrabber")
-        #self._setup_camera()
+
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
-
-        try:
-            self.frame_grabber.start()
-        except Exception as e:
-            self.log.info(e)
-            self._setup_camera()
-            self.frame_grabber.setup_stack_capture(filepath_srcs,
-                                                   frames,
-                                                   filetype)
-            self.frame_grabber.start()
+        self.frame_grabber.start()
 
         self.ni.start()
         self.log.info(f"Starting scan.")
@@ -639,6 +629,8 @@ class Ispim(Spim):
                 print('No new frames')
             sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
 
+        self.frame_grabber.runtime.abort()
+
         self.log.info('NI task completed')
         self.log.info('Stopping NI Card')
         self.ni.stop()
@@ -649,17 +641,6 @@ class Ispim(Spim):
             self.create_overview() # If doing an overview image, start down sampling and mips
             self.stack = None  # Clear stack buffer
 
-
-        self.log.info('Waiting for camera to finish')
-        start = time()
-        if not self.simulated:
-            while self.frame_grabber.runtime.get_state() == DeviceState.Running:  # Check if camera is finished
-                sleep(.05)
-                if time() - start > 10:
-                    self.log.info('Task timed out')
-                    break
-        self.log.info('Stopping camera')
-        self.frame_grabber.runtime.abort()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -682,8 +663,7 @@ class Ispim(Spim):
             self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
             self.latest_frame_layer =+ 1
             return 1
-
-        elif a := self.frame_grabber.runtime.get_available_data(stream):
+        if a := self.frame_grabber.runtime.get_available_data(stream):
             packet = a.get_frame_count()
             f = next(a.frames())
             self.latest_frame = f.data().squeeze().copy()
@@ -699,8 +679,27 @@ class Ispim(Spim):
                 f"Frames in packet: {packet}"
             )
             return packet
-
         return 0
+        # new acquire api
+        # with self.frame_grabber.runtime.get_available_data(stream) as a:
+        #     packet = a.get_frame_count()
+        #     if packet == 0:
+        #         return 0
+        #     f = next(a.frames())
+        #     self.latest_frame = f.data().squeeze().copy()
+        #     self.latest_frame_layer = f.metadata().frame_id
+        #
+        #     if self.overview_set.is_set():
+        #         for f in a.frames():
+        #             self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
+        #
+        #     f = None  # <-- fails to get the last frames if this is held?
+        #     a = None  # <-- fails to get the last frames if this is held?
+        #     logging.debug(
+        #         f"Frames in packet: {packet}"
+        #     )
+        #     return packet
+        # return 0
 
     def overview_scan(self):
         """Quick overview scan function """
@@ -810,6 +809,7 @@ class Ispim(Spim):
         self.log.warning(f"Turning on the {wavelength}[nm] lasers.")
         self.scout_mode = scout_mode
         self.setup_imaging_for_laser(wavelength, True)
+
         self.frame_grabber.setup_stack_capture([self.cfg.local_storage_dir], 1000000, 'Trash')
         self.livestream_enabled.set()
         # Launch thread for picking up camera images.
@@ -852,7 +852,6 @@ class Ispim(Spim):
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
                 yield noise + blank, 1
-
             elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
                 f = next(packet.frames())
                 metadata = f.metadata()
@@ -865,6 +864,18 @@ class Ispim(Spim):
                 yield self.im, self.active_lasers[layer_num + 1]
             else:
                 yield   # yield for thread
+            # New acquire api
+            # else:
+            #     with self.frame_grabber.runtime.get_available_data(0) as a:
+            #         packet = a.get_frame_count()
+            #         if packet == 0:
+            #             continue
+            #         f = next(a.frames())
+            #         metadata = f.metadata()
+            #         layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
+            #         self.im = f.data().squeeze().copy()
+            #         yield self.im, self.active_lasers[layer_num + 1]
+            #     yield
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):

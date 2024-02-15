@@ -81,11 +81,12 @@ class FrameGrabber:
         i = 0
         start_time = time()
         while i < frame_average and time()-start_time<60:
-            if a := self.runtime.get_available_data(0):
+            with self.runtime.get_available_data(0) as a:
+                packet = a.get_frame_count()
+                if packet == 0:
+                    continue
                 f = next(a.frames())
                 bkg_image[i] = f.data().squeeze().copy()
-                f = None  # <-- fails to get the last frames if this is held?
-                a = None  # <-- fails to get the last frames if this is held?
                 i += 1
         self.log.info(f"Averaging {frame_average} background images")
         self.stop()
