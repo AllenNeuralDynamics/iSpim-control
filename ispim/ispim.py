@@ -18,16 +18,17 @@ from spim_core.spim_base import Spim
 from spim_core.devices.tiger_components import SamplePose,FilterWheel
 from spim_core.processes.data_transfer import DataTransfer
 import os
-from acquire import DeviceState, DeviceKind, SampleType
 import tifffile
 import shutil
-#from vortran_laser import stradus
 from ispim.operations import normalized_dct_shannon_entropy
 import threading
 import sys
 import serial
 from math import ceil, floor
 import subprocess
+from exa_spim_refactor.writers.data_structures.shared_double_buffer import SharedDoubleBuffer
+from exa_spim_refactor.writers.tiff import Writer
+
 class Ispim(Spim):
 
     def __init__(self, config_filepath: str,
@@ -65,7 +66,7 @@ class Ispim(Spim):
         self.stage_y_pos = None
         self.scout_mode = False
         # camera streams filled in with framegrabber.cameras
-        self.stream_ids = [item for item in range(0, len(self.frame_grabber.cameras))] if not self.simulated else [0]
+        self.stream_ids = [0]
 
         # Setup hardware according to the config.
         self._setup_camera()
@@ -103,7 +104,6 @@ class Ispim(Spim):
     def _setup_camera(self):
         """Configure general settings and set camera settings to those specified in config"""
 
-
         if self.simulated:
             self.frame_grabber.runtime = Mock()
 
@@ -120,7 +120,7 @@ class Ispim(Spim):
         # Initializing exposure time of both cameras
         cpx_line_interval = self.frame_grabber.get_line_interval() if not self.simulated else [15, 15]
         self.frame_grabber.set_exposure_time(self.cfg.slit_width_pix *
-                                             cpx_line_interval[0])
+                                             cpx_line_interval*0.001)   # us to ms
 
     def _setup_lasers(self):
         """Setup lasers that will be used for imaging. Warm them up, etc."""
@@ -196,7 +196,6 @@ class Ispim(Spim):
         count = self.__sim_counter_count
         self.__sim_counter_count += 1
         return count
-
 
     def acquisition_time(self, xtiles, ytiles, ztiles):
 
@@ -509,12 +508,26 @@ class Ispim(Spim):
 
                         # Convert to [mm] units for tigerbox.
                         slow_scan_axis_position = self.stage_x_pos / STEPS_PER_UM / 1000.0
-                        self._collect_stacked_tiff(slow_scan_axis_position,
+                        stack_writer = Writer("\\".join(str(filepath_srcs[0]).split("\\")[:-1]))
+                        stack_writer.row_count_px = self.cfg.sensor_row_count
+                        stack_writer.column_count_px = self.cfg.sensor_column_count
+                        stack_writer.x_voxel_size_um = 0.748
+                        stack_writer.y_voxel_size_um = 0.748
+                        stack_writer.z_voxel_size_um = 1
+                        stack_writer.x_position_mm = self.stage_x_pos / STEPS_PER_UM
+                        stack_writer.y_position_mm = self.stage_y_pos / STEPS_PER_UM
+                        stack_writer.z_position_mm = self.stage_z_pos / STEPS_PER_UM
+                        stack_writer.frame_count_px = frames
+                        stack_writer.data_type = self.cfg.image_dtype.name
+                        stack_writer.channel = str(self.active_lasers[0])
+                        stack_writer.filename = str(filepath_srcs[0]).split("\\")[-1]
+
+                        self._collect_stacked_tiff(stack_writer,slow_scan_axis_position,
                                                    ztiles,
                                                    z_step_size_um,
                                                    filepath_srcs,
                                                    filetype,
-                                                   acquisition_style)
+                                                   acquisition_style,)
 
                         # Start transferring file to its destination.
                         # Note: Image transfer is faster than image capture, but
@@ -554,7 +567,7 @@ class Ispim(Spim):
             self.log.info(f"Closing NI tasks")
             self.ni.stop()
             self.log.info(f"Closing camera")
-            self.frame_grabber.runtime.abort()
+            self.frame_grabber.stop()
             for wl, specs in self.cfg.laser_specs.items():
                 if str(wl) in self.lasers:
                     self.lasers[str(wl)].disable()
@@ -581,11 +594,12 @@ class Ispim(Spim):
                                   'tags': ['schema']}
             self.log.info("acquisition parameters", extra=acquisition_params)
 
-    def _collect_stacked_tiff(self, slow_scan_axis_position: float,
+    def _collect_stacked_tiff(self, stack_writer, slow_scan_axis_position: float,
                               tile_count, tile_spacing_um: float,
                               filepath_srcs: list[Path],
                               filetype: str,
-                              acquisition_style: str = 'interleaved'):
+                              acquisition_style: str = 'interleaved',
+                              ):
 
         self.log.info(f"Configuring stage scan parameters")
         self.log.info(f"Starting scan at Z = {self.stage_z_pos / STEPS_PER_UM / 1000} mm")
@@ -605,31 +619,64 @@ class Ispim(Spim):
         self.frame_grabber.setup_stack_capture(filepath_srcs,
                                                frames,
                                                filetype)
+        mem_shape = (64,
+                     self.cfg.sensor_row_count,
+                     self.cfg.sensor_column_count)
+        img_buffer = SharedDoubleBuffer(mem_shape,
+                                        dtype=self.cfg.image_dtype)
+        stack_writer.prepare()
+        stack_writer.start()
+        chunk_size_frames = 64
+
         self.frame_grabber.start()
 
         self.ni.start()
         self.log.info(f"Starting scan.")
         self.tigerbox.start_scan() if not self.simulated else print('Started')
+
         prev_frame_count = 0
-        curr_frame_count = 0
+        frames_collected = 0
         self.latest_frame_layer = 0
+        chunk_lock = threading.Lock()
         while self.ni.counter_task.read() < tile_count:
-            if self.simulated:
-                tifffile.imwrite(filepath_srcs[0],np.ones((self.cfg.sensor_column_count,
-                                                           self.cfg.sensor_row_count)), append=True, bigtiff=True)
-            
-            for streams in self.stream_ids:
-                frame_count = self.framedata(streams)
-            curr_frame_count += frame_count
-            if curr_frame_count != prev_frame_count:
+            curr_frame_count = self.ni.counter_task.read()
+            if curr_frame_count != prev_frame_count and curr_frame_count < tile_count:
+                if curr_frame_count - prev_frame_count != 1:
+                    self.log.warning(f"Dropped {curr_frame_count - prev_frame_count} frames")
                 prev_frame_count = curr_frame_count
+                curr_chunk_index = self.ni.counter_task.read() % chunk_size_frames
+                self.latest_frame_layer = curr_frame_count
+                self.latest_frame = self.frame_grabber.grab_frame()
+                if self.overview_set.is_set():
+                    self.stack[curr_frame_count] = self.latest_frame
+                else:
+                    img_buffer.write_buf[curr_chunk_index] = self.latest_frame
+                    img_buffer.buffer_index = curr_chunk_index
+                    if curr_chunk_index == chunk_size_frames - 1:
+                        while not stack_writer.done_reading.is_set():
+                            sleep(0.001)
+                        # Dispatch chunk to each StackWriter compression process.
+                        # Toggle double buffer to continue writing images.
+                        # To read the new data, the StackWriter needs the name of
+                        # the current read memory location and a trigger to start.
+                        # Lock out the buffer before toggling it such that we
+                        # don't provide an image from a place that hasn't been
+                        # written yet.
+                        with chunk_lock:
+                            img_buffer.toggle_buffers()
+                            if self.cfg.ext_storage_dir is not None:
+                                stack_writer.shm_name = \
+                                    img_buffer.read_buf_mem_name
+                                stack_writer.done_reading.clear()
+                frames_collected += 1
                 self.log.info(f'Total frames: {frames} '
                               f'-> Frames collected: {curr_frame_count}')
-            else:
-                print('No new frames')
-            sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
+            # else:
+            #     print('No new frames')
 
-        self.frame_grabber.runtime.abort()
+            #sleep(self.cfg.get_period_time() + self.cfg.jitter_time_s) if not self.simulated else sleep(.01)
+
+        self.frame_grabber.stop()
 
         self.log.info('NI task completed')
         self.log.info('Stopping NI Card')
@@ -640,7 +687,25 @@ class Ispim(Spim):
         if self.overview_set.is_set():
             self.create_overview() # If doing an overview image, start down sampling and mips
             self.stack = None  # Clear stack buffer
-
+        else:
+            while not stack_writer.done_reading.is_set():
+                sleep(0.001)
+            # Dispatch chunk to each StackWriter compression process.
+            # Toggle double buffer to continue writing images.
+            # To read the new data, the StackWriter needs the name of
+            # the current read memory location and a trigger to start.
+            # Lock out the buffer before toggling it such that we
+            # don't provide an image from a place that hasn't been
+            # written yet.
+            with chunk_lock:
+                img_buffer.toggle_buffers()
+                if self.cfg.ext_storage_dir is not None:
+                    stack_writer.shm_name = \
+                        img_buffer.read_buf_mem_name
+                    stack_writer.done_reading.clear()
+            print('waiting for stack writer to close')
+            stack_writer.wait_to_finish(wait=False)
+        img_buffer.close_and_unlink()
         self.log.info('Stack complete')
 
     def _acquisition_livestream_worker(self):
@@ -657,49 +722,6 @@ class Ispim(Spim):
             else:
                 yield # yield so thread can quit
             sleep(.1)
-
-    def framedata(self, stream):
-        if self.simulated:
-            self.latest_frame = np.ones((self.cfg.sensor_column_count,self.cfg.sensor_row_count))
-            self.latest_frame_layer =+ 1
-            return 1
-        if a := self.frame_grabber.runtime.get_available_data(stream):
-            packet = a.get_frame_count()
-            f = next(a.frames())
-            self.latest_frame = f.data().squeeze().copy()
-            self.latest_frame_layer = f.metadata().frame_id
-
-            if self.overview_set.is_set():
-                for f in a.frames():
-                    self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
-
-            f = None  # <-- fails to get the last frames if this is held?
-            a = None  # <-- fails to get the last frames if this is held?
-            logging.debug(
-                f"Frames in packet: {packet}"
-            )
-            return packet
-        return 0
-        # new acquire api
-        # with self.frame_grabber.runtime.get_available_data(stream) as a:
-        #     packet = a.get_frame_count()
-        #     if packet == 0:
-        #         return 0
-        #     f = next(a.frames())
-        #     self.latest_frame = f.data().squeeze().copy()
-        #     self.latest_frame_layer = f.metadata().frame_id
-        #
-        #     if self.overview_set.is_set():
-        #         for f in a.frames():
-        #             self.stack[f.metadata().frame_id] = f.data().squeeze().copy()
-        #
-        #     f = None  # <-- fails to get the last frames if this is held?
-        #     a = None  # <-- fails to get the last frames if this is held?
-        #     logging.debug(
-        #         f"Frames in packet: {packet}"
-        #     )
-        #     return packet
-        # return 0
 
     def overview_scan(self):
         """Quick overview scan function """
@@ -824,7 +846,7 @@ class Ispim(Spim):
             return
         wait_cond = "" if wait else "not "
         self.log.debug(f"Disabling livestream and {wait_cond}waiting.")
-        self.frame_grabber.runtime.abort()  # Abort for livestream because total frames are never being met
+        self.frame_grabber.stop()
 
         self.ni.stop()
 
@@ -852,30 +874,19 @@ class Ispim(Spim):
                                  dtype=self.cfg.image_dtype)
                 noise = np.random.normal(0, .1, blank.shape)
                 yield noise + blank, 1
-            elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
-                f = next(packet.frames())
-                metadata = f.metadata()
-
-                # TODO: Why does this work?
-                layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-                self.im = f.data().squeeze().copy()
-                f = None
-                packet = None
-                yield self.im, self.active_lasers[layer_num + 1]
+            # elif packet := self.frame_grabber.runtime.get_available_data(self.stream_ids[0]):
+            #     f = next(packet.frames())
+            #     metadata = f.metadata()
+            #
+            #     # TODO: Why does this work?
+            #     layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
+            #     self.im = f.data().squeeze().copy()
+            #     f = None
+            #     packet = None
+            #     yield self.im, self.active_lasers[layer_num + 1]
             else:
-                yield   # yield for thread
-            # New acquire api
-            # else:
-            #     with self.frame_grabber.runtime.get_available_data(0) as a:
-            #         packet = a.get_frame_count()
-            #         if packet == 0:
-            #             continue
-            #         f = next(a.frames())
-            #         metadata = f.metadata()
-            #         layer_num = metadata.frame_id % (len(self.active_lasers)) - 1 if len(self.active_lasers) > 1 else -1
-            #         self.im = f.data().squeeze().copy()
-            #         yield self.im, self.active_lasers[layer_num + 1]
-            #     yield
+                yield self.frame_grabber.grab_frame(), 0 # yield for thread
+
             sleep((1 / self.cfg.daq_obj_kwds['livestream_frequency_hz']))
 
     def setup_imaging_for_laser(self, wavelength: list, live: bool = False):

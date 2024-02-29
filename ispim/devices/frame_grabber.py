@@ -2,27 +2,15 @@ import logging
 from mock import Mock
 from pprint import pprint
 import numpy as np
-import acquire
-from acquire import DeviceKind, Trigger, SampleType, Trigger, SignalIOKind, TriggerEdge, Direction, Runtime
-# import calliphlox
-# from calliphlox import DeviceKind, Trigger, SampleType, TriggerEvent, SignalIOKind, TriggerEdge, Direction
 from pathlib import Path
 from time import time
+from exa_spim_refactor.devices.camera.hamamatsu_dcam import Camera
 
 class FrameGrabber:
 
     def __init__(self):
 
-        self.runtime = Runtime()
-        dm = self.runtime.device_manager()
-        self.p = self.runtime.get_configuration()
-
-        self.cameras = [
-            d.name
-            for d in dm.devices()
-            if (d.kind == DeviceKind.Camera) and ("C15440" in d.name)
-
-        ]
+        self.camera = Camera("500749")
 
         self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -30,18 +18,20 @@ class FrameGrabber:
         """General setup for both cameras for both livestream and stack capture
 
         param tile_shape: size 2 tuple of (columns, rows) for single tile"""
-        dm = self.runtime.device_manager()
-        for stream_id, camera in zip(range(0, len(self.cameras)), self.cameras):
-            self.p.video[stream_id].camera.identifier = dm.select(DeviceKind.Camera, camera)
-            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
-            self.p.video[stream_id].camera.settings.binning = 1
-            self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
-            self.runtime.set_configuration(self.p)
-            self.p.video[stream_id].camera.settings.offset = (int((2304 - tile_shape[0])/2), int((2304 - tile_shape[1])/2)) #TODO: Not hard code 2304
-            self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
-            self.p.video[stream_id].frame_average_count = 0  # disables
-            self.runtime.set_configuration(self.p)
 
+        self.camera.roi = {"width_px": tile_shape[0], "height_px": tile_shape[1]}
+        print(self.camera.roi)
+        # dm = self.runtime.device_manager()
+        # for stream_id, camera in zip(range(0, len(self.cameras)), self.cameras):
+        #     self.p.video[stream_id].camera.identifier = dm.select(DeviceKind.Camera, camera)
+        #     self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, "Trash")
+        #     self.p.video[stream_id].camera.settings.binning = 1
+        #     self.p.video[stream_id].camera.settings.shape = (tile_shape[0], tile_shape[1])
+        #     self.runtime.set_configuration(self.p)
+        #     self.p.video[stream_id].camera.settings.offset = (int((2304 - tile_shape[0])/2), int((2304 - tile_shape[1])/2)) #TODO: Not hard code 2304
+        #     self.p.video[stream_id].camera.settings.pixel_type = SampleType.U16
+        #     self.p.video[stream_id].frame_average_count = 0  # disables
+        #     self.runtime.set_configuration(self.p)
 
     def setup_stack_capture(self, output_paths: list[Path], frame_count: int, filetype: str):
         """Setup capturing for a stack. Including tiff file storage location
@@ -50,16 +40,16 @@ class FrameGrabber:
         :param frame_count: how many tiles to grab from camera
 
         """
-
-        dm = self.runtime.device_manager()
-        for stream_id in range(0, len(self.cameras)):
-            self.log.info(f"Configuring camera.")
-            self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
-            self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
-            self.p.video[stream_id].max_frame_count = frame_count
-            self.p.video[stream_id].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
-        self.runtime.set_configuration(self.p)
-        print(self.runtime.get_configuration())
+        self.camera.prepare()
+        # dm = self.runtime.device_manager()
+        # for stream_id in range(0, len(self.cameras)):
+        #     self.log.info(f"Configuring camera.")
+        #     self.p.video[stream_id].storage.identifier = dm.select(DeviceKind.Storage, filetype) #zarr compression name = ZarrBlosc1ZstdByteShuffle
+        #     self.p.video[stream_id].storage.settings.filename = str(output_paths[stream_id].absolute())
+        #     self.p.video[stream_id].max_frame_count = frame_count
+        #     self.p.video[stream_id].camera.settings.input_triggers.frame_start = acquire.Trigger(enable=True, line=0, edge="Rising")
+        # self.runtime.set_configuration(self.p)
+        # print(self.runtime.get_configuration())
 
 
     def collect_background(self, frame_average=1):
@@ -98,66 +88,51 @@ class FrameGrabber:
         return np.median(bkg_image, axis=0).astype('uint16')
 
     def get_exposure_time(self):
-        exposure_time = [
-            self.p.video[stream_id].camera.settings.exposure_time_us
-            for stream_id in range(0, len(self.cameras))
-        ]
-        return exposure_time
+        return self.camera.exposure_time_ms
 
     def set_exposure_time(self, exp_time: float, live: bool = False):
-        for video in self.p.video:
-            video.camera.settings.exposure_time_us = exp_time
-            self.log.debug(f'exposure set to: {video.camera.settings.exposure_time_us}')
+        # for video in self.p.video:
+        #     video.camera.settings.exposure_time_us = exp_time
+        #     self.log.debug(f'exposure set to: {video.camera.settings.exposure_time_us}')
+        #
+        # if live:
+        #     self.stop()
+        #     self.runtime.set_configuration(self.p)
+        #     self.start()
+        # else:
+        #     self.runtime.set_configuration(self.p)
+        self.camera.exposure_time_ms = exp_time
 
-        if live:
-            self.stop()
-            self.runtime.set_configuration(self.p)
-            self.start()
-        else:
-            self.runtime.set_configuration(self.p)
-
+    def grab_frame(self):
+        return self.camera.grab_frame()
 
     def get_line_interval(self):
-        line_interval = [
-            self.p.video[stream_id].camera.settings.line_interval_us
-            for stream_id in range(0, len(self.cameras))
-        ]
-        return line_interval
+        return self.camera.line_interval_us
 
     def set_line_interval(self, line_int: float, live: bool = False):
-        for video in self.p.video:
-            video.camera.settings.line_interval_us = line_int
-            self.log.debug(f'line interval set to: {video.camera.settings.line_interval_us}')
-        if live:
-            self.stop()
-            self.runtime.set_configuration(self.p)
-            self.start()
-        else:
-            self.runtime.set_configuration(self.p)
-
+        self.camera.line_interval_us = line_int
 
     def get_scan_direction(self, stream_id):
-        return self.p.video[stream_id].camera.settings.readout_direction
+        direction = self.camera.readout_mode
+        READOUT_MODES = {
+            "FORWARD":"light sheet forward",
+            "BACKWARD":"light sheet backward"
+        }
+        return READOUT_MODES[direction]
 
     def set_scan_direction(self, stream_id, direction:str, live: bool = False):
-        direction = Direction.Forward if direction == 'FORWARD' else Direction.Backward
-        self.p.video[stream_id].camera.settings.readout_direction = direction
-        if live:
-            self.stop()
-            self.runtime.set_configuration(self.p)
-            self.start()
-        else:
-            self.runtime.set_configuration(self.p)
+        direction =  "light sheet forward" if direction == 'FORWARD' else "light sheet backward"
+        self.camera.readout_mode = direction
 
     def start(self):
         """start the setup frame acquisition."""
         self.log.debug("Starting cameras.")
-        self.runtime.start()
+        self.camera.start()
 
     def stop(self):
         """Stop frame acquisition and file writing."""
         self.log.debug("Stopping cameras.")
-        self.runtime.abort()
+        self.camera.stop()
 
     def close(self):
-        self.runtime = None
+        self.camera.close()

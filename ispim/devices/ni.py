@@ -115,8 +115,8 @@ class WaveformHardware:
         assert type(ao_voltages_t) == ndarray, \
             "Error: voltages_t digital signal waveform must be a numpy ndarray."
         # Write analog voltages.
-        if scout_mode:
-            self.rereserve_buffer(len(ao_voltages_t[0]))
+        #if scout_mode:
+        self.rereserve_buffer(len(ao_voltages_t[0]))
         self.ao_task.write(ao_voltages_t, auto_start=False)  # arrays of floats
         self.do_task.write(do_voltages_t.astype(bool), auto_start=False)  # arrays of floats
 
